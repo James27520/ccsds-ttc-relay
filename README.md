@@ -76,15 +76,15 @@
 
 ### 3.1 6G 全域覆盖网络与本项目位置
 
-![6G SAGIN](docs/images/fig1_6g.png)
+![6G SAGIN](https://cdn.jsdelivr.net/gh/James27520/ccsds-ttc-relay@main/docs/images/fig1_6g.png)
 
 ### 3.2 卫星载荷框图（本项目所在层级）
 
-![Payload](docs/images/fig2_payload.png)
+![Payload](https://cdn.jsdelivr.net/gh/James27520/ccsds-ttc-relay@main/docs/images/fig2_payload.png)
 
 ### 3.3 与 4G/5G 的相同点与不同点
 
-![Compare](docs/images/fig3_compare.png)
+![Compare](https://cdn.jsdelivr.net/gh/James27520/ccsds-ttc-relay@main/docs/images/fig3_compare.png)
 
 **最本质的三条差异：**
 
@@ -98,7 +98,7 @@
 
 ## 4. 为什么 FPGA 是本项目的核心
 
-![Why FPGA](docs/images/fig5_fpga.png)
+![Why FPGA](https://cdn.jsdelivr.net/gh/James27520/ccsds-ttc-relay@main/docs/images/fig5_fpga.png)
 
 | 维度 | 软件实现（ARM / PC） | FPGA 实现 |
 |---|---|---|
@@ -144,7 +144,7 @@
 
 ### 5.3 信号链路
 
-![Chain](docs/images/fig4_chain.png)
+![Chain](https://cdn.jsdelivr.net/gh/James27520/ccsds-ttc-relay@main/docs/images/fig4_chain.png)
 
 ---
 
