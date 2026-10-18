@@ -1,0 +1,127 @@
+# ---- Vivado / Xilinx 工程产物（可由 tcl 脚本重建）----
+*.jou
+*.log
+*.str
+*.wdb
+*.wcfg
+.Xil/
+vivado*.log
+vivado*.jou
+vivado_pid*.str
+*.backup.log
+*.backup.jou
+*.dcp
+*.dcp.*
+*.ltx
+*.bit
+*.bin
+*.elf
+*.hdf
+*.xsa
+*.edf
+*.edn
+*.ngc
+*.ngd
+*.pcf
+*.rpt
+*.rpx
+*.ut
+*.xpr.db
+*.mcs
+*.prm
+
+# Vivado 工程目录（体积大，用 tcl 重建）
+vivado2018/
+vivado2018_ila/
+ccsds_pl_ila.cache/
+ccsds_pl_ila.gen/
+ccsds_pl_ila.hw/
+ccsds_pl_ila.ip_user_files/
+ccsds_pl_ila.runs/
+ccsds_pl_ila.sim/
+ccsds_pl_ila.srcs/
+ccsds_pl_ila.tmp/
+
+# ---- ModelSim 仿真产物 ----
+work/
+*_run/
+sim/out/
+sim/vectors/
+transcript
+vsim.wlf
+vsim_stacktrace.vstf
+*.vstf
+*.wlf
+modelsim.ini
+wlf*
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# ---- 运行时产生的数据文件 ----
+*.bin
+*.csv
+!docs/**/*.csv
+out/
+_scratch/
+*.png
+!docs/images/*.png
+*.jpg
+!docs/images/*.jpg
+*.sqlite
+
+# ---- 板级抓取/临时文件 ----
+*.log
+serial_*.txt
+uboot_*.txt
+capture_*.txt
+tmp/
+temp/
+_tmp_*
+
+# ---- 备份目录 ----
+_backup_*/
+*.bak
+*.prev
+*.old
+
+# ---- 第三方大文件（不进仓库）----
+# 厂商资料包 / 固件镜像 / 手册
+*.zip
+*.7z
+*.rar
+*.tar.gz
+*.pdf
+*.iso
+*.img
+*.frm
+
+# ---- 系统 / 编辑器 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# ---- 密码 / 密钥（务必排除）----
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+secrets.*
+.env
