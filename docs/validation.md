@@ -2,7 +2,7 @@
 
 记录日期：2026-10-27。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。下列上板操作均为临时 JTAG 加载，未写启动 Flash。
 
-最新产物、时序、快照和串口证据索引见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照，不替代最终 r4c 记录；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
+最新网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成
 
@@ -37,13 +37,20 @@ normal A/B快照的14位符号扩展格式检查通过，normal后重新切回tr
 | 数字帧/控制协议 | 2906项主机断言通过；26字节RF_SET兼容旧解析器，ACK/重试/序号检查通过 |
 | 波形算法 | 45/45合成波形通过，覆盖频偏、极性、时钟偏差及噪声/单音/坏CRC负例 |
 | PS离线状态测试 | core88、capture/controller11193断言通过；pattern57项历史fixture回放通过；A9 hard-float目标文件编译通过 |
-| 最终完整M2固件 | ELF SHA256 `00d14352729bb2748f7a7604547416474b9022082a520b8b6e35dcf49ac64c30` 下，三组金标准与131072点合成波形通过，波形耗时278 ms、no_UDP=1 |
+| 历史完整M2固件 | ELF SHA256 `00d14352729bb2748f7a7604547416474b9022082a520b8b6e35dcf49ac64c30` 下，三组金标准与131072点合成波形通过，波形耗时278 ms、no_UDP=1 |
+| 网络修复回归 | 正式ELF的selftest及131072点合成波形（277 ms、no_UDP=1）通过；正式ELF另检一份131072点A通道k=0内部PN9，板端及独立DDR检查错误均为0 |
 
 合成波形耗时是单块A9执行时间，不能据此宣称31.25 MSPS连续无间断解调。SYNTHETIC和ADC_TEST来源不获得自动转发资格；有效ADC_NORMAL仍需ARM、网络ready和匹配成功ACK才计为远端已确认。
 
-### M4网络失败恢复与上位机
+### M4网口验证、失败恢复与上位机
 
-PHY/初始化/MDIO的mock负例通过，包括18处注入MDIO失败、有界reset/无链路等待、64次PHY和64次DMA初始化失败的资源回收，以及后续恢复。实际板端仍未从MDIO识别PHY；`network on`返回`NETWORK_FAILED`、rc=-2，network保持0，此后串口status和selftest继续正常。v6已验证三次显式失败重试，最终r4c固件又验证一次。这说明无PHY响应路径能返回，不代表PHY检测、Ethernet收发或双板UDP已经成功。
+PHY/初始化/MDIO的mock负例通过，包括18处注入MDIO失败、有界reset/无链路等待、64次PHY和64次DMA初始化失败的资源回收，以及后续恢复。历史v6三次和完整M2固件一次`network on`失败后，串口status和selftest仍正常；这些记录保留，但原“无PHY响应”推断错误。
+
+JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Table 13定义地址0为广播地址，各PHY均响应；本板地址脚实际为1。当前驱动严格使用地址1及ID `001C:C915`，允许匹配该ID的地址0广播响应；其他地址、错误ID及MDIO错误仍拒绝。
+
+网络修复正式ELF（SHA256 `aa7eb6d368f8ab256749d53a40ad24d1b50ddccac0873e13c6e705a97ce8b4a2`）已临时上板，使用相同r4c BIT（SHA256 `10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b`）和ps7_init（SHA256 `3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205`）。`network on`成功，自动协商1000 Mbps，status显示network=1；PC `169.254.219.130` → ADDA `169.254.9.11` 连续10次ping全部成功，延迟<1～2 ms。ping中显示0 ms的结果表示延迟小于1 ms。
+
+真实双板UDP尚未开始，当前等待将PC端网线移接LDSDR；本次PC连通结果不代表RF_SET、匹配ACK或业务RF已验收。
 
 串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。10项fake串口测试继续覆盖输入校验、连接不自动写命令及来源/状态分离。
 
@@ -51,7 +58,7 @@ PHY/初始化/MDIO的mock负例通过，包括18处注入MDIO失败、有界rese
 
 | 工作 | 验收要求 |
 |---|---|
-| PHY与双板UDP/业务闭环 | 查明PHY/MDC/时钟/复位和MDIO响应，确认LDSDR固件与端口；验证RF_SET、匹配ACK、频率读回及实际业务转发 |
+| 双板UDP/业务闭环 | 将PC端网线移接LDSDR，确认LDSDR固件与端口；验证RF_SET、匹配ACK、频率读回及实际业务转发；PHY识别和PC→ADDA连通已通过 |
 | 真实100.5 MHz输入 | 登记发送端端口、电平与衰减；验证V2多组指令、序号变化、坏帧拒绝和实际接收边界 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 

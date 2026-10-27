@@ -111,24 +111,40 @@ modify(lwip/'netif/xemacpsif_dma.c',patch_dma)
 
 def patch_phy(t):
     start=t.index('void detect_phy(XEmacPs *xemacpsp)');end=t.index('\nu32_t phy_setup_emacps',start)
-    b='''void detect_phy(XEmacPs *xemacpsp)
+    # RevB straps addr1; RTL8211E also answers broadcast0 (datasheet 7.7/Table13).
+    # This is deliberately board-specific, not a generic skip-address0 scanner.
+    b=r'''void detect_phy(XEmacPs *xemacpsp)
 {
     u16_t id1,id2;
-    u32_t addr,count=0;
+    u32_t addr,expected=0,extra=0,errors=0,bad_broadcast=0;
+    u32_t cfg=XEmacPs_ReadReg(xemacpsp->Config.BaseAddress,XEMACPS_NWCFG_OFFSET);
+    int rc1,rc2;
     u32_t *map=(xemacpsp->Config.BaseAddress==XPAR_XEMACPS_0_BASEADDR)?phymapemac0:phymapemac1;
+    xil_printf("MDIO_POLICY Z7ADDALite_RevB expected_addr=1 expected_id=001c:c915 base=%08x mdc_div_code=%u\r\n",
+        xemacpsp->Config.BaseAddress,(cfg>>18)&7U);
     for (addr=0; addr<32; ++addr) map[addr]=FALSE;
     for (addr=0; addr<32; ++addr) {
-        if (XEmacPs_PhyRead(xemacpsp,addr,2,&id1)!=XST_SUCCESS ||
-            XEmacPs_PhyRead(xemacpsp,addr,3,&id2)!=XST_SUCCESS) {
-            xil_printf("PHY_ERROR MDIO scan addr=%u\\r\\n",addr);
-            for (addr=0; addr<32; ++addr) map[addr]=FALSE;
-            return;
-        }
+        id1=id2=0;
+        rc1=(int)XEmacPs_PhyRead(xemacpsp,addr,2,&id1);
+        rc2=(int)XEmacPs_PhyRead(xemacpsp,addr,3,&id2);
+        /* Always report 0/1; report every other nonempty/error response. */
+        if (addr<2 || rc1!=XST_SUCCESS || rc2!=XST_SUCCESS || (id1!=0 && id1!=0xFFFFU))
+            xil_printf("MDIO_ID addr=%u id1=%04x rc1=%d id2=%04x rc2=%d\r\n",addr,id1,rc1,id2,rc2);
+        if (rc1!=XST_SUCCESS || rc2!=XST_SUCCESS) {++errors;continue;}
+        if (addr==1) {expected=(id1==0x001CU && id2==0xC915U);continue;}
         if (id1==0 || id1==0xFFFFU) continue;
-        if (id1==0x001CU && (id2 & 0xFFF0U)==0xC910U) {map[addr]=TRUE; ++count;}
-        else xil_printf("PHY_ERROR unsupported addr=%u id=%04x:%04x\\r\\n",addr,id1,id2);
+        if (addr==0) {
+            /* This model also responds at broadcast0; it is not a second PHY. */
+            if (id1!=0x001CU || id2!=0xC915U) bad_broadcast=1;
+        } else ++extra;
     }
-    if (count!=1) for (addr=0; addr<32; ++addr) map[addr]=FALSE;
+    if (!expected || errors || extra || bad_broadcast) {
+        xil_printf("PHY_POLICY_REJECT expected_addr1=%u mdio_errors=%u extra_nonzero=%u bad_broadcast=%u\r\n",
+            expected,errors,extra,bad_broadcast);
+        return;
+    }
+    map[1]=TRUE;
+    xil_printf("PHY_SELECTED addr=1 id=001c:c915; addr0 is RTL8211E broadcast\r\n");
 }
 '''
     t=t[:start]+b+t[end:]

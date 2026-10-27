@@ -1,6 +1,6 @@
 # Z7ADDALite PS 接收与转发
 
-包含采集 ABI 客户端、来源/ARM/事务门控、PN9/checker 检查、CLI/平台接入和网络 BSP 补丁。协议与解调算法位于相邻 `software/`。原 C/H、网络策略及补丁字节不变；仓库仅调整 `test_pattern_check.py`，使其重放归档的 PN9 mem。`SOURCE_MANIFEST.json` 列字节不变输入，`REPRO_MANIFEST.json` 单列该测试入口差异。完整r4c已临时上板通过全通道/四个k内部PN9/checker及normal格式/切换检查，板端与独立DDR检查一致；真实模拟输入和PHY/双板UDP仍待验收。
+包含采集 ABI 客户端、来源/ARM/事务门控、PN9/checker 检查、CLI/平台接入和网络 BSP 补丁。协议与解调算法位于相邻 `software/`。网络BSP补丁及测试已更新本板PHY地址策略；`SOURCE_MANIFEST.json`记录对应输入及测试hash，`REPRO_MANIFEST.json`记录历史PN9 mem回放入口差异。完整r4c已临时上板通过全通道/四个k内部PN9/checker及normal格式/切换检查，板端与独立DDR检查一致；PHY识别、1000 Mbps协商及PC ping已通过，真实模拟输入和双板UDP仍待验收。
 
 以下主机测试从仓库根目录运行，需要 NumPy、宿主 GCC、支持 Cortex-A9 的 `arm-none-eabi-gcc.exe`。工具目录通过参数、`ADDA_HOST_GCC_BIN`/`ADDA_ARM_GCC_BIN` 或 PATH 提供，不绑定开发者磁盘路径：
 
@@ -44,4 +44,6 @@ python -B verify_xsa_binding.py --platform-xsa '<生成BSP所用平台.xsa>' --f
 
 本次仓库离线核验：core 88 assertions、capture/controller 11193 assertions、pattern 57 cases 通过；core/capture 的 Cortex-A9 hard-float compile-only 通过；网络 PHY/init/MDIO 三组 mock 测试通过。最终r4c BSP/ELF已另行完成生成、链接及HWH/init/bit绑定检查，见 [r4c验证摘要](../../../docs/validation/2026-10-27-m2.json)。
 
-最终采集ELF SHA256为 `00d14352729bb2748f7a7604547416474b9022082a520b8b6e35dcf49ac64c30`：三组金标准与131072点合成波形在板端通过，波形278 ms、no_UDP=1；ADC_TEST decode未发现有效帧，未发RF_SET。`network on`仍因MDIO无PHY响应返回rc=-2，随后status/selftest正常；v6的三次失败恢复与最终固件一次失败恢复均有记录，未据此证明物理网络连通。
+历史完整M2采集ELF SHA256为 `00d14352729bb2748f7a7604547416474b9022082a520b8b6e35dcf49ac64c30`，其失败恢复记录保留于r4c摘要。原“MDIO无PHY响应”推断已纠正：JTAG直读地址0和1均为`001C:C915`，RTL8211E原厂datasheet 7.7 Table 13定义地址0为广播地址，实际地址脚为1。当前本板驱动严格使用地址1及ID `001C:C915`，允许匹配该ID的地址0广播响应；其他地址、错误ID和MDIO错误仍拒绝。
+
+网络修复正式ELF SHA256为 `aa7eb6d368f8ab256749d53a40ad24d1b50ddccac0873e13c6e705a97ce8b4a2`，配套r4c BIT SHA256为 `10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b`、ps7_init SHA256为 `3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205`。正式固件实板`network on`成功并自动协商1000 Mbps，status显示network=1；PC `169.254.219.130` → ADDA `169.254.9.11` 连续ping 10/10通过，延迟<1～2 ms。正式固件selftest与131072点合成波形（277 ms、no_UDP=1）通过；正式固件的一份131072点A通道k=0内部PN9，板端及独立DDR检查错误均为0。双板UDP尚未开始，等待将PC端网线移接LDSDR；真实100.5 MHz/SMA输入、业务RF及持续运行/启动仍待验收。见 [网络验证摘要](../../../docs/validation/2026-10-27-network.json)。

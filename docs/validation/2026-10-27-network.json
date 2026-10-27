@@ -1,0 +1,200 @@
+{
+  "date": "2026-10-27",
+  "scope": "Z7ADDALite Ethernet initialization and PC ICMP round-trip acceptance; dual-board UDP not yet executed",
+  "board": {
+    "role": "telecontrol",
+    "name": "Z7ADDALite",
+    "part": "xc7z020clg484-2",
+    "phy": "RTL8211E"
+  },
+  "diagnosis": {
+    "previous_inference_superseded": "No unique supported PHY was incorrectly described as no MDIO response. The strict scan rejected two responding addresses.",
+    "observed_ids": {
+      "0": "001C:C915",
+      "1": "001C:C915",
+      "2..31": "FFFF:FFFF"
+    },
+    "physical_address": 1,
+    "address0": "RTL8211E broadcast response, not an extra physical PHY",
+    "policy": "Require address1=001C:C915; allow matching broadcast0; reject other responding addresses, mismatched IDs and any MDIO read error",
+    "datasheet": {
+      "publisher": "Realtek Semiconductor Corp.",
+      "section": "Rev1.6 section7.7 Table13 printed page16",
+      "url": "https://datasheet.lcsc.com/datasheet/pdf/4db0b5f392a00cbc87420d89cf1d417f.pdf",
+      "sha256": "452eb038a4cf18dbda94be65cc884883290418b4bc616e735719ae302086d5b2"
+    }
+  },
+  "artifacts": {
+    "telecontrol.elf": {
+      "sha256": "aa7eb6d368f8ab256749d53a40ad24d1b50ddccac0873e13c6e705a97ce8b4a2",
+      "bytes": 1029504
+    },
+    "telecontrol_system.bit": {
+      "sha256": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b",
+      "bytes": 4045770
+    },
+    "ps7_init.tcl": {
+      "sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205",
+      "bytes": 31130
+    }
+  },
+  "binding": {
+    "repo_source_manifest_sha256": "a883661f921476e1d294891b95234e3a7a7b73da8f4ea227921a91eb9ccf976b",
+    "build_manifest_sha256": "be54905f1bb8cc0e83ec2dc385dc7f93aa1692fdc650d4c946c3b95bd5e7d952",
+    "release_source_snapshot_sha256": "3a69a0e58ace160469eb302ce00e6b64d452397d103066338f0a7248c1a93912",
+    "hardware_binding_sha256": "fa07f13ceff798cbfa13b0c8d5e0a107e960fe9c2f7d89803f129c8008da5ef1",
+    "unchanged_r4c_pl": true,
+    "hwh_init_embedded_bit_check": "PASS",
+    "repository_copy_note": "Four edited policy/test inputs preserve repository LF. SOURCE_MANIFEST records both repository and frozen build hashes; LF-normalized inputs are identical."
+  },
+  "host_tests": {
+    "phy": {
+      "summary": "PASS RTL8211E addr1 policy (every setup write asserted addr1): 0+1 and only1 accepted; only0/C916/unknown/extra nonzero rejected; all64 scan MDIO faults rejected; retry; 18 setup MDIO faults; bounded timeouts; 10/100/1000; nonblocking reconnect",
+      "extracted_sha256": "ce6f6503e7b6c6afab896f1def329815b131c7c7a56b25bd405bc1899b2d684c",
+      "harness_sha256": "e924bc8ec73b218e0e561d4669acf2f16ec4d90b4a0524802698460720585d5b"
+    },
+    "init": {
+      "summary": "PASS init: OOM/config failures; 64 PHY failures + 64 DMA failures without queue consumption/leaks; queue failure cleanup; later success",
+      "extracted_sha256": "f1f70e3208144dd7bd8de8e739813601b2addf650151458073877ee5821c008f",
+      "harness_sha256": "6fbb3a33aa7c5e40e315c1590cbe4ed648cc16f2cd5444f9a954109804360195"
+    },
+    "mdio": {
+      "summary": "PASS MDIO: busy and stuck read/write bounded at 100000 status reads; cleared failed output; success and NULL output",
+      "extracted_sha256": "0431d20908c51ab1508e6db95791d4c8839a42e7d0f0e3eaa737ca6b3cd6128a",
+      "harness_sha256": "416ed29a0b5fa7b30b8db0e41e3808a288085e66259733c4f2bc083c9040bd07"
+    }
+  },
+  "hardware_tests": {
+    "deployment": "Volatile JTAG DDR load; no Flash or SD write",
+    "network_on": {
+      "rc": 0,
+      "phy_address": 1,
+      "link_mbps": 1000,
+      "local": "169.254.9.11:5006",
+      "network_ready": true
+    },
+    "pc_ping": {
+      "source": "169.254.219.130",
+      "destination": "169.254.9.11",
+      "sent": 10,
+      "received": 10,
+      "lost": 0,
+      "latency": "<1 to2 ms"
+    },
+    "selftest": {
+      "golden_vectors": 3,
+      "passed": true,
+      "udp_attempted": false
+    },
+    "synthetic_waveform": {
+      "samples": 131072,
+      "elapsed_ms": 277,
+      "passed": true,
+      "udp_attempted": false
+    },
+    "pn9": {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "1",
+        "config_epoch": "2",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "0",
+        "first": "1614",
+        "last": "-1192"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          1614,
+          -67,
+          -4419,
+          6559,
+          5331,
+          -6907,
+          1456,
+          3012
+        ],
+        "last": [
+          -133,
+          7546,
+          -3265,
+          -5722,
+          2570,
+          2913,
+          6024,
+          -1192
+        ],
+        "sha256": "d73202af619e8a14854be625dafd0aba338a2d8fac02f23396ae137a6d4b4ad1",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      }
+    },
+    "final_state": {
+      "network": false,
+      "armed": false,
+      "automatic_capture": false,
+      "sample_source": "ADC_TEST"
+    }
+  },
+  "evidence": {
+    "direct_mdio_scan.txt": {
+      "sha256": "d3e1d74f30cf9a1707345929ac1b5c553967d551e1d1c50ce493a888ec4fb98b",
+      "bytes": 1997
+    },
+    "release_load.txt": {
+      "sha256": "e3290947973ab9921331168635c590cf5dedb2c4e6b4bff144aa29bbece2a67c",
+      "bytes": 911
+    },
+    "release_boot.txt": {
+      "sha256": "68f8ffa6520b180171c4bf9576221ab0dea391e07ddec0588f2c9d061744603c",
+      "bytes": 168
+    },
+    "release_network_on.txt": {
+      "sha256": "5477786ed186ac2bf1cfa607c7effb4d6ed505d9060e0ffd32e211f944132f04",
+      "bytes": 928
+    },
+    "release_pc_ping.txt": {
+      "sha256": "9d6bad71f845c2a1060a8b5c8da0e662093da0c9108a8385fc377e34108e06f2",
+      "bytes": 782
+    },
+    "release_network_off.txt": {
+      "sha256": "2794b814bae00b09c734fdd76f747b8ed87e394dcd0ad3c235a8742fea1d7020",
+      "bytes": 49
+    },
+    "release_pn9/result.json": {
+      "sha256": "a6ab72791fdd50e73ff5e8121eca01535ed0b547047b03075501da44974da1ab",
+      "bytes": 988
+    },
+    "release_pn9/uart.txt": {
+      "sha256": "e0d4852a757738990c1ff42a9129f5f58d7c649de8f096a30215d2199e4f4dc3",
+      "bytes": 1050
+    },
+    "release_pn9/snapshot.bin": {
+      "sha256": "d73202af619e8a14854be625dafd0aba338a2d8fac02f23396ae137a6d4b4ad1",
+      "bytes": 262144
+    }
+  },
+  "not_verified": [
+    "ADDA-to-LDSDR RF_SET/ACK and independent PLL readback in this session",
+    "External100.5MHz ADC signal reception",
+    "RF business-signal forwarding",
+    "Continuous reception and standalone cold boot"
+  ],
+  "next_wiring": "Move the PC end of the Ethernet cable to LDSDR RJ45; retain both USB debug connections and board power. No SMA needed for UDP validation."
+}

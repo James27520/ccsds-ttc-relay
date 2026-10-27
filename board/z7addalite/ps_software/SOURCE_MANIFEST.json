@@ -1,5 +1,5 @@
 {
-  "scope": "byte-identical archived PS sources; modified test entry in REPRO_MANIFEST.json",
+  "scope": "Current PS source inputs, including verified RTL8211E address1 policy; repository pattern runner listed separately in REPRO_MANIFEST.json",
   "files": [
     {
       "path": "adda_capture.c",
@@ -83,13 +83,17 @@
     },
     {
       "path": "network_phy_policy.inc",
-      "sha256": "350e84ce1d425abdb9b62ec68547c0e0677a8198465280e52ea8245e680107be",
-      "bytes": 4103
+      "sha256": "1690666e7d56ee2714283ba2d1ac1d953cd6c2ff42c3ae72f43474c6c082580f",
+      "bytes": 4082,
+      "build_source_sha256": "0264e43b336c846fd65d057fec225d30e0ee033f241d886a0e5f03621ac000c3",
+      "copy_transform": "Preserve repository LF; LF-normalized bytes equal frozen build input"
     },
     {
       "path": "patch_network_bsp.py",
-      "sha256": "d66afa6bf59db0970eb098f1b491a1c71fed1be99ff9734eae4cdfb8fbb49edc",
-      "bytes": 10674
+      "sha256": "057fe23a2d146aa483c1b4c0a5ecc82a2d397d4ed0beaddcc33a72e953504868",
+      "bytes": 11689,
+      "build_source_sha256": "cbc0e2d4b9a721ad9b3aefff02c98fcde6204263bf4d688798a54b121c6dbb4f",
+      "copy_transform": "Preserve repository LF; LF-normalized bytes equal frozen build input"
     },
     {
       "path": "platform_2018.mss",
@@ -108,8 +112,10 @@
     },
     {
       "path": "test_network_bsp.py",
-      "sha256": "12a312918dedddbc79f724add8d9e2d7005e82c07be96649b4b4f7889f544f7a",
-      "bytes": 2838
+      "sha256": "84d0bda3b068e052f39cd842116d955388ec773f24bbb8b4fb1392a212422d62",
+      "bytes": 2909,
+      "build_source_sha256": "fa32ee70f5fbcea6f914cf77dcdbc6bdc794bca78bcb761e6685bb31e29ff691",
+      "copy_transform": "Preserve repository LF; LF-normalized bytes equal frozen build input"
     },
     {
       "path": "test_network_init.c",
@@ -123,8 +129,10 @@
     },
     {
       "path": "test_network_phy.c",
-      "sha256": "1d4c28e86d2016bf0a3908f2b6a76ad4331e2cfd17cc1a9b063ccfd2a4767c58",
-      "bytes": 4010
+      "sha256": "b2a102dd5e06a6c1917177aea6de4bc5bab39f19e1f721fb5ea5a6508f6b8be2",
+      "bytes": 4909,
+      "build_source_sha256": "e924bc8ec73b218e0e561d4669acf2f16ec4d90b4a0524802698460720585d5b",
+      "copy_transform": "Preserve repository LF; LF-normalized bytes equal frozen build input"
     },
     {
       "path": "test_ps_core.c",

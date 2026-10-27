@@ -18,7 +18,7 @@ static u32_t adda_phy_current_speed(XEmacPs *mac, u32_t addr)
     u16_t id1, id2, status, speed;
     if (!adda_phy_read(mac, addr, 2, &id1) ||
         !adda_phy_read(mac, addr, 3, &id2) ||
-        id1 != 0x001CU || (id2 & 0xFFF0U) != 0xC910U)
+        id1 != 0x001CU || id2 != 0xC915U)
         return XST_FAILURE;
     if (!adda_phy_read(mac, addr, 1, &status) ||
         !adda_phy_read(mac, addr, 1, &status) ||
@@ -53,8 +53,8 @@ static u32_t get_IEEE_phy_speed(XEmacPs *mac, u32_t addr)
         xil_printf("PHY_ERROR MDIO identity addr=%u\r\n", addr);
         return XST_FAILURE;
     }
-    if (id1 != 0x001CU || (id2 & 0xFFF0U) != 0xC910U) {
-        xil_printf("PHY_ERROR unsupported addr=%u id=%04x:%04x (requires RTL8211E family)\r\n", addr,id1,id2);
+    if (id1 != 0x001CU || id2 != 0xC915U) {
+        xil_printf("PHY_ERROR unsupported addr=%u id=%04x:%04x (requires RTL8211E 001c:c915)\r\n", addr,id1,id2);
         return XST_FAILURE;
     }
     xil_printf("PHY_IDENT addr=%u id=%04x:%04x; bounded reset=1s autoneg=5s\r\n",addr,id1,id2);

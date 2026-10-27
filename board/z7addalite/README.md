@@ -2,7 +2,7 @@
 
 目标链路：ADC 125 MSPS → PL 采集/每 4 点抽取 → PS C 解调（31.25 MSPS）→ UDP → LDSDR 转发板。这里归档可重建源码。r4c完整M2已通过临时JTAG上板的A/B全通道、k=0..3内部PN9/checker快照检查，板端检查与独立JTAG DDR导出检查一致；normal A/B格式与normal→training切换通过，未接外部信号。
 
-最终时序WNS/WHS/WPWS为+0.483/+0.022/+0.264 ns，TNS/THS/TPWS=0，DRC=0；198个动态mailbox端点均受20 ns物理延迟约束。最终完整M2固件的三组金标准与131072点合成波形通过，A9波形耗时278 ms。network on无PHY响应时返回rc=-2，串口/自检继续正常；PHY、双板UDP、真实100.5 MHz接收及连续运行/启动仍待验收。详细证据见 [最新验证记录](../../docs/validation.md) 与 [r4c摘要](../../docs/validation/2026-10-27-m2.json)。
+最终时序WNS/WHS/WPWS为+0.483/+0.022/+0.264 ns，TNS/THS/TPWS=0，DRC=0；198个动态mailbox端点均受20 ns物理延迟约束。网络修复正式固件的三组金标准与131072点合成波形（277 ms、no_UDP=1）通过；正式固件的一份A通道k=0内部PN9快照回归通过，板端与独立DDR检查错误均为0。`network on`成功，自动协商1000 Mbps，PC→遥控板连续ping 10/10通过（<1～2 ms）；双板UDP尚未开始，真实100.5 MHz/SMA输入、业务RF及连续运行/启动仍待验收。详细证据见 [最新验证记录](../../docs/validation.md)、[网络验证摘要](../../docs/validation/2026-10-27-network.json) 与 [r4c历史摘要](../../docs/validation/2026-10-27-m2.json)。
 
 - `telecontrol_system/`：冻结 r4c 的 RTL、XDC、ABI、BD、脚本及仿真源码，构建用法见其 README。
 - `ps_software/`：采集/网络/控制集成源码与离线重建入口，见其 README。

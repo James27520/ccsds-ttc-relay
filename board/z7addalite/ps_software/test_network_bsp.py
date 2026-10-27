@@ -39,7 +39,8 @@ for name,items in groups.items():
     subprocess.run(cmd,check=True,env=env)
     run=subprocess.run([str(exe)],capture_output=True,text=True,env=env,timeout=15)
     if run.returncode:raise RuntimeError(run.stdout+run.stderr)
-    print(run.stdout.strip())
+    (out/(name+'_stdout.txt')).write_text(run.stdout)
+    print(run.stdout.strip().splitlines()[-1])
     results[name]={'result':run.stdout.strip(),'extracted_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
       'harness_sha256':hashlib.sha256((ROOT/('test_network_'+name+'.c')).read_bytes()).hexdigest()}
 (out/'results.json').write_text(json.dumps(results,indent=2)+'\n')
