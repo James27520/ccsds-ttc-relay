@@ -1,8 +1,8 @@
 # 验证记录与未完成项
 
-记录日期：2026-10-27。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。下列上板操作均为临时 JTAG 加载，未写启动 Flash。
+记录日期：2026-10-28。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
 
-最新UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
+最新真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成
 
@@ -28,7 +28,7 @@ CDC路径复核：CDC-10的启动延时计数译码仅驱动向量复位置位�
 
 两次完整临时下载后，共导出并独立检查13份快照、1703936个样点：7份A通道PN9、4份B通道checker和2份normal格式检查。立即取消采集后返回CANCEL且快照无效，随后重新采集通过；第二次下载后的PN9复测通过。此处不把另外两次GUI采集计入独立DDR导出统计。
 
-normal A/B快照的14位符号扩展格式检查通过，normal后重新切回training A的PN9检查通过。normal测试未接外部信号，只证明本次格式与模式切换，不能作为模拟指令接收证据。ADC_TEST快照decode没有有效帧，没有发出RF_SET。
+normal A/B快照的14位符号扩展格式检查通过，normal后重新切回training A的PN9检查通过。该次normal测试未接外部信号，只证明当次格式与模式切换，不能作为模拟指令接收证据。ADC_TEST快照decode没有有效帧，没有发出RF_SET。
 
 ### M3协议、C解调与PS控制
 
@@ -60,7 +60,7 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 | network off后请求900/1000 MHz | 保持900999998 / 1000999998 | NETWORK_NOT_READY，rc=-12，无发送 |
 | network on后恢复900/1000 MHz | 900000000 / 1000000000 | 匹配ACK成功 |
 
-最终applied=4、pending=0、failures=0；`retries=1`表示该事务总发送次数为1。ADDA的network/armed/auto均关闭，LDSDR保持mode=2静音、txatt=89。此次未打开GUI，未接SMA或真实ADC指令输入；结果仅验证UART_NETTEST控制路径，完整空口遥控链及业务RF仍待验收。
+最终applied=4、pending=0、failures=0；`retries=1`表示该事务总发送次数为1。ADDA的network/armed/auto均关闭，LDSDR保持mode=2静音、txatt=89。此次未打开GUI，未接SMA或真实ADC指令输入；该次结果仅验证UART_NETTEST控制路径；2026-10-28真实有线指令控制结果另见下节，业务RF仍待验收。
 
 串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。10项fake串口测试继续覆盖输入校验、连接不自动写命令及来源/状态分离。
 
@@ -68,14 +68,33 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 
 新增离线V2波形生成器和快照分析工具，复用已有编码/SRRC和C接收器，未修改已上板固件。6项生成器单元测试通过；量化IQ经理想上变频/采样模型送入原C接收器，12组指令正确恢复，单音、零输入、噪声和非法样点格式4组负例通过。结果属于软件兼容验证，不是实板模拟接收。
 
-新发送板通过DEBUG读到独立串口/JTAG和Pluto Linux/IIO接口。JTAG为XC7Z010，固件型号字符串却含Z7020/AD9361；射频芯片与板卡版本仍需按实物核对。本次只读系统及驱动属性，没有下载固件、设置LO、上传波形或启动发射。接口参数与后续顺序见 [联调准备](signal-input-bringup.md)，证据摘要见 [准备验证记录](validation/2026-10-28-signal-prep.json)。
+新发送板通过DEBUG读到独立串口/JTAG和Pluto Linux/IIO接口。JTAG为XC7Z010，固件型号字符串含Z7020/AD9361；后续已按持有者确认的资料包核对板型，按厂家AD9363资料处理，未把固件字符串作为芯片型号证明。最初只读阶段没有下载固件、设置LO、上传波形或启动发射；后续控制预检与真实输入结果分段记录。接口依据见 [中频输入联调](signal-input-bringup.md)，准备阶段证据见 [准备验证记录](validation/2026-10-28-signal-prep.json)。
+
+### 2026-10-28：真实SMA输入与自动控制闭环
+
+实测接线为发送板TX1A/JP1 → ADDA ADC1/J5。100 MHz LO加500 kHz复基带偏移形成100.5 MHz有线输入；TX衰减60 dB、40 dB两次单音均测得6.749868 MHz采样别名，FFT幅度增加20.015 dB。该结果验证当前通路与相对幅度变化，不替代SMA绝对功率校准。
+
+先保持network/ARM/auto关闭，采集三组真实指令900/1000/80、901/1000/81、901/1001/82（RX MHz / TX MHz / seq）；ADC_NORMAL快照由主机和PS正确解码，字段及CRC均通过，板端约277 ms，没有发送UDP。
+
+随后启用受控自动解调转发，真实ADC_NORMAL指令经C解调、26字节UDP RF_SET及匹配ACK控制LDSDR，独立SPI读回如下：
+
+| RX / TX（MHz） | seq | SPI读回RX / TX（Hz） | applied |
+|---|---|---|---|
+| 900 / 1000 | 80 | 900000000 / 1000000000 | 4 → 5 |
+| 901 / 1000 | 81 | 900999998 / 1000000000 | 5 → 6 |
+| 901 / 1001 | 82 | 900999998 / 1000999998 | 6 → 7 |
+| 900 / 1000（恢复） | 83 | 900000000 / 1000000000 | 7 → 8 |
+
+四例均通过，pending=0、failures=0；各例retries=1表示总发送1次。每例重复帧继续观察2秒，没有新UDP或新增applied；最后关闭信号再观察2秒，无误触发。此为短时去重与无信号检查，不作为误码率或长期连续运行结论。
+
+结束时发送板LO关闭、DDS全零、DMA关闭、两路TX衰减89 dB；ADDA network/ARM/auto关闭；LDSDR静音、TX衰减89 dB，SPI恢复900000000/1000000000 Hz。未改写SD或Flash启动介质。结论限本次实物和当前有线100.5 MHz工作点，未验收绝对功率、全频段、误码率、长期连续运行、业务RF或GUI控制。原始日志、快照、波形及本机复测脚本已归档为`analog_loop_20261028.zip`，保存在电脑1的`D:/RelayTools/releases`，文件大小和SHA256见[真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
 
 ## 后续验收
 
 | 工作 | 验收要求 |
 |---|---|
-| 真实指令与业务闭环 | UART_NETTEST双板UDP、匹配ACK及独立SPI频率读回已通过；仍需由真实ADC指令驱动控制，并验收实际业务RF转发 |
-| 真实100.5 MHz输入 | 登记发送端端口、电平与衰减；验证V2多组指令、序号变化、坏帧拒绝和实际接收边界 |
+| 业务RF与GUI控制 | 真实ADC_NORMAL指令驱动UDP、匹配ACK及独立SPI频率读回已通过；仍需验收实际业务RF转发和GUI控制 |
+| 接收性能边界 | 当前实物有线100.5 MHz工作点已通过；后续按目标工作范围开展电平标定、误码率、真实坏帧拒绝与接收边界测试 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 
 旧`rtl/`、`fpga/src/`、原`sw/gui/`和历史仿真保留其早期工程范围，部分仍含原开发机路径，不用于直接重建Z7ADDALite。当前板级入口的工具路径可显式配置；2018.3第三方源和厂商工具依赖见板级README。旧协议线格式与新V2链路分别维护，不用旧环回或厂商资料目录名推断当前器件、端口与验收结果。

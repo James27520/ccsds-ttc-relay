@@ -1,0 +1,668 @@
+{
+  "date": "2026-10-28",
+  "scope": "Real conducted command link: sender TX1A -> Z7ADDALite ADC1/J5 -> automatic PS C decode -> ADDA Ethernet -> LDSDR PLL configuration readback",
+  "passed": true,
+  "wiring": {
+    "signal": "7010_AD9363_SDR TX1A/JP1 to Z7ADDALite ADC1/J5 using short SMA cable",
+    "control": "Z7ADDALite RJ45 directly to LDSDR RJ45",
+    "pc": "Three independent USB UART/JTAG interfaces; no PC UDP used",
+    "external_attenuator": false,
+    "antennas": false
+  },
+  "sender": {
+    "system": "Existing Pluto Linux; no boot-media reflash",
+    "lo_hz": 100000000,
+    "baseband_offset_hz": 500000,
+    "nominal_rf_hz": 100500000,
+    "sample_rate_hz": 2500000,
+    "symbol_rate_sym_s": 100000,
+    "rf_bandwidth_hz": 3000000,
+    "waveform_complex_peak_normalized": 0.1,
+    "tx1_attenuation_db_during_command_tests": 30,
+    "tx2_attenuation_db": 89,
+    "scan_channels": [
+      0,
+      1
+    ],
+    "block_complex_samples": 4000,
+    "block_bytes": 16000,
+    "transport": "Small IQ files uploaded through DEBUG UART to /tmp; SHA256 verified",
+    "process": "libiio 0.25 iio_writedev -b 4000 -c, explicit TX1 I/Q"
+  },
+  "telecontrol": {
+    "adc_sample_rate_hz": 125000000,
+    "decimated_sample_rate_hz": 31250000,
+    "snapshot_samples": 131072,
+    "snapshot_duration_ms": 4.194304,
+    "board_decode_elapsed_ms": 277,
+    "implementation": "Existing r4c network-fixed firmware, unchanged in this test",
+    "processing_limit": "Block captures; 277 ms processing per 4.194304 ms snapshot does not establish uninterrupted reception"
+  },
+  "individual_captures": [
+    {
+      "name": "tone_att60",
+      "waveform": "tone",
+      "tx_attenuation_db": 60,
+      "snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "3",
+        "config_epoch": "4",
+        "source": "ADC_NORMAL",
+        "channel": "0",
+        "k": "0",
+        "first": "-10",
+        "last": "-12"
+      },
+      "samples": 131072,
+      "ac_rms_codes": 1.4383880110655871,
+      "minimum": -19,
+      "maximum": -5,
+      "rail_samples": 0,
+      "invalid_sign_extension": 0,
+      "valid_frame": false,
+      "command": null,
+      "body_hex": null,
+      "crc_valid": false,
+      "asm_errors": null,
+      "path_metric": null,
+      "polarity_inverted": null,
+      "square_law_carrier_hz": 6749948.90618673,
+      "dominant_fft_bin_hz": 6749868.392944335,
+      "board_decode": [
+        "WAVEFORM_DECODE source=ADC_NORMAL epoch=3 rc=0 elapsed_ms=279",
+        "CLI_RESULT rc=-7"
+      ],
+      "sha256": "63ee996ede3a9232f05a796c8f4310c9f81f968d254f09dedb1f28bb884b0a95",
+      "passed": true
+    },
+    {
+      "name": "tone_att40",
+      "waveform": "tone",
+      "tx_attenuation_db": 40,
+      "snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "4",
+        "config_epoch": "5",
+        "source": "ADC_NORMAL",
+        "channel": "0",
+        "k": "0",
+        "first": "-8",
+        "last": "-8"
+      },
+      "samples": 131072,
+      "ac_rms_codes": 3.0039225796130418,
+      "minimum": -24,
+      "maximum": 0,
+      "rail_samples": 0,
+      "invalid_sign_extension": 0,
+      "valid_frame": false,
+      "command": null,
+      "body_hex": null,
+      "crc_valid": false,
+      "asm_errors": null,
+      "path_metric": null,
+      "polarity_inverted": null,
+      "square_law_carrier_hz": 6749970.3031193,
+      "dominant_fft_bin_hz": 6749868.392944335,
+      "board_decode": [
+        "WAVEFORM_DECODE source=ADC_NORMAL epoch=4 rc=0 elapsed_ms=280",
+        "CLI_RESULT rc=-7"
+      ],
+      "sha256": "6b7d2c3538caeb57715a3e014c1fce4310ff5f10dcbc1ba6727ce9ffdd5104df",
+      "passed": true
+    },
+    {
+      "name": "command80_att30",
+      "waveform": "command_80",
+      "tx_attenuation_db": 30,
+      "snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "5",
+        "config_epoch": "6",
+        "source": "ADC_NORMAL",
+        "channel": "0",
+        "k": "0",
+        "first": "-9",
+        "last": "-2"
+      },
+      "samples": 131072,
+      "ac_rms_codes": 5.495086837916383,
+      "minimum": -30,
+      "maximum": 8,
+      "rail_samples": 0,
+      "invalid_sign_extension": 0,
+      "valid_frame": true,
+      "command": {
+        "version": 1,
+        "rx_mhz": 900,
+        "tx_mhz": 1000,
+        "seq": 80
+      },
+      "body_hex": "018403e803507d8c",
+      "crc_valid": true,
+      "asm_errors": 0,
+      "path_metric": 0,
+      "polarity_inverted": 0,
+      "square_law_carrier_hz": 6749969.360723875,
+      "dominant_fft_bin_hz": 6748676.300048827,
+      "board_decode": [
+        "WAVEFORM_DECODE source=ADC_NORMAL epoch=5 rc=1 elapsed_ms=277",
+        "DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0",
+        "LOCAL_ONLY forwarding is disarmed",
+        "CLI_RESULT rc=0"
+      ],
+      "sha256": "8812371c7e564a47ef40f57abf82cdd2b3c1f2f43e6be2992b7d8091adcd854e",
+      "passed": true
+    },
+    {
+      "name": "command81_att30",
+      "waveform": "command_81",
+      "tx_attenuation_db": 30,
+      "snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "6",
+        "config_epoch": "7",
+        "source": "ADC_NORMAL",
+        "channel": "0",
+        "k": "0",
+        "first": "-9",
+        "last": "2"
+      },
+      "samples": 131072,
+      "ac_rms_codes": 5.516359003467337,
+      "minimum": -30,
+      "maximum": 7,
+      "rail_samples": 0,
+      "invalid_sign_extension": 0,
+      "valid_frame": true,
+      "command": {
+        "version": 1,
+        "rx_mhz": 901,
+        "tx_mhz": 1000,
+        "seq": 81
+      },
+      "body_hex": "018503e80351c7fc",
+      "crc_valid": true,
+      "asm_errors": 0,
+      "path_metric": 0,
+      "polarity_inverted": 1,
+      "square_law_carrier_hz": 6749969.5788703095,
+      "dominant_fft_bin_hz": 6750583.64868164,
+      "board_decode": [
+        "WAVEFORM_DECODE source=ADC_NORMAL epoch=6 rc=1 elapsed_ms=277",
+        "DECODED source=ADC_NORMAL rx=901 tx=1000 air_seq=81 rc=0",
+        "LOCAL_ONLY forwarding is disarmed",
+        "CLI_RESULT rc=0"
+      ],
+      "sha256": "12306226bc0a0db4f148875e0d5fd4efcfaccd837d690ecd316fd039207e156e",
+      "passed": true
+    },
+    {
+      "name": "command82_att30",
+      "waveform": "command_82",
+      "tx_attenuation_db": 30,
+      "snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "7",
+        "config_epoch": "8",
+        "source": "ADC_NORMAL",
+        "channel": "0",
+        "k": "0",
+        "first": "-11",
+        "last": "-5"
+      },
+      "samples": 131072,
+      "ac_rms_codes": 5.492987196337305,
+      "minimum": -31,
+      "maximum": 9,
+      "rail_samples": 0,
+      "invalid_sign_extension": 0,
+      "valid_frame": true,
+      "command": {
+        "version": 1,
+        "rx_mhz": 901,
+        "tx_mhz": 1001,
+        "seq": 82
+      },
+      "body_hex": "018503e90352c0af",
+      "crc_valid": true,
+      "asm_errors": 0,
+      "path_metric": 0,
+      "polarity_inverted": 1,
+      "square_law_carrier_hz": 6749968.858524849,
+      "dominant_fft_bin_hz": 6748676.300048827,
+      "board_decode": [
+        "WAVEFORM_DECODE source=ADC_NORMAL epoch=7 rc=1 elapsed_ms=277",
+        "DECODED source=ADC_NORMAL rx=901 tx=1001 air_seq=82 rc=0",
+        "LOCAL_ONLY forwarding is disarmed",
+        "CLI_RESULT rc=0"
+      ],
+      "sha256": "79bbcd672c7c999cbf18ad26408b6982ee7778f47be3d85c9de114ea69b4754c",
+      "passed": true
+    }
+  ],
+  "tone_relative_amplitude": {
+    "method": "Maximum Hann-window FFT magnitude within +/-1500 Hz of the nominal 6.75 MHz alias, same snapshot length/window",
+    "tx_attenuation_change_db": -20,
+    "measured_peak_change_db": 20.014612219675712,
+    "absolute_power_calibrated": false
+  },
+  "automatic_control_cases": [
+    {
+      "name": "baseline",
+      "requested_mhz": [
+        900,
+        1000
+      ],
+      "air_seq": 80,
+      "udp_transaction_seq": 5,
+      "spi_hz": [
+        900000000,
+        1000000000
+      ],
+      "applied_before": 4,
+      "applied_after": 5,
+      "send_attempts": 1,
+      "failures": 0,
+      "pending": 0,
+      "duplicate_observation_minimum_seconds": 2.0,
+      "duplicate_frames_decoded": 7,
+      "duplicate_udp_count": 0,
+      "passed": true
+    },
+    {
+      "name": "rx_only",
+      "requested_mhz": [
+        901,
+        1000
+      ],
+      "air_seq": 81,
+      "udp_transaction_seq": 6,
+      "spi_hz": [
+        900999998,
+        1000000000
+      ],
+      "applied_before": 5,
+      "applied_after": 6,
+      "send_attempts": 1,
+      "failures": 0,
+      "pending": 0,
+      "duplicate_observation_minimum_seconds": 2.0,
+      "duplicate_frames_decoded": 7,
+      "duplicate_udp_count": 0,
+      "passed": true
+    },
+    {
+      "name": "tx_only",
+      "requested_mhz": [
+        901,
+        1001
+      ],
+      "air_seq": 82,
+      "udp_transaction_seq": 7,
+      "spi_hz": [
+        900999998,
+        1000999998
+      ],
+      "applied_before": 6,
+      "applied_after": 7,
+      "send_attempts": 1,
+      "failures": 0,
+      "pending": 0,
+      "duplicate_observation_minimum_seconds": 2.0,
+      "duplicate_frames_decoded": 7,
+      "duplicate_udp_count": 0,
+      "passed": true
+    },
+    {
+      "name": "restore",
+      "requested_mhz": [
+        900,
+        1000
+      ],
+      "air_seq": 83,
+      "udp_transaction_seq": 8,
+      "spi_hz": [
+        900000000,
+        1000000000
+      ],
+      "applied_before": 7,
+      "applied_after": 8,
+      "send_attempts": 1,
+      "failures": 0,
+      "pending": 0,
+      "duplicate_observation_minimum_seconds": 2.0,
+      "duplicate_frames_decoded": 7,
+      "duplicate_udp_count": 0,
+      "passed": true
+    }
+  ],
+  "signal_off": {
+    "minimum_observation_seconds": 2.0,
+    "passed": true,
+    "decoded_before": 63,
+    "decoded_after": 63,
+    "applied_before": 8,
+    "applied_after": 8,
+    "spi_hz": [
+      900000000,
+      1000000000
+    ]
+  },
+  "final_state": {
+    "sender_tx_lo_powerdown": 1,
+    "sender_dma_buffer_enabled": 0,
+    "sender_dds_scales": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "sender_tx_attenuation_db": [
+      89,
+      89
+    ],
+    "telecontrol_network": 0,
+    "telecontrol_armed": 0,
+    "telecontrol_auto": 0,
+    "telecontrol_pending": 0,
+    "relay_mode": 2,
+    "relay_tx_attenuation_db": 89,
+    "relay_pll_hz": [
+      900000000,
+      1000000000
+    ],
+    "cleanup_errors": []
+  },
+  "limits": [
+    "This physical board set and nominal 100.5 MHz conducted link only; no full-frequency-range qualification",
+    "PLL register readback is not an RF frequency/power measurement",
+    "No absolute power, spectral-mask or BER qualification",
+    "No wireless-range or business-signal RF forwarding validation",
+    "Short repeated command blocks, not long-duration or gap-free stream reception",
+    "GUI automatic-control workflow and power-cycle/SD-boot deployment remain unverified"
+  ],
+  "evidence": {
+    "evidence/closed_loop_run1/adda.txt": {
+      "bytes": 65173,
+      "sha256": "fb58ce71129499750db8b1d0915134c5c7502059f991c5a63be793666ea0f48f"
+    },
+    "evidence/closed_loop_run1/relay.txt": {
+      "bytes": 1546,
+      "sha256": "3a9198e142d7aa0eab8c1dda3a33f47fe0038153ad18de55721c120f01309657"
+    },
+    "evidence/closed_loop_run1/result.json": {
+      "bytes": 85004,
+      "sha256": "da04c4033b0defd46f9fb6b6335b14ad9b1dda76408dd1d528771253bfe1334b"
+    },
+    "evidence/closed_loop_run1/sender.json": {
+      "bytes": 54302,
+      "sha256": "1d571013d906724e37b1360cd2650e8f9b704f0fab8beaa853dd4ad51f9d7de3"
+    },
+    "evidence/command80_att30/capture/dump.txt": {
+      "bytes": 815,
+      "sha256": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+    },
+    "evidence/command80_att30/capture/result.json": {
+      "bytes": 905,
+      "sha256": "a6e10ae6dbfc39ebaaef0502b9bb3b133fb8a0b9dfb3610a1c62405ab29e3498"
+    },
+    "evidence/command80_att30/capture/snapshot.bin": {
+      "bytes": 262144,
+      "sha256": "8812371c7e564a47ef40f57abf82cdd2b3c1f2f43e6be2992b7d8091adcd854e"
+    },
+    "evidence/command80_att30/capture/uart.txt": {
+      "bytes": 914,
+      "sha256": "0bed4d3a471e2b739c236d51a760187b06a62fe764eb17ca75cf772ebf378fa6"
+    },
+    "evidence/command80_att30/capture/uart_events.json": {
+      "bytes": 2330,
+      "sha256": "d0e0621c9c0e4fd93742885c373c02e97e9b89b582130baa48d853a7f796f0e4"
+    },
+    "evidence/command80_att30/capture_process.txt": {
+      "bytes": 1309,
+      "sha256": "8f3e52fc8414c58c86fa6cfaf901760bdd84b79e302c9bd8ab441ea9872e388f"
+    },
+    "evidence/command80_att30/result.json": {
+      "bytes": 2118,
+      "sha256": "f5d16d3578e287670edcf68970506825a7c9ffa944bc8a31e4f87203fe2e1f64"
+    },
+    "evidence/command80_att30/sender.json": {
+      "bytes": 10778,
+      "sha256": "f4f0a0e0ea16fc66e66aa89b1bf03691110f01c9b2cc63c73e25497b8731c28e"
+    },
+    "evidence/command81_att30/capture/dump.txt": {
+      "bytes": 815,
+      "sha256": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+    },
+    "evidence/command81_att30/capture/result.json": {
+      "bytes": 903,
+      "sha256": "d76aa67f6f6575241a4558aa37de2bf7d525942e6081fbd49a4c3c378a3f4f5c"
+    },
+    "evidence/command81_att30/capture/snapshot.bin": {
+      "bytes": 262144,
+      "sha256": "12306226bc0a0db4f148875e0d5fd4efcfaccd837d690ecd316fd039207e156e"
+    },
+    "evidence/command81_att30/capture/uart.txt": {
+      "bytes": 913,
+      "sha256": "1fafba47094c07f15d60dcf57a7d710b2dcc8bd5938a55284e9b80f599d32acd"
+    },
+    "evidence/command81_att30/capture/uart_events.json": {
+      "bytes": 2332,
+      "sha256": "3bd1e5817e5954e11f7c1f9a60ec27e8be93155359c1afedda022fa358d7c359"
+    },
+    "evidence/command81_att30/capture_process.txt": {
+      "bytes": 1307,
+      "sha256": "9c213c4fc57fa002ec02d7a9a6c6b32172dab52e8ccf247a94fe733cb638d03e"
+    },
+    "evidence/command81_att30/result.json": {
+      "bytes": 2114,
+      "sha256": "7b7433e844e1fdbea72ad87d0d68b0f9302a8cad958615c44fd961af60fc58f3"
+    },
+    "evidence/command81_att30/sender.json": {
+      "bytes": 10778,
+      "sha256": "f4c07fb7af6c1ba8ecbb39f720c44c09ecbc8576a2a415fec1ce070343aaf999"
+    },
+    "evidence/command82_att30/capture/dump.txt": {
+      "bytes": 66,
+      "sha256": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+    },
+    "evidence/command82_att30/capture/result.json": {
+      "bytes": 906,
+      "sha256": "da533f620397cb317437e7846f85d9e1feab84b9d7183c14e6c9a71705116097"
+    },
+    "evidence/command82_att30/capture/snapshot.bin": {
+      "bytes": 262144,
+      "sha256": "79bbcd672c7c999cbf18ad26408b6982ee7778f47be3d85c9de114ea69b4754c"
+    },
+    "evidence/command82_att30/capture/uart.txt": {
+      "bytes": 915,
+      "sha256": "220b93ca927e2281a612b05b077629f8d176f4f28d42aa7f52cb3d6071790cd9"
+    },
+    "evidence/command82_att30/capture/uart_events.json": {
+      "bytes": 2329,
+      "sha256": "d66b02f8bb38a2bb0657d8d7406a4c4f3b21296e55ed11ad6e8dd1e40ff76bb9"
+    },
+    "evidence/command82_att30/capture_process.txt": {
+      "bytes": 1310,
+      "sha256": "f96c3ccb9fd3c1d1869afe3e7201295f6aace1b900ff051cc3441558e847e034"
+    },
+    "evidence/command82_att30/result.json": {
+      "bytes": 2119,
+      "sha256": "2285a1e14da35f8847553bc0414c285a928e28bbed9374e9c0293ff01de4609b"
+    },
+    "evidence/command82_att30/sender.json": {
+      "bytes": 10524,
+      "sha256": "ccbc0cf55262f99ede1de1cd485af8bfb32f052de4ecaf0b6c1c3a0fb73839df"
+    },
+    "evidence/tone_att40/capture/dump.txt": {
+      "bytes": 815,
+      "sha256": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+    },
+    "evidence/tone_att40/capture/result.json": {
+      "bytes": 909,
+      "sha256": "3ca8aa47f6486758d6f393dd8d28cca5413f51533725b7432cd0c93376a8f4cf"
+    },
+    "evidence/tone_att40/capture/snapshot.bin": {
+      "bytes": 262144,
+      "sha256": "6b7d2c3538caeb57715a3e014c1fce4310ff5f10dcbc1ba6727ce9ffdd5104df"
+    },
+    "evidence/tone_att40/capture/uart.txt": {
+      "bytes": 914,
+      "sha256": "bf7c021b5a8a26ef4feab305b249ad1616fa7d13c3457420b8e02862c73e0bdc"
+    },
+    "evidence/tone_att40/capture/uart_events.json": {
+      "bytes": 2326,
+      "sha256": "38bf2dab3ce807c5e82bb75a7c9597401387a06d39d4a7f111dfdfe881d17655"
+    },
+    "evidence/tone_att40/capture_process.txt": {
+      "bytes": 1313,
+      "sha256": "ee0ef01314b155d97047f80eacbad90d026e41d50e4f6296728d56f0a42fa5e1"
+    },
+    "evidence/tone_att40/result.json": {
+      "bytes": 1803,
+      "sha256": "792d765745e43099e7bb21a39fc379efc47a9dcb3f6ea81210e8e4ef831f0152"
+    },
+    "evidence/tone_att40/sender.json": {
+      "bytes": 10736,
+      "sha256": "0da2e2894f23381eb22e0f7dcbdb6bc9ef972a74cfe6917459429da1ad5bbae6"
+    },
+    "evidence/tone_att60/capture/dump.txt": {
+      "bytes": 815,
+      "sha256": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+    },
+    "evidence/tone_att60/capture/result.json": {
+      "bytes": 913,
+      "sha256": "141215906d267938ba5eeec95056b605cfa76e1df9c47d93547ec17bceab55b9"
+    },
+    "evidence/tone_att60/capture/snapshot.bin": {
+      "bytes": 262144,
+      "sha256": "63ee996ede3a9232f05a796c8f4310c9f81f968d254f09dedb1f28bb884b0a95"
+    },
+    "evidence/tone_att60/capture/uart.txt": {
+      "bytes": 916,
+      "sha256": "1ecc754551d7801ad9aa2819331761622631e6d4988ac0db5a76875738277e12"
+    },
+    "evidence/tone_att60/capture/uart_events.json": {
+      "bytes": 2333,
+      "sha256": "75ba8c9f2b20b0af7de104312963d688661f0d9b4b3ab7da8ad5dd88a6e7575c"
+    },
+    "evidence/tone_att60/capture_process.txt": {
+      "bytes": 1317,
+      "sha256": "59c15d4fe25ace81ae00fa67a13414fd9509a525bec94fa01a19e065c874d8d2"
+    },
+    "evidence/tone_att60/result.json": {
+      "bytes": 1808,
+      "sha256": "01201c6edbe1e955c108b6d269ee54bcfbb532d1b37bfe5001f155c4b1cf201f"
+    },
+    "evidence/tone_att60/sender.json": {
+      "bytes": 10482,
+      "sha256": "982420cc40d8788c8d268e3594111177b1b8d4edfc761ec9ae1e51186b6af41e"
+    },
+    "evidence/upload_restore.json": {
+      "bytes": 37827,
+      "sha256": "5d2c4c833a2fe594fa4b75c28512c8661806814a19a2767ea56db1001274ed04"
+    },
+    "tools/adda_receiver.dll": {
+      "bytes": 62680,
+      "sha256": "f518414619ccac0dc604475498af640a06d7101288c9c705150c4e19cc42dd00"
+    },
+    "tools/capture_snapshot_check.py": {
+      "bytes": 4887,
+      "sha256": "9b4756debb138fc075182fb76b6728d1d95671591b9080d6c01ffb0fdc47381f"
+    },
+    "tools/check_snapshot.py": {
+      "bytes": 3014,
+      "sha256": "7ecf6661c535ca215abcd2bd4149e0c30da0c5176781d01c86530101d728ac26"
+    },
+    "tools/closed_loop_probe.py": {
+      "bytes": 11561,
+      "sha256": "130592bb26b256e7536e258f004f42f2426fe99a424671d559cb57fd1d1cd920"
+    },
+    "tools/controlled_signal_probe.py": {
+      "bytes": 8473,
+      "sha256": "9e7fb9ad3c030458a72ca6fa7833adab1aa858f58e79c10092540d301f693a31"
+    },
+    "tools/dump_adda_snapshot.tcl": {
+      "bytes": 1610,
+      "sha256": "8eb78bd071f155c7f91ffad21425519a7899fafd2669acd0b59b71b3d5ff24f9"
+    },
+    "tools/sender_console.py": {
+      "bytes": 2714,
+      "sha256": "44fd0b92de6735d2272dcbbfb9b509542d57d9609f1caacb52795acb8517b551"
+    },
+    "waveforms/command_80/iq_s16le.bin": {
+      "bytes": 16000,
+      "sha256": "012cbb492c99dded213f032fbec685293a060ae9711c0ad58805fccc9e6648b9"
+    },
+    "waveforms/command_80/manifest.json": {
+      "bytes": 972,
+      "sha256": "597db1c73877d325c80c752dcb9185e273fe1fe054c342aeb55b4153a971d347"
+    },
+    "waveforms/command_81/iq_s16le.bin": {
+      "bytes": 16000,
+      "sha256": "7859b6718cc99512c556e0cebf59bf1dde4eb08a595afef3490088516ae1ed4b"
+    },
+    "waveforms/command_81/manifest.json": {
+      "bytes": 972,
+      "sha256": "9eade7aa648dce66dc9908ad4d50df6ab22730d0d8d639c2033ea1f77f1abdf3"
+    },
+    "waveforms/command_82/iq_s16le.bin": {
+      "bytes": 16000,
+      "sha256": "b4ec9f72682c3f7f9d918d18d4155f0b795e09c214df95bebbf72df68c45ff3f"
+    },
+    "waveforms/command_82/manifest.json": {
+      "bytes": 972,
+      "sha256": "a0d17fefe5b8549270de67764930a86cfb4afe8dcf0270dd6d7ec64bcf37582b"
+    },
+    "waveforms/command_83/iq_s16le.bin": {
+      "bytes": 16000,
+      "sha256": "736cf8e3ebc62cad40ae04b67a119fa66d713092ffb7ab63cccad14b7c6783f4"
+    },
+    "waveforms/command_83/manifest.json": {
+      "bytes": 972,
+      "sha256": "d6b0396eecc0aabefd8360ce8c23dcca79dd10b199a3dd0fe56fd28f485f2a7f"
+    },
+    "waveforms/tone/iq_s16le.bin": {
+      "bytes": 16000,
+      "sha256": "8da930f5b3253d61bb9d97caf67b0a55da6e1b0f70c24c7e9e97a5b783c7444d"
+    },
+    "waveforms/tone/manifest.json": {
+      "bytes": 900,
+      "sha256": "1546174a2e966272946fe89e9c21761a5914c42ebfd16e36ddead7182215eff6"
+    }
+  },
+  "evidence_archive": {
+    "name": "analog_loop_20261028.zip",
+    "bytes": 551961,
+    "sha256": "2b73ec06e026c425ef79f0c64f01bb0d57b1f5eec4b3a451c858550bf11cc921",
+    "note": "Stored locally under D:/RelayTools/releases; not uploaded to repository"
+  },
+  "firmware_artifacts": {
+    "adda_elf": {
+      "sha256": "aa7eb6d368f8ab256749d53a40ad24d1b50ddccac0873e13c6e705a97ce8b4a2",
+      "bytes": 1029504
+    },
+    "adda_bit": {
+      "sha256": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b",
+      "bytes": 4045770
+    },
+    "adda_ps7_init": {
+      "sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205",
+      "bytes": 31130
+    },
+    "relay_elf": {
+      "sha256": "c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+      "bytes": 868624
+    }
+  }
+}

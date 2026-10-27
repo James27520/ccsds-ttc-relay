@@ -2,7 +2,7 @@
 
 本项目面向嵌入式芯片与系统设计竞赛，实现遥控指令接收、频率参数解析和业务信号变频转发。当前遥控板采用 **Z7ADDALite（Zynq-7020 + AD9643）**，由 PL 采集 ADC 数据、PS 执行 C 解调与指令处理，再通过以太网控制 **LDSDR 转发板**。
 
-截至 **2026-10-27**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；UART_NETTEST 来源的遥控板→LDSDR 双板 UDP RF_SET、匹配ACK及独立SPI频率读回已通过，真实 100.5 MHz 指令接收与业务RF仍待验收。
+截至 **2026-10-28**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；真实100.5 MHz有线指令已由ADC_NORMAL自动解调，经UDP、匹配ACK及LDSDR独立SPI频率读回完成四组控制与恢复。结论限本次实物和工作点，业务RF、长期连续运行及GUI控制仍待验收。
 
 Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已归档至 [board/z7addalite/](board/z7addalite/README.md)。重建需要外部工具链、2018.3 embeddedsw 源归档及匹配的硬件产物；第三方依赖与命令见板级说明。原有 RTL 环回、PC 演示软件和串口工具继续保留为早期实现。
 
@@ -11,7 +11,7 @@ Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已�
 | 角色 | 当前硬件或职责 | 说明 |
 |---|---|---|
 | 电脑 1 / 电脑 A | 操作界面、参数设置、状态与日志 | 串口 GUI 的自检、normal/training 采集、空输入解调及状态显示已实测；双板UART_NETTEST另经串口命令验证，GUI nettest按钮未实测 |
-| 发送端 | 7010_AD9363_SDR，提供业务信号和遥控指令信号 | DEBUG已识别XC7Z010与Pluto Linux；厂商资料标注AD9363，TX1A/JP1与TX2A/JP3映射已查明；输出电平及真实100.5 MHz输出待实测 |
+| 发送端 | 7010_AD9363_SDR，提供业务信号和遥控指令信号 | DEBUG已识别XC7Z010与Pluto Linux；厂商资料标注AD9363，TX1A/JP1与TX2A/JP3映射已查明；TX1A→ADDA ADC1/J5的100.5 MHz单音与指令实测通过，绝对输出功率未校准 |
 | **遥控板** | **Z7ADDALite，XC7Z020-2CLG484-I，AD9643 ADC** | 接收 100.5 MHz 中频指令，PS 解调后通过网口控制转发板；DAC 不参与当前接收链 |
 | **转发板** | **LDSDR（7010_rev3.1）** | 厂商资料标注XC7Z010CLG400-1与AD9363-BBCZ；接收频率设置，执行业务信号变频转发；实际射频频段以实测为准 |
 | 模拟板 / 电脑 2 | 业务端发送、接收与验证 | 保留原系统角色，板卡身份、信号方向及端口在多板联调时确认 |
@@ -49,12 +49,12 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 |---|---|---|
 | M1：ADC 数字接口 | 两次临时 JTAG 加载、六段采集，98,304 个 A 通道样点，PN9 错误 0；B 通道棋盘码及配置读回正确 | 实板内部测试码，不是外部模拟输入 |
 | M1：时序 | WNS +0.483 ns，WHS +0.075 ns，TNS/THS = 0 | 已上板 PN9 诊断版本 |
-| M2：完整采集工程 | r4c WNS +0.483 ns、WHS +0.022 ns、WPWS +0.264 ns；TNS/THS/TPWS=0，DRC=0；全通道/四个k的真实快照检查通过 | 56条ADC路径与198个动态mailbox端点已复核；normal仅格式与切换，未接外部信号 |
-| M3：C 解调 | 三组帧金标准、45组合成波形通过；最终完整M2固件在A9解调131072点合成波形278 ms通过 | ADC_TEST decode未找到有效帧、未发RF_SET；不代表真实信号接收或持续吞吐率 |
-| M4：网络控制 | 报文/ACK与网络负例通过；实板PHY识别、1000 Mbps协商及PC→遥控板ping 10/10通过 | UART_NETTEST双板UDP四个成功事务及network off拒绝通过；真实ADC指令与业务RF待验收 |
-| 多板通信 | ADDA→LDSDR的26字节RF_SET、匹配ACK及独立SPI频率读回通过 | 来源为UART_NETTEST；未接SMA，完整空口遥控链和业务RF仍待验收 |
+| M2：完整采集工程 | r4c WNS +0.483 ns、WHS +0.022 ns、WPWS +0.264 ns；TNS/THS/TPWS=0，DRC=0；全通道/四个k的真实快照检查通过 | 56条ADC路径与198个动态mailbox端点已复核；早期normal仅格式与切换，本轮另验证真实SMA输入 |
+| M3：C 解调 | 三组真实ADC_NORMAL指令由主机及PS正确解码、CRC通过，板端约277 ms；金标准与合成波形测试另已通过 | 本轮先关闭转发验证接收，再完成自动控制；未量化误码率和持续吞吐率 |
+| M4：网络控制 | 报文/ACK与网络负例通过；实板PHY识别、1000 Mbps协商及PC→遥控板ping 10/10通过 | UART_NETTEST负例及真实ADC_NORMAL自动控制均通过；业务RF待验收 |
+| 多板通信 | 真实SMA指令→ADC_NORMAL→自动C解调→UDP→ACK→LDSDR SPI读回四例通过，含900/1000 MHz恢复 | 当前有线100.5 MHz工作点；每例重复帧观察2秒无新UDP，关闭信号2秒无误触发；业务RF待验收 |
 
-完整记录、产物摘要和未完成项见 [验证与待办](docs/validation.md)。早期 40 字节 RTL 环回结果见 [历史验证记录](docs/legacy-validation.md)，两者使用不同的板卡与协议路径。
+本轮证据见 [真实输入闭环摘要](docs/validation/2026-10-28-analog-loop.json)，完整记录、产物摘要和未完成项见 [验证与待办](docs/validation.md)。早期 40 字节 RTL 环回结果见 [历史验证记录](docs/legacy-validation.md)，两者使用不同的板卡与协议路径。
 
 ## 仓库内容与使用范围
 
