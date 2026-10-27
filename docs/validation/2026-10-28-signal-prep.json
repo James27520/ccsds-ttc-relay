@@ -1,6 +1,6 @@
 {
   "date": "2026-10-28",
-  "scope": "Offline waveform/receiver preparation and read-only identification of the new sender; no RF transmission or analog acceptance",
+  "scope": "Offline waveform/receiver preparation, read-only sender identification and vendor material review; no RF transmission or analog acceptance",
   "firmware_changed": false,
   "hardware_rf_parameters_written": false,
   "transmission_started": false,
@@ -36,7 +36,6 @@
     "os": "Buildroot2023.02.5",
     "libiio": "0.25",
     "device_tree_model": "FISH Ball PlutoSDR Rev.A (Z7020/AD9361)",
-    "model_mismatch_requires_physical_confirmation": true,
     "iio_devices": [
       "ad9361-phy",
       "xadc",
@@ -84,7 +83,9 @@
       0
     ],
     "tx_lo_powerdown": 0,
-    "limitation": "Driver ranges and device-tree names do not establish actual RF chip identity, SMA mapping, safe levels or100.5MHz RF performance"
+    "limitation": "Driver ranges and device-tree names do not establish actual RF output power or 100.5 MHz performance; schematic SMA mapping reviewed separately",
+    "device_tree_part_disagrees_with_jtag": true,
+    "identity_basis": "JTAG: XC7Z010; user maps new sender to 7010_AD9363_SDR vendor package, whose manual specifies AD9363 extended by firmware; not a physical RF-chip marking inspection"
   },
   "sources": {
     "sw/tools/telecontrol_waveform.py": {
@@ -167,10 +168,110 @@
     }
   },
   "remaining": [
-    "Physical board and RF chip identity",
-    "SMA mapping and output/input level budget",
+    "Current Linux I/Q scan channels to physical TX mapping verification",
+    "TX attenuation and reliable stop/readback procedure; output/input level budget",
     "USB2.0 or Ethernet data transport",
-    "IIO TX channel adapter and physical tone",
+    "Actual 100.5 MHz tone in the AD9363 extension band",
     "Actual V2 ADC reception and automatic relay control"
-  ]
+  ],
+  "vendor_material_review": {
+    "date": "2026-10-28",
+    "hardware_access_performed": false,
+    "role_mapping_confirmed_by_owner": {
+      "relay": "LDSDR（7010_rev3.1）",
+      "sender": "7010_AD9363_SDR",
+      "telecontrol": "Z7ADDALite"
+    },
+    "sender_documented_rf_chip": "AD9363; firmware extension described by vendor",
+    "relay_documented_devices": [
+      "XC7Z010CLG400-1",
+      "AD9363-BBCZ"
+    ],
+    "schematic_mappings": {
+      "sender_TX1A": "JP1 -> AD936x TX1A_P/N",
+      "sender_TX2A": "JP3 -> AD936x TX2A_P/N",
+      "relay_TX1": "AD936x TX1A_P/N",
+      "relay_TX2": "AD936x TX2A_P/N; intermediate TX1BN net names do not change this",
+      "telecontrol_ADC1": "J5 -> ADA4937-2 -> AD9643 channel A, differential polarity reversed",
+      "telecontrol_ADC2": "J4 -> ADA4937-2 -> AD9643 channel B"
+    },
+    "sender_interfaces": {
+      "DEBUG": "JTAG and UART console, power",
+      "USB2.0": "Pluto USB data and power; host data connection not yet established"
+    },
+    "frequency_limit": "AD9363 manufacturer range 325 MHz to 3.8 GHz; 100.5 MHz requires extension-band hardware testing",
+    "level_limit": "No guaranteed sender power at 100.5 MHz or complete ADDA SMA continuous-input rating established. ADC-chip full scale and ESD voltage are not connector ratings.",
+    "vendor_sources": [
+      {
+        "id": "sender_manual",
+        "filename": "XC7Z010_AD9363SDR用户手册.pdf",
+        "pdf_pages": [
+          5,
+          6,
+          15,
+          17
+        ],
+        "bytes": 2642772,
+        "sha256": "84fc9c220dffbe917db6bf0010f7de8dc64bd683f0a5882476f45c5e1a896525"
+      },
+      {
+        "id": "sender_schematic",
+        "filename": "原理图.pdf",
+        "pdf_pages": [
+          1,
+          15
+        ],
+        "bytes": 541563,
+        "sha256": "555bab548cc0081667856a4b25baf9c725df472e87fd881cf551504c2fabf2fd"
+      },
+      {
+        "id": "relay_manual",
+        "filename": "LDSDR使用说明及开发手册.pdf",
+        "pdf_pages": [
+          2,
+          3,
+          6,
+          7,
+          23
+        ],
+        "bytes": 2600234,
+        "sha256": "418b1b0fbe343107fb312ec13fcdec0a202dd662ec9f5e4bb5b8dd61616eb432"
+      },
+      {
+        "id": "relay_schematic",
+        "filename": "原理图.pdf",
+        "pdf_pages": [
+          1,
+          4
+        ],
+        "bytes": 1544234,
+        "sha256": "0fbfae41156d253c627700131e2dc4efdc723af6a2bc89f2b6b5fb93702e2fe0"
+      },
+      {
+        "id": "telecontrol_manual",
+        "filename": "01Z7ADDALite硬件参考手册.pdf",
+        "pdf_pages": [
+          3,
+          8
+        ],
+        "bytes": 2397901,
+        "sha256": "19c104f2ef6fa6e120f170404fb3da39ecc7d93ee096eedc0cc52c43332fb2c6"
+      },
+      {
+        "id": "telecontrol_schematic",
+        "filename": "Z7ADDALite_SCH_RevB.pdf",
+        "pdf_pages": [
+          10,
+          11
+        ],
+        "bytes": 605502,
+        "sha256": "858212795dea38b30c5f4d457f8ec257c522ee3f97ee6dec047d8b3f6325c571"
+      }
+    ],
+    "primary_component_references": [
+      "https://www.analog.com/media/en/technical-documentation/data-sheets/ad9363.pdf",
+      "https://www.minicircuits.com/pdfs/TC1-1-13M%2B.pdf"
+    ],
+    "missing_files_blocking_preparation": false
+  }
 }
