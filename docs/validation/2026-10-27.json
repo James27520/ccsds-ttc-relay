@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-27",
+  "scope": "Documentation snapshot; new firmware sources and complete raw evidence are not yet included in this repository.",
+  "m1_adc_internal_pattern": {
+    "date": "2026-10-27",
+    "role": "遥控板",
+    "board": "Z7ADDALite",
+    "part": "xc7z020clg484-2",
+    "nominal_adc_rate": 125000000,
+    "nominal_vector_rate": 31250000,
+    "source": "AD9643 internal A PN9 / B checkerboard; no analog signal",
+    "spi_diag": "7da10a0002010000000406050582",
+    "timing": {
+      "WNS_ns": 0.483,
+      "WHS_ns": 0.075,
+      "TNS_ns": 0.0,
+      "THS_ns": 0.0,
+      "DRC_errors": 0
+    },
+    "artifacts": {
+      "telecontrol_125_pn9.bit": {
+        "bytes": 4045769,
+        "sha256": "1f2e50e277d3acb50ff3756a4767f3b4730aa6a48aa0bddec1a9f19106672562"
+      },
+      "telecontrol_125_pn9.ltx": {
+        "bytes": 50532,
+        "sha256": "38d5e1d2fd94c97b6bd8b9b238dd21b1a7cae2bb73d8aac3aed158195729e78c"
+      }
+    },
+    "runs": [
+      {
+        "folder": "m1_pn9_20261027",
+        "kind": "volatile JTAG programming followed by three captures",
+        "captures": [
+          {
+            "csv": "adc_ramp_00.csv",
+            "sha256": "712740d098f6ccf6ada7443c5ea9cde7fbd3da242c7f974861feddb369e96da3",
+            "rows": 4096,
+            "a_samples": 16384,
+            "a_parity": 0,
+            "pn9_errors": 0,
+            "unique_codes": 511,
+            "all_14_lanes_toggle": true,
+            "all_metadata_checks": true
+          },
+          {
+            "csv": "adc_ramp_01.csv",
+            "sha256": "84bb83475e62b97bbabc30e955d72d5c4471aec15e63036873d6ed2d6f8b28e5",
+            "rows": 4096,
+            "a_samples": 16384,
+            "a_parity": 0,
+            "pn9_errors": 0,
+            "unique_codes": 511,
+            "all_14_lanes_toggle": true,
+            "all_metadata_checks": true
+          },
+          {
+            "csv": "adc_ramp_02.csv",
+            "sha256": "3cbe32e19246da4874ddc9cbb742e37e5e8ec552e25952147491f513c000c23b",
+            "rows": 4096,
+            "a_samples": 16384,
+            "a_parity": 0,
+            "pn9_errors": 0,
+            "unique_codes": 511,
+            "all_14_lanes_toggle": true,
+            "all_metadata_checks": true
+          }
+        ]
+      },
+      {
+        "folder": "m1_pn9_reload_20261027",
+        "kind": "volatile JTAG programming followed by three captures",
+        "captures": [
+          {
+            "csv": "adc_ramp_00.csv",
+            "sha256": "83927e6900cf63b4103478044cf3bc340c8bc45a30b38107579e2c1bcec0bd0c",
+            "rows": 4096,
+            "a_samples": 16384,
+            "a_parity": 0,
+            "pn9_errors": 0,
+            "unique_codes": 511,
+            "all_14_lanes_toggle": true,
+            "all_metadata_checks": true
+          },
+          {
+            "csv": "adc_ramp_01.csv",
+            "sha256": "9cbc87c8185b088fcbe35275ffa4df096fadb1dfbba463d66f042355b9f63381",
+            "rows": 4096,
+            "a_samples": 16384,
+            "a_parity": 0,
+            "pn9_errors": 0,
+            "unique_codes": 511,
+            "all_14_lanes_toggle": true,
+            "all_metadata_checks": true
+          },
+          {
+            "csv": "adc_ramp_02.csv",
+            "sha256": "c35c3bfde9a3697dd47ecd968b93583ad24ae0be0ba8bf3f8ad402b501e5af37",
+            "rows": 4096,
+            "a_samples": 16384,
+            "a_parity": 0,
+            "pn9_errors": 0,
+            "unique_codes": 511,
+            "all_14_lanes_toggle": true,
+            "all_metadata_checks": true
+          }
+        ]
+      }
+    ],
+    "total_A_samples": 98304,
+    "pn9_errors": 0,
+    "flash_written": false,
+    "limitations": [
+      "Not a normal-mode analog input test",
+      "Not calibrated frequency or PVT characterization",
+      "RAM/PS demodulation/UDP milestones are separate",
+      "Ramp-mode repeated codes remain recorded; PN9 is the accepted independent sample-order test"
+    ]
+  },
+  "m2_integrated_candidate": {
+    "kind": "simulation and routed candidate only; not hardware acceptance",
+    "signoff_report": "WNS=0.483 TNS=0.000 WHS=0.014 THS=0.000 WPWS=0.264 TPWS=0.000 DRC_ERRORS=0 LATCHES=0 NO_CLOCK=0 UNCONSTRAINED_INTERNAL=0 NO_INPUT=0 NO_OUTPUT=0 PARTIAL_INPUT=0 PARTIAL_OUTPUT=0 ADC_14LANE_DDR_BOTH_EDGE_MAX_MIN=1 STA_PASS=1",
+    "signoff_sha256": "5e63a0d851f55518177373c90b905e54822cfbb89b96a323cfe3e1c3e5e6dbf2",
+    "timing_xdc_sha256": "070bf33d42af15860c7fba2c7c724359a7b544e2237e491a4341651407d6b508",
+    "status": "NOT_RELEASED: bundled-data CDC physical delay limits and exact source/build binding still require review and a new signoff.",
+    "ps_adc_capture_verified": false,
+    "capture_simulation": "4 complete snapshots, 131072 samples each",
+    "capture_simulation_log_sha256": "a72ef7e2a909a7c4d93275fea64c9768ceec89d3b54e629b53e0d41368b50f6d"
+  },
+  "m3_host_tests": {
+    "frame_and_control_assertions": 2906,
+    "protocol_test_log_sha256": "c3149ed0c6c0d6eccadc937ff9f413dc89b6122b62f72e0fd20b4bd93906effe",
+    "synthetic_waveform_cases": 45,
+    "synthetic_waveform_passed": 45,
+    "waveform_result_sha256": "bb4a10d3e97adb6e89930443e3159fc6ae7c727fb1dbf257c9e8bfe2f301f7fd"
+  },
+  "m3_physical_cpu_synthetic_test": {
+    "date": "2026-10-27",
+    "board": "Z7ADDALite",
+    "source": "physical Cortex-A9 execution with synthetic waveform; ADC capture disabled",
+    "elf_sha256": "411212529d3d331b07f195a3e7087e1203b7c9a5ae4fa2f81328c8045958421c",
+    "serial_port": "COM10",
+    "frame_goldens": 3,
+    "waveform_samples": 131072,
+    "expected_command": {
+      "rx_mhz": 100,
+      "tx_mhz": 2450,
+      "seq": 0
+    },
+    "waveform_reported_ms": 279,
+    "network_enabled": false,
+    "armed": false,
+    "udp_sent": false,
+    "passed": true,
+    "log": "captures/ps_selftest_20261027/commands.txt",
+    "log_sha256": "62279abe9121001f1f1f9248e656957fd0e4983dd8d55ae065f398d1dca88416",
+    "notes": [
+      "The first serial script sent commands before boot; commands were repeated after the boot banner.",
+      "A subsequent network-on test without a physical link exposed a legacy lwIP assertion. A patched network release has not passed board acceptance."
+    ]
+  },
+  "m4_network": {
+    "adda_to_ldsdr_verified": false,
+    "no_link_test": "Legacy lwIP PHY setup assertion stopped command processing; recovery patch exists but has not passed board acceptance.",
+    "no_link_log_sha256": "6fa1cb6f1aa51a0095843c3d1d47e78be0b76fbc922b730650082877ac4d474b"
+  },
+  "multiboard_end_to_end_verified": false,
+  "flash_written": false
+}
