@@ -1,0 +1,191 @@
+{
+  "date": "2026-10-28",
+  "result": "PASS",
+  "scope": "Native Windows GUI controls real ADDA automatic ADC reception and board Ethernet; LDSDR PLL is independently read over COM13.",
+  "wiring": [
+    "sender TX1A -> short SMA -> Z7ADDALite ADC1/J5",
+    "ADDA RJ45 -> LDSDR RJ45",
+    "DEBUG USB on all three boards"
+  ],
+  "firmware_changes": false,
+  "sd_or_flash_writes": false,
+  "input": {
+    "nominal_if_hz": 100500000,
+    "sender_lo_hz": 100000000,
+    "iq_offset_hz": 500000,
+    "sample_rate_hz": 2500000,
+    "tx1_attenuation_db": 30,
+    "tx2_attenuation_db": 89,
+    "normalized_iq_peak": 0.1,
+    "board_watchdog_seconds": 90
+  },
+  "gui_actions": [
+    "status",
+    "network on",
+    "status",
+    "auto on",
+    "auto off",
+    "status",
+    "status",
+    "auto on",
+    "status",
+    "auto off",
+    "network off",
+    "status"
+  ],
+  "initial_status": {
+    "time": "06:41:29",
+    "network": 0,
+    "armed": 0,
+    "decoded": 63,
+    "applied": 8,
+    "pending": 0,
+    "retries": 1,
+    "failures": 0,
+    "gain": 0,
+    "att": 89
+  },
+  "initial_pll": {
+    "rx_rc": 0,
+    "tx_rc": 0,
+    "rx_hz": 900000000,
+    "tx_hz": 1000000000
+  },
+  "successful_commands": [
+    {
+      "source": "ADC_NORMAL",
+      "air_seq": 81,
+      "rx_mhz": 901,
+      "tx_mhz": 1000,
+      "ack": "ACK source=ADC_NORMAL rx=901 tx=1000 air_seq=81 rc=0",
+      "independent_spi": {
+        "rx_rc": 0,
+        "tx_rc": 0,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      },
+      "applied_before": 8,
+      "applied_after": 9
+    },
+    {
+      "source": "ADC_NORMAL",
+      "air_seq": 83,
+      "rx_mhz": 900,
+      "tx_mhz": 1000,
+      "ack": "ACK source=ADC_NORMAL rx=900 tx=1000 air_seq=83 rc=0",
+      "independent_spi": {
+        "rx_rc": 0,
+        "tx_rc": 0,
+        "rx_hz": 900000000,
+        "tx_hz": 1000000000
+      },
+      "applied_before": 9,
+      "applied_after": 10
+    }
+  ],
+  "stop_test": {
+    "different_valid_frame_present": "seq83 requesting 900/1000 MHz, while last applied was seq81 requesting 901/1000 MHz",
+    "status_samples": [
+      {
+        "time": "06:43:20",
+        "network": 1,
+        "armed": 0,
+        "decoded": 132,
+        "applied": 9,
+        "pending": 0,
+        "retries": 1,
+        "failures": 0,
+        "gain": 0,
+        "att": 89
+      },
+      {
+        "time": "06:43:42",
+        "network": 1,
+        "armed": 0,
+        "decoded": 132,
+        "applied": 9,
+        "pending": 0,
+        "retries": 1,
+        "failures": 0,
+        "gain": 0,
+        "att": 89
+      }
+    ],
+    "status_wall_clock_separation_seconds": 22,
+    "independent_spi": {
+      "rx_rc": 0,
+      "tx_rc": 0,
+      "rx_hz": 900999998,
+      "tx_hz": 1000000000
+    },
+    "new_decode_or_udp_or_ack_between_stop_and_restart": false,
+    "restart_accepts_previously_ignored_frame": true,
+    "boundary": "Observation starts at the board AUTO_OFF acknowledgment. One already-running seq81 snapshot completed and was deduplicated after the click but before acknowledgment; no new UDP was sent."
+  },
+  "gui_observed": [
+    "connecting sends no automatic command",
+    "decoded and ACK frequency/sequence/source remain visible through CAPTURE updates",
+    "stopped state reports automatic OFF and ARM OFF",
+    "disconnect clears both historical fields and disables command buttons"
+  ],
+  "final_status": {
+    "time": "06:45:18",
+    "network": 0,
+    "armed": 0,
+    "decoded": 180,
+    "applied": 10,
+    "pending": 0,
+    "retries": 1,
+    "failures": 0,
+    "gain": 0,
+    "att": 89
+  },
+  "final_pll": {
+    "rx_rc": 0,
+    "tx_rc": 0,
+    "rx_hz": 900000000,
+    "tx_hz": 1000000000
+  },
+  "final_sender_readback": "1\r\n0\r\n-89.000000 dB\r\n-89.000000 dB\r\n0.000000\r\n0.000000\r\n0.000000\r\n0.000000\r\n0.000000\r\n0.000000\r\n0.000000\r\n0.000000",
+  "final_automatic": 0,
+  "final_relay_mode": 2,
+  "final_relay_tx_attenuation_db": 89,
+  "offline_validation": {
+    "tests": 15,
+    "passed": 15,
+    "full_hardware_log_replay_with_final_source": "PASS"
+  },
+  "source_note": "During the GUI run, an additional invalid/nonzero-rc DECODED status-text guard was added to source and tested offline. Successful DECODED/ACK parsing and GUI display code are unchanged. Final source was replayed against the complete saved hardware RX stream.",
+  "submitted_source_sha256": {
+    "adda_monitor.py": "256b1bf880378f7d59d1edf1c56ef430f83ad7dd1f5624ffcf859edf0fd1fc10",
+    "monitor_core.py": "065cb8d005e1e3137c330576c57491f3bd1911e086805278c6a7eb8b9acb1be7",
+    "test_monitor.py": "eb128951b16f0c944c491de7b48d72bb60c1bcbeb9270caa9ec6716856df9d76"
+  },
+  "limits": [
+    "GUI nettest button not exercised in this run",
+    "ACK display is board-reported confirmation, not live PLL telemetry",
+    "only the current conducted 100.5 MHz input point is covered",
+    "no business RF forwarding quality, power calibration, full-band, BER or endurance claim",
+    "capture plus PS decode remains snapshot-based, not a gap-free receiver"
+  ],
+  "evidence_sha256": {
+    "bench.py": "01129d2bdbe5d62ec17a25ec41885157fab527f0f9f496e388b41e7c68569687",
+    "final_gui.png": "4dedd6f3623edd05f2ab3daaf34dfea9b1a0b0f400a2c2480993d134e046e6a6",
+    "final_relay.txt": "2f194967c3b19f5120aef441a18701a09fa2399c28ed2a980ee916a12698ef23",
+    "final_sender.json": "eb52c2a9d3c6ddd2fc79850bd45f42d7c087e51926961c361b757b5f318263b0",
+    "gui_session.txt": "6d42c1066d050886088de657e22b397cdae37e1eee5e395152771d829d7bf2a8",
+    "initial_relay.txt": "d4f6d171afe048e37541486b301b2d5bd1a03fe476af6b53314fc1af021d0692",
+    "restored_relay.txt": "0c99c5fbae858ca569694bc91174b5fe03acbc09a1da8b03b68bf46de3ed748d",
+    "rx901_relay.txt": "9f1a80696f11a433c258a7979aa74a066096621deadcb31d2e55d47e4798c34a",
+    "rx901_sender.json": "c6b5861c54fbdfa0fea6ef00185815ea67cd093fc62199860b5c4cf810523397",
+    "stopped_newframe_relay.txt": "5dcd974162c9faa7152494cdf47d9d799ec65786d6c94704cb24f6c30729c4f6",
+    "stopped_newframe_sender.json": "a438afa629ce4d30782c170e702a47b334f2f591c3a1c511233e70c92a9a1c68",
+    "tests.txt": "818783ea5fdf0c8176a8da8728fd7fe7ab95ad0d2f7c325490504f7ec4e6b1f8"
+  },
+  "evidence_archive": {
+    "local_path": "D:\\RelayTools\\releases\\gui_loop_20261028.zip",
+    "bytes": 308908,
+    "sha256": "c34ee46aed15e321092d2d1e26028958e0dda2aba756febf75fb6e1c7c3b6563",
+    "entries": 24
+  }
+}

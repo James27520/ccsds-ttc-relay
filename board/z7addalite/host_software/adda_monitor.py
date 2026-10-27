@@ -20,7 +20,7 @@ from monitor_core import BoardState, Session
 
 
 class Monitor(tk.Tk):
-    def __init__(self, serial_factory=None, enumerate_ports=None, hidden=False):
+    def __init__(self, serial_factory=None, enumerate_ports=None, hidden=False, log_file=None):
         super().__init__()
         if hidden:
             self.withdraw()
@@ -31,6 +31,13 @@ class Monitor(tk.Tk):
         self.minsize(740, 520)
         self.session = Session()
         self.state = BoardState()
+        self.log_stream = None
+        if log_file is not None:
+            try:
+                self.log_stream = Path(log_file).open("x", encoding="utf-8", buffering=1)
+            except OSError:
+                self.destroy()
+                raise
         self.factory = serial_factory or (serial.Serial if serial else None)
         self.enumerate_ports = enumerate_ports or (list_ports.comports if list_ports else None)
         self.port = tk.StringVar()
@@ -40,6 +47,8 @@ class Monitor(tk.Tk):
         self.capture_status = tk.StringVar(value="自动模式：未知　采集：未知")
         self.source = tk.StringVar(value="最近数据来源：尚无板端记录")
         self.result = tk.StringVar(value=self.state.last_result)
+        self.decoded = tk.StringVar(value="最近有效解码：尚无")
+        self.confirmed = tk.StringVar(value="最近ACK确认：尚无")
         self.counts = tk.StringVar(value="最近STATUS计数 — 解码 / ACK确认 / 待确认 / 失败：未知")
         self.fields = [tk.StringVar(value=v) for v in ("100", "2450", "0", "0", "89")]
         self.capture_mode = tk.StringVar(value="training")
@@ -49,6 +58,8 @@ class Monitor(tk.Tk):
         self._build()
         self.protocol("WM_DELETE_WINDOW", self.shutdown)
         self.log("HOST", "连接不改变板端ARM或网络状态；断开串口不等于解除ARM。")
+        if log_file is not None:
+            self.log("HOST", f"完整会话日志：{Path(log_file).resolve()}")
         if self.factory is None:
             self.log("HOST", "缺少PySerial：界面可离线打开，安装方法见同目录README.md。")
         self.after_id = self.after(100, self._poll)
@@ -71,7 +82,7 @@ class Monitor(tk.Tk):
 
         status = ttk.LabelFrame(outer, text="板端报告", padding=8)
         status.grid(row=1, column=0, sticky="ew", pady=6)
-        for variable in (self.board_status, self.capture_status, self.counts, self.source, self.result):
+        for variable in (self.board_status, self.capture_status, self.counts, self.decoded, self.confirmed, self.source, self.result):
             ttk.Label(status, textvariable=variable).pack(anchor="w", pady=2)
         buttons = ttk.Frame(status)
         buttons.pack(anchor="w", pady=(5, 0))
@@ -190,6 +201,15 @@ class Monitor(tk.Tk):
                  "UART_NETTEST": "手动网络控制测试，不是ADC接收"}
         self.source.set(f"最近数据来源：{self.state.origin} — {names[self.state.origin]}")
         self.result.set(self.state.last_result)
+        def command(record):
+            if record is None:
+                return "尚无"
+            seq = f"空口序号 {record.air_seq}"
+            if record.udp_seq is not None:
+                seq += f" / UDP序号 {record.udp_seq}"
+            return f"RX {record.rx_mhz} MHz / TX {record.tx_mhz} MHz　{seq}　[{record.source}]"
+        self.decoded.set("最近有效解码（不代表已执行）：" + command(self.state.last_decoded))
+        self.confirmed.set("最近ACK确认（板端报告）：" + command(self.state.last_ack))
 
     def send(self, action, values=()):
         try:
@@ -219,8 +239,19 @@ class Monitor(tk.Tk):
         self.after_id = self.after(100, self._poll)
 
     def log(self, direction, text):
+        line = f"{time.strftime('%H:%M:%S')} [{direction}] {text}\n"
+        if self.log_stream is not None:
+            try:
+                self.log_stream.write(line)
+            except OSError as exc:
+                try:
+                    self.log_stream.close()
+                except OSError:
+                    pass
+                self.log_stream = None
+                line += f"[HOST] 日志文件写入失败，后续仅显示在界面：{exc}\n"
         self.logs.configure(state="normal")
-        self.logs.insert("end", f"{time.strftime('%H:%M:%S')} [{direction}] {text}\n")
+        self.logs.insert("end", line)
         if int(self.logs.index("end-1c").split(".")[0]) > 3000:
             self.logs.delete("1.0", "501.0")
         self.logs.see("end")
@@ -231,8 +262,16 @@ class Monitor(tk.Tk):
         try:
             self.session.close()
         finally:
-            self.destroy()
+            try:
+                if self.log_stream is not None:
+                    self.log_stream.close()
+            finally:
+                self.destroy()
 
 
 if __name__ == "__main__":
-    Monitor().mainloop()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--log-file", type=Path, help="保存完整串口会话到新文件；父目录须已存在")
+    args = parser.parse_args()
+    Monitor(log_file=args.log_file).mainloop()

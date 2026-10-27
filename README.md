@@ -2,7 +2,7 @@
 
 本项目面向嵌入式芯片与系统设计竞赛，实现遥控指令接收、频率参数解析和业务信号变频转发。当前遥控板采用 **Z7ADDALite（Zynq-7020 + AD9643）**，由 PL 采集 ADC 数据、PS 执行 C 解调与指令处理，再通过以太网控制 **LDSDR 转发板**。
 
-截至 **2026-10-28**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；真实100.5 MHz有线指令已由ADC_NORMAL自动解调，经UDP、匹配ACK及LDSDR独立SPI频率读回完成四组控制与恢复。结论限本次实物和工作点，业务RF、长期连续运行及GUI控制仍待验收。
+截至 **2026-10-28**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；真实100.5 MHz有线指令已由ADC_NORMAL自动解调，经UDP、匹配ACK及LDSDR独立SPI频率读回完成四组控制与恢复。[GUI实板验证](docs/validation/2026-10-28-gui-loop.json)另通过启停及ADC_NORMAL自动控制；GUI nettest按钮未实测。结论限本次实物和工作点，业务RF与长期连续运行仍待验收。
 
 Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已归档至 [board/z7addalite/](board/z7addalite/README.md)。重建需要外部工具链、2018.3 embeddedsw 源归档及匹配的硬件产物；第三方依赖与命令见板级说明。原有 RTL 环回、PC 演示软件和串口工具继续保留为早期实现。
 
@@ -10,7 +10,7 @@ Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已�
 
 | 角色 | 当前硬件或职责 | 说明 |
 |---|---|---|
-| 电脑 1 / 电脑 A | 操作界面、参数设置、状态与日志 | 串口 GUI 的自检、normal/training 采集、空输入解调及状态显示已实测；双板UART_NETTEST另经串口命令验证，GUI nettest按钮未实测 |
+| 电脑 1 / 电脑 A | 操作界面、参数设置、状态与日志 | 串口 GUI 的自检、normal/training 采集、空输入解调及状态显示已实测；[GUI启停及ADC_NORMAL自动控制](docs/validation/2026-10-28-gui-loop.json)已通过；双板UART_NETTEST另经串口命令验证，GUI nettest按钮未实测 |
 | 发送端 | 7010_AD9363_SDR，提供业务信号和遥控指令信号 | DEBUG已识别XC7Z010与Pluto Linux；厂商资料标注AD9363，TX1A/JP1与TX2A/JP3映射已查明；TX1A→ADDA ADC1/J5的100.5 MHz单音与指令实测通过，绝对输出功率未校准 |
 | **遥控板** | **Z7ADDALite，XC7Z020-2CLG484-I，AD9643 ADC** | 接收 100.5 MHz 中频指令，PS 解调后通过网口控制转发板；DAC 不参与当前接收链 |
 | **转发板** | **LDSDR（7010_rev3.1）** | 厂商资料标注XC7Z010CLG400-1与AD9363-BBCZ；接收频率设置，执行业务信号变频转发；实际射频频段以实测为准 |

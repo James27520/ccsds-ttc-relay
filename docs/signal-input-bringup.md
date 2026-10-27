@@ -1,6 +1,6 @@
 # 真实中频输入联调
 
-2026-10-28已完成发送板TX1A/JP1 → 遥控板ADC1/J5的真实100.5 MHz有线输入验证：单音、三组关闭转发的指令解码及四组ADC_NORMAL自动解调→UDP→LDSDR控制闭环均通过。结论限本次实物和工作点；绝对功率、全频段、误码率、长期连续运行、业务RF与GUI控制未验收。见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
+2026-10-28已完成发送板TX1A/JP1 → 遥控板ADC1/J5的真实100.5 MHz有线输入验证：单音、三组关闭转发的指令解码及四组ADC_NORMAL自动解调→UDP→LDSDR控制闭环均通过。[GUI实板验证](validation/2026-10-28-gui-loop.json)另通过启停及ADC_NORMAL自动控制，GUI nettest按钮未实测。结论限本次实物和工作点；绝对功率、全频段、误码率、长期连续运行与业务RF未验收。见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
 
 ## 板卡与资料对应
 

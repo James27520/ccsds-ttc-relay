@@ -2,7 +2,7 @@
 
 记录日期：2026-10-28。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
 
-最新真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
+最新GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成
 
@@ -62,7 +62,7 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 
 最终applied=4、pending=0、failures=0；`retries=1`表示该事务总发送次数为1。ADDA的network/armed/auto均关闭，LDSDR保持mode=2静音、txatt=89。此次未打开GUI，未接SMA或真实ADC指令输入；该次结果仅验证UART_NETTEST控制路径；2026-10-28真实有线指令控制结果另见下节，业务RF仍待验收。
 
-串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。10项fake串口测试继续覆盖输入校验、连接不自动写命令及来源/状态分离。
+串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。该阶段10项fake串口测试覆盖输入校验、连接不自动写命令及来源/状态分离；本轮扩展至15项，见下节。
 
 ### 2026-10-28：真实输入联调准备
 
@@ -87,13 +87,23 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 
 四例均通过，pending=0、failures=0；各例retries=1表示总发送1次。每例重复帧继续观察2秒，没有新UDP或新增applied；最后关闭信号再观察2秒，无误触发。此为短时去重与无信号检查，不作为误码率或长期连续运行结论。
 
-结束时发送板LO关闭、DDS全零、DMA关闭、两路TX衰减89 dB；ADDA network/ARM/auto关闭；LDSDR静音、TX衰减89 dB，SPI恢复900000000/1000000000 Hz。未改写SD或Flash启动介质。结论限本次实物和当前有线100.5 MHz工作点，未验收绝对功率、全频段、误码率、长期连续运行、业务RF或GUI控制。原始日志、快照、波形及本机复测脚本已归档为`analog_loop_20261028.zip`，保存在电脑1的`D:/RelayTools/releases`，文件大小和SHA256见[真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
+结束时发送板LO关闭、DDS全零、DMA关闭、两路TX衰减89 dB；ADDA network/ARM/auto关闭；LDSDR静音、TX衰减89 dB，SPI恢复900000000/1000000000 Hz。未改写SD或Flash启动介质。该次结论限本次实物和当前有线100.5 MHz工作点，未验收绝对功率、全频段、误码率、长期连续运行、业务RF或GUI控制；后续GUI验证见下节。原始日志、快照、波形及本机复测脚本已归档为`analog_loop_20261028.zip`，保存在电脑1的`D:/RelayTools/releases`，文件大小和SHA256见[真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
+
+### 2026-10-28：GUI实板自动控制与停止验证
+
+GUI新增持久显示`last_decoded`与`last_ack`，分别表示最近有效解码和最近ACK确认，均依据板端报告，不是PLL遥测；最近解码不代表已执行。`--log-file`将完整会话日志保存到新文件，父目录须已存在，不覆盖旧文件。15项fake单测通过。自动采集固定为normal、A通道、k=0；界面模式、通道及k下拉框仅用于单次采集。
+
+实际GUI连接COM10、读取status，启动network并auto on。真实ADC_NORMAL指令901/1000 MHz、seq81收到ACK，独立SPI读回900999998/1000000000 Hz，applied增至9。GUI auto off后发送新的900/1000 MHz、seq83；06:43:20与06:43:42两次status均为decoded=132、applied=9、pending=0、failures=0，auto=ARM=0，SPI仍保持900999998/1000000000 Hz。再由GUI auto on，seq83被接收并ACK，SPI恢复900000000/1000000000 Hz，applied增至10。本轮共两次成功真实ADC事务，没有使用GUI nettest，GUI nettest按钮仍未实测。
+
+停止观察以收到板端`AUTO_OFF`确认为起点。点击停止到确认之间仍有一帧seq81完成解码并被去重，没有新增UDP；不能把鼠标点击时刻当成采集已停。
+
+结束时GUI关闭network/auto/ARM，decoded=180、applied=10、pending=0、failures=0。发送板LO关闭、buffer=0、两路TX衰减89 dB、DDS全零；LDSDR mode=2、TX衰减89 dB。未修改PL/PS或启动介质。此次验证当前实物有线100.5 MHz输入的GUI启停及自动控制，业务RF、功率校准、全频段、误码率和长期连续运行仍待验收。证据见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)。
 
 ## 后续验收
 
 | 工作 | 验收要求 |
 |---|---|
-| 业务RF与GUI控制 | 真实ADC_NORMAL指令驱动UDP、匹配ACK及独立SPI频率读回已通过；仍需验收实际业务RF转发和GUI控制 |
+| 业务RF | 真实ADC_NORMAL自动控制及GUI启停、匹配ACK和独立SPI频率读回已通过；仍需验收实际业务RF转发 |
 | 接收性能边界 | 当前实物有线100.5 MHz工作点已通过；后续按目标工作范围开展电平标定、误码率、真实坏帧拒绝与接收边界测试 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 

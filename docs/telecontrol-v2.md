@@ -1,6 +1,6 @@
 # 遥控链路 V2：中频指令与转发板控制
 
-更新：2026-10-28。适用于“发送端 → Z7ADDALite 遥控板 → LDSDR 转发板”。接收源码已归档到`board/z7addalite`，UART_NETTEST双板UDP及真实100.5 MHz有线指令驱动的ADC_NORMAL自动解调、UDP、匹配ACK和LDSDR独立SPI读回均已验证。结果限本次实物和工作点，未验收业务RF、全频段、误码率、长期连续运行或GUI控制，见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
+更新：2026-10-28。适用于“发送端 → Z7ADDALite 遥控板 → LDSDR 转发板”。接收源码已归档到`board/z7addalite`，UART_NETTEST双板UDP及真实100.5 MHz有线指令驱动的ADC_NORMAL自动解调、UDP、匹配ACK和LDSDR独立SPI读回均已验证。[GUI实板验证](validation/2026-10-28-gui-loop.json)另通过启停及ADC_NORMAL自动控制，GUI nettest按钮未实测。结果限本次实物和工作点，未验收业务RF、全频段、误码率或长期连续运行，见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)。
 
 ## 三种格式的边界
 

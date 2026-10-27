@@ -1,6 +1,8 @@
 import unittest
+from pathlib import Path
+import tempfile
 
-from monitor_core import BoardState, LineBuffer, Session, command_bytes, open_serial
+from monitor_core import BoardState, CommandRecord, LineBuffer, Session, command_bytes, open_serial
 
 
 class FakeSerial:
@@ -37,6 +39,75 @@ class FakeSerial:
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_real_adc_trace_preserves_decode_and_confirmation(self):
+        board = BoardState()
+        # Exact lines from closed_loop_run1/adda.txt, including duplicate frames.
+        lines = [
+            "WAVEFORM_DECODE source=ADC_NORMAL epoch=16 rc=1 elapsed_ms=277",
+            "DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0",
+            "COMMAND source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0",
+            "UDP_SEND_ATTEMPT source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0",
+        ]
+        for line in lines:
+            board.receive(line)
+        self.assertEqual(board.last_decoded, CommandRecord("ADC_NORMAL", 900, 1000, 80))
+        self.assertIsNone(board.last_ack)
+        board.receive("ACK source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0")
+        confirmed = board.last_ack
+        self.assertEqual(confirmed, board.last_decoded)
+        self.assertIsNone(confirmed.udp_seq)
+        for line in [
+            "CAPTURE state=1 valid=0 error=OK epoch=17 copied_words=65536",
+            "WAVEFORM_DECODE source=ADC_NORMAL epoch=17 rc=1 elapsed_ms=278",
+            "DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0",
+            "COMMAND source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=1",
+            "CAPTURE state=6 valid=1 error=OK epoch=17 copied_words=65536",
+        ]:
+            board.receive(line)
+        self.assertIs(board.last_ack, confirmed)
+        board.receive("DECODED source=ADC_NORMAL rx=901 tx=1000 air_seq=81 rc=0")
+        self.assertEqual(board.last_decoded.air_seq, 81)
+        self.assertEqual(board.last_ack.air_seq, 80)
+
+    def test_only_complete_successful_ack_updates_confirmation(self):
+        board = BoardState()
+        good = "ACK source=UART_NETTEST rx=100 tx=2450 air_seq=0 rc=0"
+        board.receive(good)
+        confirmed = board.last_ack
+        self.assertEqual(confirmed, CommandRecord("UART_NETTEST", 100, 2450, 0))
+        for line in [
+            good.replace("rc=0", "rc=-4"), good.replace("rc=0", "rc=1"),
+            "ACK rc=0", good.replace("air_seq=0 ", ""),
+            good.replace("rx=100", "rx=6001"), good.replace("air_seq=0", "air_seq=256"),
+            good.replace("UART_NETTEST", "SYNTHETIC"), good + " garbage",
+            "ACK_TIMEOUT not marked applied; remote state not confirmed",
+        ]:
+            with self.subTest(line=line):
+                board.receive(line)
+                self.assertIs(board.last_ack, confirmed)
+        board.receive(good)
+        self.assertEqual(board.last_ack, confirmed)  # duplicate contains no new transaction ID
+        board.receive("DECODED source=ADC_NORMAL rx=901 tx=1000 air_seq=81 rc=-4")
+        self.assertIsNone(board.last_decoded)
+        self.assertNotIn("解出有效帧", board.last_result)
+        board.receive("DECODED source=ADC_NORMAL rx=901 rc=0")
+        self.assertIsNone(board.last_decoded)
+        self.assertNotIn("解出有效帧", board.last_result)
+
+    def test_history_reset_and_restart(self):
+        board = BoardState()
+        for restart in (None,
+                        "BOOT ADDA M2 candidate UART115200/8N1 capture=ENABLED",
+                        "ADDA PS control core: network=OFF armed=OFF; selftest is local only"):
+            board.receive("DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0")
+            board.receive("ACK source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0")
+            if restart is None:
+                board.reset()  # GUI uses the same reset on disconnect.
+            else:
+                board.receive(restart)
+            self.assertIsNone(board.last_decoded)
+            self.assertIsNone(board.last_ack)
+
     def test_nettest_boundaries_and_defaults(self):
         self.assertEqual(command_bytes("nettest", ("100", "2450", "0", "0", "89")), b"nettest 100 2450 0 0 89\r\n")
         self.assertEqual(command_bytes("nettest", ("70", "6000", "255", "76", "89")), b"nettest 70 6000 255 76 89\r\n")
@@ -157,6 +228,87 @@ class ProtocolTests(unittest.TestCase):
 
 
 class HiddenGuiTests(unittest.TestCase):
+    @staticmethod
+    def forbidden_enumeration():
+        raise AssertionError("Offline GUI tests must not enumerate hardware")
+
+    def test_gui_keeps_confirmation_during_capture_and_resets_on_disconnect(self):
+        from adda_monitor import Monitor
+        app = Monitor(serial_factory=FakeSerial, enumerate_ports=self.forbidden_enumeration, hidden=True)
+        try:
+            app.port.set("COM99")
+            app.toggle_connection()
+            port = app.session.serial
+
+            def receive(*lines):
+                port.incoming.extend(("\r\n".join(lines) + "\r\n").encode("ascii"))
+                app.after_cancel(app.after_id)
+                app._poll()
+
+            receive("DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0",
+                    "ACK source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0")
+            confirmed = app.confirmed.get()
+            self.assertIn("RX 900 MHz / TX 1000 MHz", confirmed)
+            self.assertIn("空口序号 80", confirmed)
+            self.assertIn("ADC_NORMAL", confirmed)
+            self.assertNotIn("UDP序号", confirmed)
+            receive("CAPTURE state=1 valid=0 error=OK epoch=18 copied_words=65536",
+                    "DECODED source=ADC_NORMAL rx=901 tx=1000 air_seq=81 rc=0",
+                    "ACK source=ADC_NORMAL rx=901 tx=1000 air_seq=81 rc=-4",
+                    "COMMAND source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=1")
+            self.assertEqual(app.confirmed.get(), confirmed)
+            self.assertIn("RX 901 MHz / TX 1000 MHz", app.decoded.get())
+            self.assertIn("空口序号 81", app.decoded.get())
+            app.toggle_connection()
+            self.assertIsNone(app.state.last_ack)
+            self.assertIsNone(app.state.last_decoded)
+            self.assertIn("尚无", app.confirmed.get())
+            self.assertIn("尚无", app.decoded.get())
+            self.assertEqual(port.writes, [])
+            app.toggle_connection()
+            self.assertIn("尚无", app.confirmed.get())
+            self.assertEqual(app.session.serial.writes, [])
+        finally:
+            app.shutdown()
+
+    def test_gui_full_session_log_survives_display_trimming(self):
+        from adda_monitor import Monitor
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "session.log"
+            app = Monitor(serial_factory=FakeSerial, enumerate_ports=self.forbidden_enumeration,
+                          hidden=True, log_file=path)
+            try:
+                app.port.set("COM99")
+                app.toggle_connection()
+                port = app.session.serial
+                app.send("status")
+                port.incoming.extend(b"DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0\r\n")
+                app.after_cancel(app.after_id)
+                app._poll()
+                # The file must retain older lines even when the widget trims.
+                for i in range(3005):
+                    app.log("HOST", f"offline-log-line-{i:04d}")
+                visible = app.logs.get("1.0", "end")
+                self.assertNotIn("offline-log-line-0000", visible)
+                self.assertIn("offline-log-line-3004", visible)
+                # Line-buffered output is available before shutdown as well.
+                self.assertIn("offline-log-line-3004", path.read_text(encoding="utf-8"))
+                app.toggle_connection()
+                self.assertEqual(port.writes, [b"status\r\n"])
+            finally:
+                app.shutdown()
+            saved = path.read_text(encoding="utf-8")
+            self.assertIn("[TX] status\n", saved)
+            self.assertIn("[RX] DECODED source=ADC_NORMAL rx=900 tx=1000 air_seq=80 rc=0\n", saved)
+            self.assertIn("串口已打开", saved)
+            self.assertIn("串口已断开", saved)
+            for i in range(3005):
+                self.assertIn(f"[HOST] offline-log-line-{i:04d}\n", saved)
+            with self.assertRaises(FileExistsError):
+                Monitor(serial_factory=FakeSerial, enumerate_ports=self.forbidden_enumeration,
+                        hidden=True, log_file=path)
+            self.assertEqual(path.read_text(encoding="utf-8"), saved)
+
     def test_gui_fake_connect_has_no_automatic_write(self):
         from adda_monitor import Monitor
 

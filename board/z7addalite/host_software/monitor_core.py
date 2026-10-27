@@ -35,6 +35,36 @@ def command_bytes(action, values=()):
     return (line + "\r\n").encode("ascii")
 
 
+@dataclass(frozen=True)
+class CommandRecord:
+    """Board-reported frame/confirmation, independent of transient capture status.
+
+    Current ADDA trace lines expose air_seq only. Never infer the distinct UDP
+    transaction number from it or from an applied-command counter.
+    """
+    source: str
+    rx_mhz: int
+    tx_mhz: int
+    air_seq: int
+    udp_seq: int | None = None
+
+
+def _command_record(line, event):
+    match = re.fullmatch(
+        re.escape(event) + r" source=(ADC_NORMAL|ADC_TEST|SYNTHETIC|UART_NETTEST)"
+        r" rx=([0-9]+) tx=([0-9]+) air_seq=([0-9]+) rc=0", line)
+    if not match:
+        return None
+    source, rx, tx, seq = match.groups()
+    rx, tx, seq = int(rx), int(tx), int(seq)
+    if not (70 <= rx <= 6000 and 70 <= tx <= 6000 and 0 <= seq <= 255):
+        return None
+    # Only these origins can actually obtain a successful remote ACK.
+    if event == "ACK" and source not in ("ADC_NORMAL", "UART_NETTEST"):
+        return None
+    return CommandRecord(source, rx, tx, seq)
+
+
 @dataclass
 class BoardState:
     # Unknown until reported by the connected board; connecting is not a reset.
@@ -47,9 +77,16 @@ class BoardState:
     counters: dict = field(default_factory=dict)
     origin: str = "UNKNOWN"
     last_result: str = "尚未收到板端执行结果"
+    last_decoded: CommandRecord | None = None
+    last_ack: CommandRecord | None = None
+
+    def reset(self):
+        """Clear this connection's history on disconnect or a board restart."""
+        self.__dict__.update(BoardState().__dict__)
 
     def receive(self, line):
         if line.startswith("BOOT ADDA "):
+            self.reset()
             if "capture=ENABLED" in line:
                 self.capture_enabled = True
             elif "capture=DISABLED" in line:
@@ -74,6 +111,7 @@ class BoardState:
                 self.network, self.armed = data["network"], data["armed"]
                 self.counters = data
         elif line == "ADDA PS control core: network=OFF armed=OFF; selftest is local only":
+            self.reset()
             self.network, self.armed = 0, 0
             self.automatic, self.capture_state, self.capture_valid = None, None, None
             self.capture_enabled = None
@@ -119,12 +157,18 @@ class BoardState:
         elif line.startswith("SELFTEST_FAIL "):
             self.last_result = "内部自检失败"
         elif line.startswith("ACK "):
-            rc = re.search(r"(?:^| )rc=(-?[0-9]+)(?= |$)", line)
-            self.last_result = "板端报告匹配ACK，指令已确认" if rc and rc[1] == "0" else "ACK未通过板端校验"
+            record = _command_record(line, "ACK")
+            if record is not None:
+                self.last_ack = record
+            self.last_result = "板端报告匹配ACK，指令已确认" if record else "ACK未通过板端校验"
         elif line.startswith("UDP_SEND_ATTEMPT "):
             self.last_result = "已尝试UDP发送，等待匹配ACK"
         elif line.startswith("DECODED "):
-            self.last_result = "板端报告解出有效帧；尚不代表指令已转发或执行"
+            record = _command_record(line, "DECODED")
+            if record is not None:
+                self.last_decoded = record
+            self.last_result = ("板端报告解出有效帧；尚不代表指令已转发或执行" if record
+                                else "解码记录未通过格式或结果校验；查看日志")
         elif line.startswith("LOCAL_ONLY "):
             self.last_result = "仅本地解码，未发RF_SET；查看来源与ARM状态"
         elif line.startswith(("ACK_TIMEOUT", "NETWORK_LOST", "ABORT ")):
