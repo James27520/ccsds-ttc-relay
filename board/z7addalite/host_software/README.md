@@ -8,4 +8,4 @@
 
 仓库根目录运行 `python -B -m unittest discover -s board/z7addalite/host_software -p test_monitor.py -v`。测试仅使用 fake 串口与隐藏 Tk 窗口，不枚举、连接或控制真实硬件。测试通过不代表 M2 或端到端链路通过。
 
-实际串口已在最终r4c固件验证status、selftest、waveformtest、normal采集、空输入decode及training采集，来源与就绪状态显示正确，未发送RF_SET。10项fake测试继续覆盖离线行为。全通道内部快照另经板端与独立DDR检查通过；真实中频输入及UDP闭环仍待验收。见 [最新验证记录](../../../docs/validation.md)。
+实际串口已在最终r4c固件验证status、selftest、waveformtest、normal采集、空输入decode及training采集，来源与就绪状态显示正确，未发送RF_SET。10项fake测试继续覆盖离线行为。全通道内部快照另经板端与独立DDR检查通过。双板UDP已通过UART_NETTEST串口命令验证：PC仅经COM10向ADDA发送nettest，26字节RF_SET由ADDA网口发往LDSDR，COM13的rfread提供独立SPI读回；四个成功事务、匹配ACK、network off拒绝及重新开启恢复均通过。本次未打开GUI，GUI nettest按钮未实测；真实中频指令与业务RF仍待验收。见 [最新验证记录](../../../docs/validation.md)。

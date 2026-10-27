@@ -2,7 +2,7 @@
 
 记录日期：2026-10-27。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。下列上板操作均为临时 JTAG 加载，未写启动 Flash。
 
-最新网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
+最新UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成
 
@@ -50,7 +50,17 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 
 网络修复正式ELF（SHA256 `aa7eb6d368f8ab256749d53a40ad24d1b50ddccac0873e13c6e705a97ce8b4a2`）已临时上板，使用相同r4c BIT（SHA256 `10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b`）和ps7_init（SHA256 `3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205`）。`network on`成功，自动协商1000 Mbps，status显示network=1；PC `169.254.219.130` → ADDA `169.254.9.11` 连续10次ping全部成功，延迟<1～2 ms。ping中显示0 ms的结果表示延迟小于1 ms。
 
-真实双板UDP尚未开始，当前等待将PC端网线移接LDSDR；本次PC连通结果不代表RF_SET、匹配ACK或业务RF已验收。
+真实双板UDP已通过，来源为`UART_NETTEST`。PC仅经COM10向ADDA发送`nettest`，ADDA `169.254.9.11:5006` 经板间网线向LDSDR `169.254.9.10:5005` 发送26字节RF_SET；COM13的`rfread`提供独立SPI读回。ADDA使用上述正式ELF；LDSDR使用原已验证ELF临时DDR热加载，未写Flash或SD。
+
+| 事务 | 独立SPI读回RX / TX（Hz） | 结果 |
+|---|---|---|
+| 原值900/1000 MHz | 900000000 / 1000000000 | 匹配ACK成功 |
+| 仅RX改为901 MHz | 900999998 / 1000000000 | 匹配ACK成功 |
+| 仅TX改为1001 MHz | 900999998 / 1000999998 | 匹配ACK成功 |
+| network off后请求900/1000 MHz | 保持900999998 / 1000999998 | NETWORK_NOT_READY，rc=-12，无发送 |
+| network on后恢复900/1000 MHz | 900000000 / 1000000000 | 匹配ACK成功 |
+
+最终applied=4、pending=0、failures=0；`retries=1`表示该事务总发送次数为1。ADDA的network/armed/auto均关闭，LDSDR保持mode=2静音、txatt=89。此次未打开GUI，未接SMA或真实ADC指令输入；结果仅验证UART_NETTEST控制路径，完整空口遥控链及业务RF仍待验收。
 
 串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。10项fake串口测试继续覆盖输入校验、连接不自动写命令及来源/状态分离。
 
@@ -58,7 +68,7 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 
 | 工作 | 验收要求 |
 |---|---|
-| 双板UDP/业务闭环 | 将PC端网线移接LDSDR，确认LDSDR固件与端口；验证RF_SET、匹配ACK、频率读回及实际业务转发；PHY识别和PC→ADDA连通已通过 |
+| 真实指令与业务闭环 | UART_NETTEST双板UDP、匹配ACK及独立SPI频率读回已通过；仍需由真实ADC指令驱动控制，并验收实际业务RF转发 |
 | 真实100.5 MHz输入 | 登记发送端端口、电平与衰减；验证V2多组指令、序号变化、坏帧拒绝和实际接收边界 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 

@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-27",
+  "time": "2026-10-27T23:43:04.951051+08:00",
+  "scope": "UART_NETTEST -> Z7ADDALite Ethernet -> LDSDR RF_SET -> matched ACK and independent PLL register readback",
+  "passed": true,
+  "cases_passed": 5,
+  "wiring": {
+    "ethernet": "Z7ADDALite RJ45 directly to LDSDR RJ45",
+    "pc": "USB UART/JTAG only; PC sends no UDP in this test",
+    "sma_connected": false
+  },
+  "endpoints": {
+    "telecontrol": "169.254.9.11:5006",
+    "relay": "169.254.9.10:5005",
+    "packet_bytes": 26
+  },
+  "artifacts": {
+    "adda_elf": {
+      "sha256": "aa7eb6d368f8ab256749d53a40ad24d1b50ddccac0873e13c6e705a97ce8b4a2",
+      "bytes": 1029504
+    },
+    "adda_bit": {
+      "sha256": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b",
+      "bytes": 4045770
+    },
+    "adda_ps7_init": {
+      "sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205",
+      "bytes": 31130
+    },
+    "relay_elf": {
+      "sha256": "c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+      "bytes": 868624
+    }
+  },
+  "deployment": "ADDA retains the previously verified image; LDSDR ELF warm-loaded into DDR through exact cable/XC7Z010 selection, preserving existing PS/PL. No Flash/SD writes.",
+  "cases": [
+    {
+      "name": "same_frequency",
+      "requested_mhz": [
+        900,
+        1000
+      ],
+      "air_seq": 40,
+      "spi_hz": [
+        900000000,
+        1000000000
+      ],
+      "passed": true,
+      "udp_seq": 1,
+      "ack": "source=UART_NETTEST rx=900 tx=1000 air_seq=40 rc=0",
+      "send_attempts": 1
+    },
+    {
+      "name": "rx_only",
+      "requested_mhz": [
+        901,
+        1000
+      ],
+      "air_seq": 41,
+      "spi_hz": [
+        900999998,
+        1000000000
+      ],
+      "passed": true,
+      "udp_seq": 2,
+      "ack": "source=UART_NETTEST rx=901 tx=1000 air_seq=41 rc=0",
+      "send_attempts": 1
+    },
+    {
+      "name": "tx_only",
+      "requested_mhz": [
+        901,
+        1001
+      ],
+      "air_seq": 42,
+      "spi_hz": [
+        900999998,
+        1000999998
+      ],
+      "passed": true,
+      "udp_seq": 3,
+      "ack": "source=UART_NETTEST rx=901 tx=1001 air_seq=42 rc=0",
+      "send_attempts": 1
+    },
+    {
+      "name": "network_off_reject",
+      "spi_hz": [
+        900999998,
+        1000999998
+      ],
+      "passed": true,
+      "expected": "NETWORK_NOT_READY, no UDP send, no frequency change",
+      "command_rx_tx_mhz": [
+        900,
+        1000
+      ],
+      "air_seq": 43
+    },
+    {
+      "name": "reenable_restore_baseline",
+      "requested_mhz": [
+        900,
+        1000
+      ],
+      "air_seq": 44,
+      "spi_hz": [
+        900000000,
+        1000000000
+      ],
+      "passed": true,
+      "udp_seq": 4,
+      "ack": "source=UART_NETTEST rx=900 tx=1000 air_seq=44 rc=0",
+      "send_attempts": 1
+    }
+  ],
+  "readback_method": {
+    "uart_command": "rfread",
+    "driver_path": "ad9361_get_rx/tx_lo_freq -> clk_get_rate -> ad9361_rfpll_recalc_rate -> ad9361_rfpll_int_recalc_rate -> SPI PLL register reads",
+    "checks": "Both SPI API results0; tolerance10000Hz; observed offset from requested changed LO was -2Hz",
+    "limitation": "Register-derived configured LO; no spectrum or RF signal measurement"
+  },
+  "final_state": {
+    "adda": {
+      "network": "0",
+      "armed": "0",
+      "decoded": "0",
+      "applied": "4",
+      "pending": "0",
+      "retries": "1",
+      "failures": "0",
+      "gain": "0",
+      "att": "89"
+    },
+    "adda_auto": 0,
+    "relay": {
+      "mode": "2",
+      "ddc": "00000000",
+      "duc": "00000000",
+      "gain": "800",
+      "dc": "0",
+      "rxgain": "0",
+      "txatt": "89",
+      "rxlo": "900",
+      "txlo": "1000",
+      "fs": "30720000",
+      "in": "3660984319",
+      "out": "3660984315",
+      "clip": "120183",
+      "rc": "0"
+    },
+    "relay_auto": 0,
+    "spi_hz": [
+      900000000,
+      1000000000
+    ],
+    "restored_by": "Fourth successful UDP transaction, not UART LO recovery"
+  },
+  "sequence_note": "CLI air_seq fields40,41,42,44 are distinct from UDP transaction seq1,2,3,4. STATUS retries=1 records total sends, not one retransmission.",
+  "evidence": {
+    "adda_initial.txt": {
+      "sha256": "2e95e1f39645eeb822fe17018eeef6c190019f92a15d11d2566f2eeeefe512f0",
+      "bytes": 170
+    },
+    "relay_initial.txt": {
+      "sha256": "3eb670d8ce1ee8d3d6eedd7a249ec4402371a5ff53b832c9570405fb5c86bd74",
+      "bytes": 179
+    },
+    "relay_load.txt": {
+      "sha256": "6ec8146678b0f3e9aae4389d55e5b1bd636d8fb7be7fd28a8821e3a81527b411",
+      "bytes": 965
+    },
+    "relay_boot.txt": {
+      "sha256": "d630a70bfbffb22c72cba528ef9d43c027689419af6663ed0556957614f46abc",
+      "bytes": 3216
+    },
+    "run1/result.json": {
+      "sha256": "406d6cb7ecab31ce089599b7f6f13b56f4ba9c9e4f2e887cd490b9c347aedcde",
+      "bytes": 10141
+    },
+    "run1/adda.txt": {
+      "sha256": "dbe454f0c903bc4c464b6de66e84bd6ae12318b4e02fc5508280733d513a6941",
+      "bytes": 3347
+    },
+    "run1/relay.txt": {
+      "sha256": "ed3165efe897d8082668f2056b9859ba8b4f68cdd08a80553e74a4a28a22bf98",
+      "bytes": 1548
+    }
+  },
+  "tools": {
+    "check_dual_board_udp.py": {
+      "sha256": "31f548241f2ae1108f56c033d3ef4495fcf366ec47f0b24eda1e945814e8ca61",
+      "bytes": 9483
+    },
+    "load_relay_udp_checked.tcl": {
+      "sha256": "5319edecd77fbae9140134ac2be98f0d97595adadc32d18ba564d432cf0741e5",
+      "bytes": 1449
+    }
+  },
+  "not_verified": [
+    "External100.5MHz ADC command reception",
+    "Complete over-the-air command-to-control path",
+    "RF business-signal forwarding",
+    "GUI nettest button in this session",
+    "Continuous operation and cold boot"
+  ]
+}
