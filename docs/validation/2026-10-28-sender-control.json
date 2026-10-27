@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-28",
+  "scope": "Sender configuration/readback and muted DMA; physical SMA confirmation pending",
+  "completed": {
+    "tx_lo_hz": 100000000,
+    "sample_rate_hz": 2500000,
+    "rf_bandwidth_hz": 3000000,
+    "tx_port": "A",
+    "lo_powerdown_roundtrip": [
+      1,
+      0,
+      1
+    ],
+    "tx1_gain_roundtrip_db": [
+      -89,
+      -60,
+      -89
+    ],
+    "iq_files_sha256_verified": 4,
+    "cyclic_buffer_samples": 4000,
+    "cyclic_buffer_bytes": 16000,
+    "active_scan_channels": [
+      0,
+      1
+    ],
+    "inactive_scan_channels": [
+      2,
+      3
+    ],
+    "buffer_enable_roundtrip": [
+      0,
+      1,
+      0
+    ],
+    "writer_exit_code": 0
+  },
+  "radiated_or_cabled_modulated_signal_tested": false,
+  "lo_enable_test_conditions": "All DDS scales zero, buffer disabled and both TX gains -89 dB; LO then powered down. No RF power measurement.",
+  "adc_baseline": {
+    "provenance": "ADC_NORMAL, UART epoch/config record plus JTAG DDR extraction",
+    "samples": 131072,
+    "ac_rms_codes": 1.395354683457549,
+    "minimum": -17,
+    "maximum": -5,
+    "rail_samples": 0,
+    "invalid_sign_extension": 0,
+    "valid_frame": false,
+    "note": "RF-disabled baseline; not evidence of successful external signal reception"
+  },
+  "relay_recovery": {
+    "reason": "Current running firmware did not recognize rfread",
+    "operation": "Volatile DDR load of previously tested image; no boot media written",
+    "elf_sha256": "c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+    "rx_hz": 900000000,
+    "tx_hz": 1000000000,
+    "mode": 2,
+    "tx_attenuation_db": 89
+  },
+  "final_state": {
+    "sender_tx_lo_powerdown": 1,
+    "sender_tx_gain_db": [
+      -89,
+      -89
+    ],
+    "sender_dma_buffer_enabled": 0,
+    "sender_dds_scales": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "telecontrol_network": 0,
+    "telecontrol_armed": 0,
+    "telecontrol_auto": 0,
+    "relay_muted": true
+  },
+  "remaining": [
+    "User confirms TX1A-to-ADC1/J5 SMA connection",
+    "Low-level tone and amplitude/frequency observation",
+    "Real V2 samples decoded by host and board C receiver",
+    "Real ADC-origin UDP control and independent relay frequency readback"
+  ],
+  "evidence": {
+    "01_initial.json": {
+      "bytes": 8814,
+      "sha256": "2df360bd4ae46b5312bcc99c6d006e162e80bf4a32377fa167531e11ec06c1d1"
+    },
+    "02_config_muted.json": {
+      "bytes": 7592,
+      "sha256": "8f88bbfef9833b9d586655eb89af1bde8db7135012dcc814af465b9dc22154ef"
+    },
+    "03_roundtrip.json": {
+      "bytes": 2950,
+      "sha256": "c1ce1a5ffab1b22cb4bb19be7bfe2d86414ef94ed9836810095cf67de5da08e9"
+    },
+    "04_receivers_idle.json": {
+      "bytes": 1414,
+      "sha256": "df495feb0e313c37c51d58d0a2d6d3a005ed21a47f954007c4abe126ba1c2c94"
+    },
+    "06_upload_and_dma_muted.json": {
+      "bytes": 146824,
+      "sha256": "f99fb9236c61a97c490c5454a8320a9005022f84876af93eb6023e64bb58cf88"
+    },
+    "upload_manifest.json": {
+      "bytes": 787,
+      "sha256": "1eaefd5214feac747797fbf2ac3a283780c44ce7020b4e40f464518f44389403"
+    },
+    "baseline_off/snapshot.bin": {
+      "bytes": 262144,
+      "sha256": "fe19103a0d59d4c9b2fc3243c485a450f931d46d46ebf72d182bc350f2196bcb"
+    },
+    "baseline_off/result.json": {
+      "bytes": 913,
+      "sha256": "9bc78db59425f14acc354772b1ac9b9570ebd36bf8ba0405c609dfcc2c12861d"
+    },
+    "baseline_off/analysis.json": {
+      "bytes": 649,
+      "sha256": "f201bef76272bfcc879447dba4b0f6544a0d5fa1fed54dc8a5745b4752ba7319"
+    },
+    "relay_reload.txt": {
+      "bytes": 965,
+      "sha256": "6ec8146678b0f3e9aae4389d55e5b1bd636d8fb7be7fd28a8821e3a81527b411"
+    },
+    "relay_reload_commands.json": {
+      "bytes": 599,
+      "sha256": "e092166c2c13deeeceec640a22e72e2fcf79b129fffc6be77294c1f74e78fe03"
+    },
+    "07_idle_verification.json": {
+      "bytes": 1130,
+      "sha256": "91d8361702122fdfa22d9be32b62def47d6394fe054433430e284f2eb62be73e"
+    }
+  }
+}
