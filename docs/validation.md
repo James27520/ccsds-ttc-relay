@@ -64,6 +64,12 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 
 串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。10项fake串口测试继续覆盖输入校验、连接不自动写命令及来源/状态分离。
 
+### 2026-10-28：真实输入联调准备
+
+新增离线V2波形生成器和快照分析工具，复用已有编码/SRRC和C接收器，未修改已上板固件。6项生成器单元测试通过；量化IQ经理想上变频/采样模型送入原C接收器，12组指令正确恢复，单音、零输入、噪声和非法样点格式4组负例通过。结果属于软件兼容验证，不是实板模拟接收。
+
+新发送板通过DEBUG读到独立串口/JTAG和Pluto Linux/IIO接口。JTAG为XC7Z010，固件型号字符串却含Z7020/AD9361；射频芯片与板卡版本仍需按实物核对。本次只读系统及驱动属性，没有下载固件、设置LO、上传波形或启动发射。接口参数与后续顺序见 [联调准备](signal-input-bringup.md)，证据摘要见 [准备验证记录](validation/2026-10-28-signal-prep.json)。
+
 ## 后续验收
 
 | 工作 | 验收要求 |

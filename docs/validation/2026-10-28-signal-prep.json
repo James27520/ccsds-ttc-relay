@@ -1,0 +1,176 @@
+{
+  "date": "2026-10-28",
+  "scope": "Offline waveform/receiver preparation and read-only identification of the new sender; no RF transmission or analog acceptance",
+  "firmware_changed": false,
+  "hardware_rf_parameters_written": false,
+  "transmission_started": false,
+  "waveform_contract": {
+    "body_bytes": 8,
+    "frame_bits": 160,
+    "sample_rate_hz": 2500000,
+    "symbol_rate_sym_s": 100000,
+    "offset_hz": 500000,
+    "complex_samples_per_block": 4000,
+    "bytes_per_block": 16000,
+    "format": "signed int16 LE, I0 Q0 I1 Q1",
+    "amplitude": "normalized digital peak only, not RF power"
+  },
+  "offline_tests": {
+    "unit_tests": 6,
+    "unit_tests_passed": 6,
+    "c_receiver_tests": 16,
+    "c_receiver_tests_passed": 16,
+    "positive_commands": 12,
+    "negative_cases": [
+      "complex tone",
+      "zero",
+      "noise",
+      "invalid14-bit sign extension"
+    ],
+    "model_limit": "Ideal quadrature upconversion, linear interpolation and31.25MSPS sampling; not actual DAC/ADC or RF hardware"
+  },
+  "sender_readonly": {
+    "jtag_part": "xc7z010",
+    "console": "1152008N1 over DEBUG",
+    "kernel": "Linux5.15.0",
+    "os": "Buildroot2023.02.5",
+    "libiio": "0.25",
+    "device_tree_model": "FISH Ball PlutoSDR Rev.A (Z7020/AD9361)",
+    "model_mismatch_requires_physical_confirmation": true,
+    "iio_devices": [
+      "ad9361-phy",
+      "xadc",
+      "cf-ad9361-dds-core-lpc",
+      "cf-ad9361-lpc"
+    ],
+    "tx_scan_channels": 4,
+    "tx_scan_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "tx_scan_type": "le:s16/16>>0",
+    "tx_scan_enabled": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "tx_buffer_enabled": 0,
+    "driver_advertised_tx_lo_hz": [
+      46875001,
+      6000000000
+    ],
+    "driver_advertised_sample_rate_hz": [
+      2083333,
+      61440000
+    ],
+    "initial_tx_lo_hz": 2400000000,
+    "initial_sample_rate_hz": 30720000,
+    "initial_rf_bandwidth_hz": 18000000,
+    "initial_tx_gain_db": [
+      -10,
+      -10
+    ],
+    "dds_scales": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "tx_lo_powerdown": 0,
+    "limitation": "Driver ranges and device-tree names do not establish actual RF chip identity, SMA mapping, safe levels or100.5MHz RF performance"
+  },
+  "sources": {
+    "sw/tools/telecontrol_waveform.py": {
+      "sha256": "603363ba95fd8229202c8b0a6346f5cd8aaf981e9f998a67db589f7fe6062eac",
+      "bytes": 5266
+    },
+    "sw/tools/test_telecontrol_waveform.py": {
+      "sha256": "6cc17c2e806b25ff4ab35486a848e956874dbf8304884e70232dc115f772b04a",
+      "bytes": 4997
+    },
+    "sw/tools/test_telecontrol_receiver.py": {
+      "sha256": "202c34f774efb5ed30cd0ded3112eae57648d13cee8cff1009f729a84470d1a5",
+      "bytes": 3585
+    },
+    "board/z7addalite/tools/analyze_adc_capture.py": {
+      "sha256": "703c0635c1dca6f08ca805edee942dfaaff67435e2df856e19f984f6b9cee12b",
+      "bytes": 4397
+    }
+  },
+  "host_library": {
+    "sha256": "f518414619ccac0dc604475498af640a06d7101288c9c705150c4e19cc42dd00",
+    "bytes": 62680
+  },
+  "c_source_manifest": {
+    "files": [
+      {
+        "path": "demod/adda_demod.c",
+        "sha256": "067b09b006fed67a619b25dc1c015aea63dd8041c639681b0a84d89f335b7733"
+      },
+      {
+        "path": "demod/adda_demod.h",
+        "sha256": "a3e3275996b33abfac159953cf79ee936ca5ea06357770cf2943fca6ec488e9c"
+      },
+      {
+        "path": "demod/adda_receiver.c",
+        "sha256": "2c5df7623164aa6b0ace2c9a6e1439ada0998d1984ab9e9f8abd1442232c085d"
+      },
+      {
+        "path": "demod/adda_receiver.h",
+        "sha256": "8223380b481d61b4a18147f383d8f4e8894c7f3b661ace1949d953c25c154c57"
+      },
+      {
+        "path": "protocol/adda_protocol.c",
+        "sha256": "a4392245726033f8b5458dad093cd8ecc6b622bfe848a1f4ae16fac4be0f5031"
+      },
+      {
+        "path": "protocol/adda_protocol.h",
+        "sha256": "852be86c9b11fb15569eaa8321bf0360438894392139ec26b4051b1692223ca4"
+      }
+    ]
+  },
+  "evidence": {
+    "waveform_unit_tests.txt": {
+      "sha256": "e6a609ac0356c2ee52ed5dfb2775c505388a8438a5f95f362ca6526990ff22de",
+      "bytes": 865
+    },
+    "c_receiver_tests/results.json": {
+      "sha256": "26e414613cbf9396cf799d8223a7adc50a83fa216f181a9151b6ffb2a243943a",
+      "bytes": 15062
+    },
+    "synthetic_analysis.json": {
+      "sha256": "ab9698a46bf339ae0cdcc1d61e05288222f72aaff133a38b115a6d794b4c7464",
+      "bytes": 843
+    },
+    "three_board_inventory.txt": {
+      "sha256": "7ce428d53230bbd8ab422e23e7c4523d5990db3398fc5b4992fa4eb085c998e3",
+      "bytes": 1470
+    },
+    "new_board_linux_identity.json": {
+      "sha256": "17697d7a0dac5136919a7460b6f28a0a43048596b1f06ca3679c92765210752d",
+      "bytes": 3392
+    },
+    "new_board_iio_readonly.json": {
+      "sha256": "bc421bfeb0070d9aaba912cd0e8aca1e3168b39f9f2d15c189ef0acbfe3238a8",
+      "bytes": 12709
+    },
+    "new_board_dds_readonly.json": {
+      "sha256": "38310fd7612feec18de141e95d647c57193fa0b298d289f48f6c9d316f61f3ed",
+      "bytes": 688
+    }
+  },
+  "remaining": [
+    "Physical board and RF chip identity",
+    "SMA mapping and output/input level budget",
+    "USB2.0 or Ethernet data transport",
+    "IIO TX channel adapter and physical tone",
+    "Actual V2 ADC reception and automatic relay control"
+  ]
+}
