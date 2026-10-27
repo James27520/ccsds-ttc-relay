@@ -1,0 +1,145 @@
+{
+  "scope": "byte-identical archived PS sources; modified test entry in REPRO_MANIFEST.json",
+  "files": [
+    {
+      "path": "adda_capture.c",
+      "sha256": "0c322b119f300487377edea2450e7d1823d6845cad03e3ab496116911b5c4b71",
+      "bytes": 12175
+    },
+    {
+      "path": "adda_capture.h",
+      "sha256": "72cad5ed756e5d51485383621c233eec9dd61b6250e83061ced5f6caeda1c922",
+      "bytes": 2198
+    },
+    {
+      "path": "adda_controller.c",
+      "sha256": "5e4ee1f2fc0080a14a529029ac62dfd9502a23e28c4123e4bb16866d82351f19",
+      "bytes": 5833
+    },
+    {
+      "path": "adda_controller.h",
+      "sha256": "aec61bac6f951333a651cd987486b235325ea02ac3c84e2d34c1802e437c3458",
+      "bytes": 841
+    },
+    {
+      "path": "adda_pattern_check.c",
+      "sha256": "cb40d08439b573a889f0da7ca205985b2672857b005020baf12df219170b2357",
+      "bytes": 1355
+    },
+    {
+      "path": "adda_pattern_check.h",
+      "sha256": "27c3ce254b352e5bf043b36b1d0216b9058a3cdfd2d01ec15c002afafc542264",
+      "bytes": 566
+    },
+    {
+      "path": "adda_platform_main.c",
+      "sha256": "dcf1c6669a331fbbd4ce23dec1e676e74bea2a276c24d11616634cb7c1002ad5",
+      "bytes": 10289
+    },
+    {
+      "path": "adda_ps_core.c",
+      "sha256": "e9030b8e0a8706a73fa2d2119f3d2529df52b1d4c7201f430ccd5fafdb2fe255",
+      "bytes": 9054
+    },
+    {
+      "path": "adda_ps_core.h",
+      "sha256": "adcbc03f7a8807bc949dd2212236a721d3b999bdc78e40e6839614158f0357c7",
+      "bytes": 2745
+    },
+    {
+      "path": "build_bsp.py",
+      "sha256": "ee0bd4c54bc965511a79397f8fef383f9deff375365ecf0a2f39d1bb411d446a",
+      "bytes": 3803
+    },
+    {
+      "path": "build_capture_tests.ps1",
+      "sha256": "ca9de1d2390be95790dd535c75fd42aa58b3e404c2dbed5d7c73242987f0a8df",
+      "bytes": 1935
+    },
+    {
+      "path": "build_common.py",
+      "sha256": "79302fe7ec6dc21aa0dd9430d5313560ae85f8c13f6f291515669dfd853bb8e6",
+      "bytes": 627
+    },
+    {
+      "path": "build_core_tests.ps1",
+      "sha256": "7227baa3e22374451e092adbc25978f8aa716559e31d3a8366d9b7c893a25bba",
+      "bytes": 1759
+    },
+    {
+      "path": "build_platform.py",
+      "sha256": "9a9127a80cc1e35cdcac95e50a642f36e4be2a0038a4bd72d96e8f4720853bc9",
+      "bytes": 5275
+    },
+    {
+      "path": "build_tools.ps1",
+      "sha256": "9105d05cdbb89ee9306b42abac3c170ad024b3f35f61c036c2f476b987fdfce3",
+      "bytes": 580
+    },
+    {
+      "path": "generate_m2_bsp_template.tcl",
+      "sha256": "387bd0292f4f0d5f4378b24ae86f7dbe52fee61897c1291d7d3a642f68f813e8",
+      "bytes": 1564
+    },
+    {
+      "path": "network_phy_policy.inc",
+      "sha256": "350e84ce1d425abdb9b62ec68547c0e0677a8198465280e52ea8245e680107be",
+      "bytes": 4103
+    },
+    {
+      "path": "patch_network_bsp.py",
+      "sha256": "d66afa6bf59db0970eb098f1b491a1c71fed1be99ff9734eae4cdfb8fbb49edc",
+      "bytes": 10674
+    },
+    {
+      "path": "platform_2018.mss",
+      "sha256": "8a55b866bf0ae628b874e3c5cdeded4da4b9d05f5c7ea0cd8fd423b9cc68392d",
+      "bytes": 4278
+    },
+    {
+      "path": "prepare_local_sources.py",
+      "sha256": "42e25669fb10b9bf946164a1ce4a49eb46f58bba1f14bb615f3fe57b0338302e",
+      "bytes": 3191
+    },
+    {
+      "path": "test_capture_controller.c",
+      "sha256": "9d439a3607740d059d176defa334f12b9c2b604338496a5f6e5d1d50297c141c",
+      "bytes": 12021
+    },
+    {
+      "path": "test_network_bsp.py",
+      "sha256": "12a312918dedddbc79f724add8d9e2d7005e82c07be96649b4b4f7889f544f7a",
+      "bytes": 2838
+    },
+    {
+      "path": "test_network_init.c",
+      "sha256": "6fbb3a33aa7c5e40e315c1590cbe4ed648cc16f2cd5444f9a954109804360195",
+      "bytes": 3354
+    },
+    {
+      "path": "test_network_mdio.c",
+      "sha256": "416ed29a0b5fa7b30b8db0e41e3808a288085e66259733c4f2bc083c9040bd07",
+      "bytes": 1605
+    },
+    {
+      "path": "test_network_phy.c",
+      "sha256": "1d4c28e86d2016bf0a3908f2b6a76ad4331e2cfd17cc1a9b063ccfd2a4767c58",
+      "bytes": 4010
+    },
+    {
+      "path": "test_ps_core.c",
+      "sha256": "9e925a3f861d76e5516202a81d7473518fbb191a2d1b3acbac326ba83a80474b",
+      "bytes": 4998
+    },
+    {
+      "path": "vendor_reference/lscript_reference_only.ld",
+      "sha256": "e61d8c9ebe398646a14ee08ebd0f66a933f15963c44fb042c052bac054fcb31b",
+      "bytes": 6165
+    },
+    {
+      "path": "verify_xsa_binding.py",
+      "sha256": "82a0e229818096262a5a59da03bc32aed55c192517c79eb373c51626a5ab47d7",
+      "bytes": 2320
+    }
+  ]
+}

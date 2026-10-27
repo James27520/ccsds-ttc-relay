@@ -1,0 +1,150 @@
+{
+  "scope": "repository reproducibility support; modified runners explicitly separated from unchanged r4c inputs",
+  "source_revision": "r4c",
+  "modified_from_r4c": [
+    "scripts/export_reviewed.ps1",
+    "scripts/pn9_generate_fixtures.py",
+    "scripts/pn9_run_sim.ps1",
+    "scripts/run_axil_sim.ps1",
+    "scripts/run_capture_sim.ps1",
+    "scripts/run_config_runtime.ps1",
+    "scripts/run_frozen_build.ps1"
+  ],
+  "files": [
+    {
+      "path": "scripts/analyze_adc_pn9.py",
+      "sha256": "8a4b084de385c881d7b1054448342683596c75dbb90f152a1d08067634f933db",
+      "bytes": 8201
+    },
+    {
+      "path": "scripts/build.tcl",
+      "sha256": "7476d052c711e7604f0b80b30fe4e8e2572cecd741ecfddad10967de1168588e",
+      "bytes": 3390,
+      "r4c_sha256": "7476d052c711e7604f0b80b30fe4e8e2572cecd741ecfddad10967de1168588e"
+    },
+    {
+      "path": "scripts/check_frozen_pn9.py",
+      "sha256": "f0c3fdfea532b5094dbb2aa60b5d5847275d7c341f32d216713d0fd30b33f1d6",
+      "bytes": 1109
+    },
+    {
+      "path": "scripts/check_mailbox_timing.tcl",
+      "sha256": "b76be7a368b5c3ad073381c64b17406322fd6f608d21e927ffc2783f6085fb54",
+      "bytes": 2396,
+      "r4c_sha256": "b76be7a368b5c3ad073381c64b17406322fd6f608d21e927ffc2783f6085fb54"
+    },
+    {
+      "path": "scripts/create_platform.tcl",
+      "sha256": "01f8ad7bcedbc748c1d36f66f71b2fc99a2f64fb117b15dbc3c498d562bc2f40",
+      "bytes": 2947,
+      "r4c_sha256": "01f8ad7bcedbc748c1d36f66f71b2fc99a2f64fb117b15dbc3c498d562bc2f40"
+    },
+    {
+      "path": "scripts/export_ps_preliminary.tcl",
+      "sha256": "b3ce7b6d93471418d3dd3f77df861d3035e0216fa5ed2d7415f1d59fefd8cd1c",
+      "bytes": 1114,
+      "r4c_sha256": "b3ce7b6d93471418d3dd3f77df861d3035e0216fa5ed2d7415f1d59fefd8cd1c"
+    },
+    {
+      "path": "scripts/export_reviewed.ps1",
+      "sha256": "ec0119c578bc517d5b9a2c7dd41cb3e18e4acf8cf237312bc1a1e184ad2850d0",
+      "bytes": 2897,
+      "r4c_sha256": "7f79efd85af1a1f3c276154b787851576c445942670c591ce9923b4bb1254773"
+    },
+    {
+      "path": "scripts/export_reviewed.tcl",
+      "sha256": "857fde86442fcee4a8a06cd084d025c13e20d9af7dcf7390764d0b0b24cd70fd",
+      "bytes": 1167,
+      "r4c_sha256": "857fde86442fcee4a8a06cd084d025c13e20d9af7dcf7390764d0b0b24cd70fd"
+    },
+    {
+      "path": "scripts/generate_abi.py",
+      "sha256": "04b465df989bb9f32d722a0f2483eab5092b1a6f33a506591d7cdc020f869a41",
+      "bytes": 2011,
+      "r4c_sha256": "04b465df989bb9f32d722a0f2483eab5092b1a6f33a506591d7cdc020f869a41"
+    },
+    {
+      "path": "scripts/pn9_generate_fixtures.py",
+      "sha256": "1a1b509517a73da9702f24c0b66037227023afb84b044f799b35bdc5f78aab8c",
+      "bytes": 4979,
+      "r4c_sha256": "ead44d1dd99780531709ee5fcdeca43fb89e186b8d47fa447ff02a6b60b542d8"
+    },
+    {
+      "path": "scripts/pn9_run_sim.ps1",
+      "sha256": "7b1a6a5c0d8473e23de744fdc9f3ffa6f029e5d556a9b4a184066e38a105a82d",
+      "bytes": 2758,
+      "r4c_sha256": "2920d926d51d46831ba01469bef1544f1527e219a94fccfa23b9f882592d732b"
+    },
+    {
+      "path": "scripts/probe_ps_bd.tcl",
+      "sha256": "3ae6a8fe0c170a82477e8a45a7902cfa4cbc4e547b1daac214dbb37eea2ce6ee",
+      "bytes": 1046,
+      "r4c_sha256": "3ae6a8fe0c170a82477e8a45a7902cfa4cbc4e547b1daac214dbb37eea2ce6ee"
+    },
+    {
+      "path": "scripts/run_axil_sim.ps1",
+      "sha256": "b2146d0ba46b2a914918f9badda2c7a347cd59ce13e6f1fc70d17effb95e3cf2",
+      "bytes": 2103,
+      "r4c_sha256": "fe3380b9afa4478275651f2dd2fef59278f78642a8e0d8b5db3775abca64ba86"
+    },
+    {
+      "path": "scripts/run_capture_sim.ps1",
+      "sha256": "517b4f7c8772af85f0d85b2abd7f34f2b51f9ae1e6beb2822b0e368135adbcbd",
+      "bytes": 1289,
+      "r4c_sha256": "052ae7b564cba7293bbb6bef29897289eb9e97bd8d3b2aade04fca8bde15b809"
+    },
+    {
+      "path": "scripts/run_config_runtime.ps1",
+      "sha256": "b73eca43f042112cf169e24e68a041bbaa92eff96b814613ba2a1be69f700921",
+      "bytes": 1113,
+      "r4c_sha256": "c48e51ac32e7446c8634186d877bdc91683ab29ffca610213749fcc5f95504b2"
+    },
+    {
+      "path": "scripts/run_frozen_build.ps1",
+      "sha256": "f5667c25de061d761f77f63b62e10aee15ace7cfab192999c4fcb5a88fa8fa27",
+      "bytes": 4352,
+      "r4c_sha256": "0efbaf775db2c8bb9964ebf3aeeb405c272bb8f14fd4f44e89a650b85a4dec96"
+    },
+    {
+      "path": "scripts/signoff.tcl",
+      "sha256": "88144edf56343b1e0118759ae21d0618ae413c4c6c242f25934daa03876d0d75",
+      "bytes": 4718,
+      "r4c_sha256": "88144edf56343b1e0118759ae21d0618ae413c4c6c242f25934daa03876d0d75"
+    },
+    {
+      "path": "sim/pn9_fixtures/pn9_fixture_manifest.json",
+      "sha256": "a191040d5ee6a52eaee6cd9e5bc47d2339da13c1c600509575a2afb8d4ee9dea",
+      "bytes": 2709
+    },
+    {
+      "path": "sim/pn9_fixtures/pn9_real_00.mem",
+      "sha256": "68a87a99806449d66c501f150760a2cfdb33d7d86a2659f55bc4598e75fcf72d",
+      "bytes": 122880
+    },
+    {
+      "path": "sim/pn9_fixtures/pn9_real_01.mem",
+      "sha256": "618dc6adbaeac2340eb9d7732ea953d3736431815545389bc4e0f5d1bb624ec6",
+      "bytes": 122880
+    },
+    {
+      "path": "sim/pn9_fixtures/pn9_real_02.mem",
+      "sha256": "6c5fc08d24f7f954c4100f76b1a19b901d4433470cba82a3567d507b112c150e",
+      "bytes": 122880
+    },
+    {
+      "path": "sim/pn9_fixtures/pn9_recurrence.mem",
+      "sha256": "ae57f1b4d3ebec7b4856351ec1ed90f46985a64eb3b7fc178515b85f88281973",
+      "bytes": 4599
+    },
+    {
+      "path": "sim/pn9_fixtures/pn9_synthetic.mem",
+      "sha256": "7bc6f55e3d01e02f75ca4f7090048ba3a9a9b5a551eeb281130d5da254ffa9cc",
+      "bytes": 122880
+    },
+    {
+      "path": "reference/axi_ad9643_pnmon_2016_r1.v",
+      "sha256": "b12552c1d93c5b0b665558586c7b66ebbf2d0ac6121778c53e8822c071f9e168",
+      "bytes": 7207
+    }
+  ]
+}

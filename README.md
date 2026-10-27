@@ -2,15 +2,15 @@
 
 本项目面向嵌入式芯片与系统设计竞赛，实现遥控指令接收、频率参数解析和业务信号变频转发。当前遥控板采用 **Z7ADDALite（Zynq-7020 + AD9643）**，由 PL 采集 ADC 数据、PS 执行 C 解调与指令处理，再通过以太网控制 **LDSDR 转发板**。
 
-截至 **2026-10-27**，已完成遥控板 125 MSPS ADC 数字接口验证和板载 ARM 合成波形解调自测；真实中频指令接收、遥控板到转发板的 UDP 联调及多板业务通信仍待验收。仓库中原有的 RTL 环回、PC 演示软件和串口控制工具继续作为早期实现保留。
+截至 **2026-10-27**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。网络初始化失败已能返回并保持串口可用，但 MDIO 尚未识别 PHY；真实 100.5 MHz 指令接收和遥控板到 LDSDR 的 UDP 闭环仍待验收。
 
-**本次更新发布架构、协议约定和验证记录。Z7ADDALite 的新 FPGA、PS、GUI 源码尚未纳入仓库，不能仅凭当前仓库重建新遥控板固件。**
+Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已归档至 [board/z7addalite/](board/z7addalite/README.md)。重建需要外部工具链、2018.3 embeddedsw 源归档及匹配的硬件产物；第三方依赖与命令见板级说明。原有 RTL 环回、PC 演示软件和串口工具继续保留为早期实现。
 
 ## 系统组成
 
 | 角色 | 当前硬件或职责 | 说明 |
 |---|---|---|
-| 电脑 1 / 电脑 A | 操作界面、参数设置、状态与日志 | 新遥控板串口 GUI 已有原型，完整联机验收待完成 |
+| 电脑 1 / 电脑 A | 操作界面、参数设置、状态与日志 | 串口 GUI 的自检、normal/training 采集、空输入解调及状态显示已实测；UDP 闭环待验收 |
 | 发送端 | 提供业务信号和遥控指令信号 | 对应旧草图左上角“ADDA”的替换板；具体型号、端口和固件需在联调前逐板登记 |
 | **遥控板** | **Z7ADDALite，XC7Z020-2CLG484-I，AD9643 ADC** | 接收 100.5 MHz 中频指令，PS 解调后通过网口控制转发板；DAC 不参与当前接收链 |
 | **转发板** | **LDSDR** | 接收频率设置，执行业务信号变频转发；实际射频频段以该实物及固件验证结果为准 |
@@ -49,9 +49,9 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 |---|---|---|
 | M1：ADC 数字接口 | 两次临时 JTAG 加载、六段采集，98,304 个 A 通道样点，PN9 错误 0；B 通道棋盘码及配置读回正确 | 实板内部测试码，不是外部模拟输入 |
 | M1：时序 | WNS +0.483 ns，WHS +0.075 ns，TNS/THS = 0 | 已上板 PN9 诊断版本 |
-| M2：完整采集工程 | 仿真通过；候选工程 WNS +0.483 ns、WHS +0.014 ns，TNS/THS = 0 | 跨时钟总线物理延迟约束仍待补齐复核；尚未从 PS 验收真实 ADC 快照 |
-| M3：C 解调 | 三组帧金标准、45 组合成波形测试通过；真实 Cortex-A9 解调 131072 点合成波形耗时 279 ms | 板载运算自测，不是实际信号接收，也不是持续吞吐率 |
-| M4：网络控制 | 报文与 ACK 状态逻辑测试通过 | 无网线链路时发现 lwIP 断言卡死；修复及双板联调待验收 |
+| M2：完整采集工程 | r4c WNS +0.483 ns、WHS +0.022 ns、WPWS +0.264 ns；TNS/THS/TPWS=0，DRC=0；全通道/四个k的真实快照检查通过 | 56条ADC路径与198个动态mailbox端点已复核；normal仅格式与切换，未接外部信号 |
+| M3：C 解调 | 三组帧金标准、45组合成波形通过；最终完整M2固件在A9解调131072点合成波形278 ms通过 | ADC_TEST decode未找到有效帧、未发RF_SET；不代表真实信号接收或持续吞吐率 |
+| M4：网络控制 | 报文/ACK与网络负例通过；初始化失败返回rc=-2后串口、自检继续正常 | 当前MDIO无PHY响应，物理PHY与双板UDP仍待验收 |
 | 多板通信 | 板卡已具备，可安排联调 | 尚未验收完整遥控闭环和业务信号转发 |
 
 完整记录、产物摘要和未完成项见 [验证与待办](docs/validation.md)。早期 40 字节 RTL 环回结果见 [历史验证记录](docs/legacy-validation.md)，两者使用不同的板卡与协议路径。
@@ -66,10 +66,11 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 | [sw/ccsds/](sw/ccsds/) | 40 字节遥测演示帧编解码与参数表 | 不是 V2 的 8 字节指令实现 |
 | [sw/gui/](sw/gui/) | 原遥测参数演示 GUI | 含原开发机的模块搜索路径；不是新遥控板 GUI |
 | [sw/link/](sw/link/) | 原空间包封装和 LDSDR 串口 CLI 适配 | 保留旧线格式兼容约定，见该目录协议说明 |
-| [sw/tools/](sw/tools/)、[board/](board/) | 原板卡实验和调试脚本 | 运行前核对目标板、固件、地址与工具路径 |
+| [board/z7addalite/](board/z7addalite/README.md) | r4c PL、PS、GUI源码及重建/测试/快照工具 | 当前Z7ADDALite路线；工具需匹配产物及明确线缆 |
+| [sw/tools/](sw/tools/)、其余 [board/](board/) | 原板卡实验和调试脚本 | 旧工程范围，运行前核对目标板、固件、地址与工具路径 |
 | [docs/](docs/) | 当前架构与验收说明、历史图表和报告索引 | 以本 README、V2 协议和最新验证记录为当前描述 |
 
-当前仓库没有原 README 所列的 `fpga/build/build_ccsds_pl_ila.tcl`、`program_and_base.tcl`，因此不再提供调用这些缺失文件的构建/下载命令。新工程的可重建入口将在源码整合时一并发布。
+原 README 中的旧 `fpga/build/build_ccsds_pl_ila.tcl`、`program_and_base.tcl` 未纳入仓库。当前路线使用 [PL冻结构建入口](board/z7addalite/telecontrol_system/README.md)、[PS/BSP重建入口](board/z7addalite/ps_software/README.md) 和 [串口GUI](board/z7addalite/host_software/README.md)。
 
 原脚本中的 U-Boot/Linux 操作针对早期射频板，不能直接用于当前裸机遥控板。Z7ADDALite 的新工程使用 Vivado 2026.1；PS 采用 standalone C + lwIP，已通过现有工具生成 BSP 并运行 ARM 自测，无需为了这条路线安装旧 SDK 2018.3。
 

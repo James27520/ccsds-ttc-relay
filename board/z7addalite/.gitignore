@@ -1,0 +1,31 @@
+# Rebuild locally; retain only source and test inputs.
+__pycache__/
+*.py[cod]
+_packages/
+build/
+arm_objects/
+generated/
+*.dll
+*.exe
+*.o
+*.obj
+*.bin
+*.bit
+*.elf
+*.xsa
+*.log
+waveform_test_results.json
+.venv/
+
+# Vivado generated data
+reports/
+artifacts/
+.Xil/
+xsim.dir/
+pn9_work/
+pn9_generated/
+*.jou
+*.pb
+*.wdb
+*.dcp
+*.rpt

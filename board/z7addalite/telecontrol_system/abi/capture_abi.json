@@ -1,0 +1,267 @@
+{
+  "name": "telecontrol_capture",
+  "abi_version": "1.0",
+  "status": "frozen; BD address validation pending; implementation pending",
+  "part": "xc7z020clg484-2",
+  "byte_order": "little",
+  "sample_description": "signed 14-bit sign extended to int16 without left shift; earlier sample in low halfword",
+  "config_epoch_semantics": "increment on every completed attempt including failure; atomically published with diagnostic and validity",
+  "registers": [
+    {
+      "name": "MAGIC",
+      "offset": "0x00",
+      "access": "RO"
+    },
+    {
+      "name": "ABI_VERSION",
+      "offset": "0x04",
+      "access": "RO"
+    },
+    {
+      "name": "COMMAND",
+      "offset": "0x08",
+      "access": "WO"
+    },
+    {
+      "name": "STATUS",
+      "offset": "0x0C",
+      "access": "RO"
+    },
+    {
+      "name": "LAST_COMMAND_RESULT",
+      "offset": "0x10",
+      "access": "RO"
+    },
+    {
+      "name": "CAPTURE_ERROR",
+      "offset": "0x14",
+      "access": "RO"
+    },
+    {
+      "name": "REQUEST_EPOCH",
+      "offset": "0x18",
+      "access": "RW"
+    },
+    {
+      "name": "REQUEST_SELECT",
+      "offset": "0x1C",
+      "access": "RW"
+    },
+    {
+      "name": "SNAPSHOT_EPOCH",
+      "offset": "0x20",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_SELECT",
+      "offset": "0x24",
+      "access": "RO"
+    },
+    {
+      "name": "SAMPLE_COUNT",
+      "offset": "0x28",
+      "access": "RO"
+    },
+    {
+      "name": "SAMPLES_WRITTEN",
+      "offset": "0x2C",
+      "access": "RO"
+    },
+    {
+      "name": "SAMPLE_FORMAT",
+      "offset": "0x30",
+      "access": "RO"
+    },
+    {
+      "name": "ADC_RATE_HZ",
+      "offset": "0x34",
+      "access": "RO"
+    },
+    {
+      "name": "OUTPUT_RATE_HZ",
+      "offset": "0x38",
+      "access": "RO"
+    },
+    {
+      "name": "CAPTURE_BYTES",
+      "offset": "0x3C",
+      "access": "RO"
+    },
+    {
+      "name": "REQUEST_MODE",
+      "offset": "0x40",
+      "access": "RW"
+    },
+    {
+      "name": "ACTIVE_MODE",
+      "offset": "0x44",
+      "access": "RO"
+    },
+    {
+      "name": "CONFIG_EPOCH",
+      "offset": "0x48",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_CONFIG_EPOCH",
+      "offset": "0x4C",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_FLAGS",
+      "offset": "0x50",
+      "access": "RO"
+    },
+    {
+      "name": "TRAINING_STATUS",
+      "offset": "0x54",
+      "access": "RO"
+    },
+    {
+      "name": "LIVE_DIAG0",
+      "offset": "0x58",
+      "access": "RO"
+    },
+    {
+      "name": "LIVE_DIAG1",
+      "offset": "0x5C",
+      "access": "RO"
+    },
+    {
+      "name": "LIVE_DIAG2",
+      "offset": "0x60",
+      "access": "RO"
+    },
+    {
+      "name": "LIVE_DIAG3",
+      "offset": "0x64",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_DIAG0",
+      "offset": "0x68",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_DIAG1",
+      "offset": "0x6C",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_DIAG2",
+      "offset": "0x70",
+      "access": "RO"
+    },
+    {
+      "name": "SNAPSHOT_DIAG3",
+      "offset": "0x74",
+      "access": "RO"
+    },
+    {
+      "name": "FRAMEWORK_BUILD_ID",
+      "offset": "0x78",
+      "access": "RO"
+    }
+  ],
+  "constants": {
+    "CTRL_BASE": "0x43C00000",
+    "CTRL_RANGE": "0x00010000",
+    "BRAM_BASE": "0x44000000",
+    "BRAM_RANGE": "0x00040000",
+    "MAGIC": "0x54434C31",
+    "ABI_VERSION": "0x00010000",
+    "SAMPLE_COUNT": "0x00020000",
+    "WORD_COUNT": "0x00010000",
+    "CAPTURE_BYTES": "0x00040000",
+    "SAMPLE_FORMAT": "0x00010E10",
+    "ADC_RATE_HZ": "0x07735940",
+    "OUTPUT_RATE_HZ": "0x01DCD650",
+    "FRAMEWORK_BUILD_ID": "0x20261027",
+    "ACTIVE_MODE_VALID": "0x80000000",
+    "SELECT_CHANNEL_MASK": "0x00000001",
+    "SELECT_K_MASK": "0x00000006",
+    "SELECT_K_SHIFT": "0x00000001",
+    "SNAPSHOT_PARITY_MASK": "0x00000100",
+    "SNAPSHOT_PARITY_SHIFT": "0x00000008",
+    "STATUS_PHASE_MASK": "0x0000000F",
+    "STATUS_ADC_VERIFIED": "0x00000010",
+    "STATUS_TRAINING_VALID": "0x00000020",
+    "STATUS_STREAM_VALID": "0x00000040",
+    "STATUS_CLOCK_ALIVE": "0x00000080",
+    "STATUS_CONFIG_BUSY": "0x00000100",
+    "STATUS_CAPTURE_ERROR": "0x00000200",
+    "SNAPSHOT_NORMAL_VERIFIED": "0x00000001",
+    "SNAPSHOT_TRAINING_VERIFIED": "0x00000002",
+    "SNAPSHOT_TRAINING_VALID": "0x00000004",
+    "SNAPSHOT_CLOCK_ALIVE": "0x00000008",
+    "SNAPSHOT_CAPTURE_SUCCESS": "0x00000010",
+    "TRAINING_VALID": "0x00000001",
+    "TRAINING_PARITY": "0x00000002",
+    "TRAINING_FAILED": "0x00000004",
+    "TRAINING_ALGORITHM_MASK": "0x0000FF00",
+    "TRAINING_ALGORITHM_SHIFT": "0x00000008",
+    "TRAINING_COUNT_SHIFT": "0x00000010",
+    "TRAINING_REQUIRED_VECTORS": "0x00000080"
+  },
+  "enums": {
+    "CMD": {
+      "ARM": 1,
+      "RELEASE": 2,
+      "APPLY_MODE": 3,
+      "ABORT": 4
+    },
+    "PHASE": {
+      "IDLE": 0,
+      "ARMING": 1,
+      "CAPTURING": 2,
+      "DRAINING": 3,
+      "DONE": 4,
+      "FAILED": 5,
+      "CONFIGURING": 6,
+      "RELEASING": 7
+    },
+    "RESULT": {
+      "ACCEPTED": 0,
+      "INVALID_COMMAND": 1,
+      "BAD_STATE": 2,
+      "BAD_ARGUMENT": 3,
+      "NOT_VERIFIED": 4,
+      "NOT_TRAINED": 5,
+      "CLOCK_UNAVAILABLE": 6
+    },
+    "ERROR": {
+      "NONE": 0,
+      "ABORT": 1,
+      "FIFO_OVERFLOW": 2,
+      "CLOCK_TIMEOUT": 3,
+      "STREAM_INVALID": 4,
+      "EPOCH_MISMATCH": 5,
+      "COUNT_LAST": 6,
+      "ARM_TIMEOUT": 7
+    },
+    "MODE": {
+      "NORMAL": 0,
+      "TRAINING": 1
+    },
+    "TRAIN_ALGO": {
+      "NONE": 0,
+      "PN9": 1
+    }
+  },
+  "diagnostic_byte_index": {
+    "ID": 0,
+    "A_FORMAT": 1,
+    "B_FORMAT": 2,
+    "A_TEST": 3,
+    "B_TEST": 4,
+    "CLOCK_DIVIDE": 5,
+    "CLOCK_PHASE": 6,
+    "DCO_DELAY": 7,
+    "A_INDEX": 8,
+    "B_INDEX": 9,
+    "ERROR": 10,
+    "CHECK_COUNT": 11,
+    "RESULT": 12,
+    "VARIANT": 13
+  }
+}

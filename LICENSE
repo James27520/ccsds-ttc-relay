@@ -62,14 +62,38 @@ Third-party notices
    ---------------------------------------------------------------------
    ad9361.c / ad9361_api.c / ad9361.h / ad9361_api.h are derived from the
    Analog Devices no-OS AD9361 driver (ADI BSD-style licence). They are NOT
-   redistributed in this repository; only this project's own RTL, scripts
-   and PC-side software are included.
+   redistributed in this repository. The new Z7ADDALite application sources
+   are standalone C code; external BSP/driver sources are described below.
 
 3) Analog Devices HDL reference design
    ---------------------------------------------------------------------
    The vendor material pack referenced in the documentation contains the
    ADI HDL reference components (axi_ad9361, axi_dmac, axi_clkgen, ...).
    Those files are NOT redistributed here.
+
+   The separate AD9643 PN9 reference is redistributed at:
+   board/z7addalite/telecontrol_system/reference/axi_ad9643_pnmon_2016_r1.v
+   Source: Analog Devices hdl, tag hdl_2016_r1,
+   library/axi_ad9643/axi_ad9643_pnmon.v.
+   Its original copyright, redistribution conditions (including the ADI
+   component condition), and disclaimer are retained in the file. They are
+   not replaced by this project's MIT licence. It documents the PN sequence
+   used to check the AD9643 data interface.
+
+4) AMD/Xilinx tools, BSP and board configuration
+   ---------------------------------------------------------------------
+   Vivado IP, generated BSP libraries and the embeddedsw 2018.3 source archive
+   are external build dependencies, not bundled libraries in this repository.
+   The preparation scripts retain the upstream notices when extracting the
+   source subset. Generated or modified vendor code remains subject to its
+   original licence; the project licence does not relicense it.
+
+   board/z7addalite/telecontrol_system/vendor/zynq_petaLinux.bd is a PS7
+   configuration input from the board material's PetaLinux boot example,
+   petaLinux20183_vivado.zip (Vivado 2018.3).
+   It provides the board DDR/MIO settings, not a Linux image or BSP.
+   No separate licence was included with that configuration in the supplied
+   board material; no additional licence grant for vendor material is implied.
 
 ===========================================================================
 CCSDS standard notice

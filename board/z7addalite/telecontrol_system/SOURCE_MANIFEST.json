@@ -1,0 +1,173 @@
+{
+  "part": "xc7z020clg484-2",
+  "source_revision": "r4c",
+  "scope": "unchanged frozen r4c inputs only; repository runner modifications and support files in REPRO_MANIFEST.json",
+  "files": [
+    {
+      "path": "abi/ABI_PROPOSAL.md",
+      "sha256": "bce179008a9e5514c8d7858c8ba2ed7f521d68e37afe1f24627ede10b3266d28",
+      "bytes": 10042
+    },
+    {
+      "path": "abi/capture_abi.h",
+      "sha256": "7bf16a60264231421736b56cbc710571276b05a419777db7a350118be59dc87f",
+      "bytes": 5948
+    },
+    {
+      "path": "abi/capture_abi.json",
+      "sha256": "8f524ff8fafc781718e50f656de89665b41c062a978e98257bd227f2de055a40",
+      "bytes": 6089
+    },
+    {
+      "path": "abi/capture_abi.vh",
+      "sha256": "5020c613a162d735f78ea94b8f863b7019dcdea76b271f080472bba8cd7e50b1",
+      "bytes": 6484
+    },
+    {
+      "path": "abi/sha256.json",
+      "sha256": "5bee314c796c1179fd9164bb91b432ecb96d50e1c1a5c86269218bff756bcaff",
+      "bytes": 273
+    },
+    {
+      "path": "constraints/pins.xdc",
+      "sha256": "7ed03a92a253330dba36220c4fd05fb10bce217956e4db4a270e7a4ebfd54d41",
+      "bytes": 4020
+    },
+    {
+      "path": "constraints/timing.xdc",
+      "sha256": "185bd3c7bc0f782f01969deb44d1ba7eeae547a792d1b4cba3927a389cfb45f1",
+      "bytes": 3326
+    },
+    {
+      "path": "scripts/build.tcl",
+      "sha256": "7476d052c711e7604f0b80b30fe4e8e2572cecd741ecfddad10967de1168588e",
+      "bytes": 3390
+    },
+    {
+      "path": "scripts/check_mailbox_timing.tcl",
+      "sha256": "b76be7a368b5c3ad073381c64b17406322fd6f608d21e927ffc2783f6085fb54",
+      "bytes": 2396
+    },
+    {
+      "path": "scripts/create_platform.tcl",
+      "sha256": "01f8ad7bcedbc748c1d36f66f71b2fc99a2f64fb117b15dbc3c498d562bc2f40",
+      "bytes": 2947
+    },
+    {
+      "path": "scripts/export_ps_preliminary.tcl",
+      "sha256": "b3ce7b6d93471418d3dd3f77df861d3035e0216fa5ed2d7415f1d59fefd8cd1c",
+      "bytes": 1114
+    },
+    {
+      "path": "scripts/export_reviewed.tcl",
+      "sha256": "857fde86442fcee4a8a06cd084d025c13e20d9af7dcf7390764d0b0b24cd70fd",
+      "bytes": 1167
+    },
+    {
+      "path": "scripts/generate_abi.py",
+      "sha256": "04b465df989bb9f32d722a0f2483eab5092b1a6f33a506591d7cdc020f869a41",
+      "bytes": 2011
+    },
+    {
+      "path": "scripts/probe_ps_bd.tcl",
+      "sha256": "3ae6a8fe0c170a82477e8a45a7902cfa4cbc4e547b1daac214dbb37eea2ce6ee",
+      "bytes": 1046
+    },
+    {
+      "path": "scripts/signoff.tcl",
+      "sha256": "88144edf56343b1e0118759ae21d0618ae413c4c6c242f25934daa03876d0d75",
+      "bytes": 4718
+    },
+    {
+      "path": "sim/tb_axil.sv",
+      "sha256": "fe9ada32a61befaa7a313d635393af86b58ab7c6bba5fbe4349e616d758acec4",
+      "bytes": 6623
+    },
+    {
+      "path": "sim/tb_capture.sv",
+      "sha256": "936aba2515e7d1d4c7a04d9f343bf5226e067677ecc84d2939867939915ebc72",
+      "bytes": 8910
+    },
+    {
+      "path": "sim/tb_config_runtime.sv",
+      "sha256": "a5d25ade9bed33dc72791d8e35f686be40ac98d955fa00ec4fceb00ffb445469",
+      "bytes": 12817
+    },
+    {
+      "path": "sim/tb_pn9_train.sv",
+      "sha256": "a9ed6cf694c20d7e5dd16339cb3aff13fd26d436e82c114d14f9e3bb7dbe1c4c",
+      "bytes": 8506
+    },
+    {
+      "path": "src/adc_rx8.v",
+      "sha256": "c97e563a90d402a27391e8d8a30fe9513f30ddf8cdcbde3284b5b02cb0e8e50b",
+      "bytes": 2189
+    },
+    {
+      "path": "src/spi_rw24.v",
+      "sha256": "61b442c642dd7a23cc7bd7a6c0e17b847c1ed5d913d4d00f762e7372174a0ef9",
+      "bytes": 2378
+    },
+    {
+      "path": "src/tc_adc_config.v",
+      "sha256": "e06c9694b304c8dadc01d741cb7ee14e6b7718d677c0a97a814cd0011246847b",
+      "bytes": 6667
+    },
+    {
+      "path": "src/tc_axil_frontend.v",
+      "sha256": "7d2f312edba2e4ce3a680644e7eb2c52b2da0cd307efb0f8e9a6810d58ccd267",
+      "bytes": 2346
+    },
+    {
+      "path": "src/tc_boot_config.v",
+      "sha256": "f288a759c85aea2c7e89e6a010b984737fe0e792da3c33a977c7fdf84fc25652",
+      "bytes": 4384
+    },
+    {
+      "path": "src/tc_boot_words.vh",
+      "sha256": "7dd2261248b974313dcf0cbdad15c7dd8ec738dfed3f9a9b622aa34c5ec48e1f",
+      "bytes": 3891
+    },
+    {
+      "path": "src/tc_capture_control.v",
+      "sha256": "0e31531a3831c44bd3d4593e6a22133048bb4957cd6332828bb1e4b37dce80c5",
+      "bytes": 9480
+    },
+    {
+      "path": "src/tc_capture_path.v",
+      "sha256": "9bb847d57fee2061e33fe541fbd49fe6f915961b58d94eed456f00bd8ad42cb4",
+      "bytes": 7155
+    },
+    {
+      "path": "src/tc_capture_source.v",
+      "sha256": "6f5da0dd5d2927b8f1fb9f0a6b05a19dc942fb7ac7c4d0a0c3ad6598411392c9",
+      "bytes": 2409
+    },
+    {
+      "path": "src/tc_mailbox.v",
+      "sha256": "c29f7e11361d97ea1d57eff7dbf0a5202548b8cddd7e407b336434d1819b9d78",
+      "bytes": 1298
+    },
+    {
+      "path": "src/tc_pn9_train.v",
+      "sha256": "627d0568952617899adaee82ad13353dfe283e9f5298392e07cf80aab4740db9",
+      "bytes": 7322
+    },
+    {
+      "path": "src/tc_snapshot_ram.v",
+      "sha256": "f92f4affedfc476b38783f8bea63750e35da00287a1c3f2b5a09b0ff4d9e3090",
+      "bytes": 971
+    },
+    {
+      "path": "src/telecontrol_top.v",
+      "sha256": "02a3d11a178772bcc64e0898df9a42679cb1f9d12fe01562b79e8fde5197b414",
+      "bytes": 14703
+    },
+    {
+      "path": "vendor/zynq_petaLinux.bd",
+      "sha256": "67a3a07b47f0c50638fab1a07aa83ad3f79236ec4247724afdc7b380816c4a21",
+      "bytes": 39937
+    }
+  ],
+  "upstream_manifest_sha256": "714b98deca2d0103ce477c3d5697d9780704d4cf759a2e97166f87e825f1c37f"
+}

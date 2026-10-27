@@ -1,0 +1,11 @@
+# Generated third-party sources, BSPs and output products are local only.
+embeddedsw_2018_subset/
+platform_bsp*/
+platform_build*/
+bsp_build*/
+network_tests*/
+build_status.txt
+sha256.json
+capture_sha256.json
+local_sources_manifest.json
+pattern_check_results.json

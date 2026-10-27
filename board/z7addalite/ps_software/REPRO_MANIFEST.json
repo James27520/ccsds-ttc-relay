@@ -1,0 +1,11 @@
+{
+  "scope": "repository test support differences; no C algorithm/driver change",
+  "files": [
+    {
+      "path": "test_pattern_check.py",
+      "sha256": "d1e804079b7bb7dd539d72392cfc7d2cb2d60523f5ed6995f4af2954ab1133de",
+      "bytes": 3210,
+      "upstream_sha256": "b660af8484a5ca7431852f4423ee0719ed257ba9724d215f7f14b2b24b60aad8"
+    }
+  ]
+}

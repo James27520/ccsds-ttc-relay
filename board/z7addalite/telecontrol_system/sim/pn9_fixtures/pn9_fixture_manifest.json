@@ -1,0 +1,62 @@
+{
+  "kind": "historical internal AD9643 PN9/checker capture vectors; not analog/RF acceptance",
+  "extraction": "analyze_adc_pn9.analyze verifies diagnostic, ready, contiguous counter, A PN9 and B checker; read_vectors extracts captured_words from each Vivado radix-aware CSV row; pack raw[k] at bits 14*k for k=0..7; one 112-bit 28-hex-digit word per row, original row order",
+  "reference_sha256": "b12552c1d93c5b0b665558586c7b66ebbf2d0ac6121778c53e8822c071f9e168",
+  "files": [
+    {
+      "path": "pn9_real_00.mem",
+      "sha256": "68a87a99806449d66c501f150760a2cfdb33d7d86a2659f55bc4598e75fcf72d",
+      "bytes": 122880,
+      "provenance": {
+        "fixture": "pn9_real_00.hex",
+        "fixture_sha256": "68a87a99806449d66c501f150760a2cfdb33d7d86a2659f55bc4598e75fcf72d",
+        "bytes": 122880,
+        "source_csv": "captures/m1_pn9_20261027/adc_ramp_00.csv",
+        "source_csv_sha256": "712740d098f6ccf6ada7443c5ea9cde7fbd3da242c7f974861feddb369e96da3",
+        "vectors": 4096,
+        "diagnostic_hex": "0x7da10a0002010000000406050582",
+        "channel_A_parity": 0
+      }
+    },
+    {
+      "path": "pn9_real_01.mem",
+      "sha256": "618dc6adbaeac2340eb9d7732ea953d3736431815545389bc4e0f5d1bb624ec6",
+      "bytes": 122880,
+      "provenance": {
+        "fixture": "pn9_real_01.hex",
+        "fixture_sha256": "618dc6adbaeac2340eb9d7732ea953d3736431815545389bc4e0f5d1bb624ec6",
+        "bytes": 122880,
+        "source_csv": "captures/m1_pn9_20261027/adc_ramp_01.csv",
+        "source_csv_sha256": "84bb83475e62b97bbabc30e955d72d5c4471aec15e63036873d6ed2d6f8b28e5",
+        "vectors": 4096,
+        "diagnostic_hex": "0x7da10a0002010000000406050582",
+        "channel_A_parity": 0
+      }
+    },
+    {
+      "path": "pn9_real_02.mem",
+      "sha256": "6c5fc08d24f7f954c4100f76b1a19b901d4433470cba82a3567d507b112c150e",
+      "bytes": 122880,
+      "provenance": {
+        "fixture": "pn9_real_02.hex",
+        "fixture_sha256": "6c5fc08d24f7f954c4100f76b1a19b901d4433470cba82a3567d507b112c150e",
+        "bytes": 122880,
+        "source_csv": "captures/m1_pn9_20261027/adc_ramp_02.csv",
+        "source_csv_sha256": "3cbe32e19246da4874ddc9cbb742e37e5e8ec552e25952147491f513c000c23b",
+        "vectors": 4096,
+        "diagnostic_hex": "0x7da10a0002010000000406050582",
+        "channel_A_parity": 0
+      }
+    },
+    {
+      "path": "pn9_recurrence.mem",
+      "sha256": "ae57f1b4d3ebec7b4856351ec1ed90f46985a64eb3b7fc178515b85f88281973",
+      "bytes": 4599
+    },
+    {
+      "path": "pn9_synthetic.mem",
+      "sha256": "7bc6f55e3d01e02f75ca4f7090048ba3a9a9b5a551eeb281130d5da254ffa9cc",
+      "bytes": 122880
+    }
+  ]
+}

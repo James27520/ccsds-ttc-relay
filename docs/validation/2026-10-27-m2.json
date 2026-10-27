@@ -1,0 +1,900 @@
+{
+  "date": "2026-10-27",
+  "scope": "Released source inputs and actual single-board Z7ADDALite internal-capture/UART acceptance; no external analog or multi-board acceptance",
+  "board": {
+    "role": "telecontrol",
+    "name": "Z7ADDALite",
+    "part": "xc7z020clg484-2",
+    "adc": "AD9643",
+    "adc_rate_nominal_hz": 125000000,
+    "snapshot_rate_nominal_hz": 31250000,
+    "snapshot_samples": 131072
+  },
+  "artifacts": {
+    "telecontrol_system.bit": {
+      "sha256": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b",
+      "bytes": 4045770
+    },
+    "telecontrol_system_final.xsa": {
+      "sha256": "7622d5ac50727cccf9f8319c35cc80d24f6e91ada07bc81f3d7d6ac3161f1ded",
+      "bytes": 503678
+    },
+    "telecontrol_system.ltx": {
+      "sha256": "38d5e1d2fd94c97b6bd8b9b238dd21b1a7cae2bb73d8aac3aed158195729e78c",
+      "bytes": 50532
+    },
+    "adda_m2_candidate.elf": {
+      "sha256": "00d14352729bb2748f7a7604547416474b9022082a520b8b6e35dcf49ac64c30",
+      "bytes": 1026700
+    },
+    "ps7_init.tcl": {
+      "sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205",
+      "bytes": 31130
+    }
+  },
+  "binding": {
+    "pl_source_manifest_sha256": "714b98deca2d0103ce477c3d5697d9780704d4cf759a2e97166f87e825f1c37f",
+    "ps_manifest_sha256": "7e8e8a971a3bcb5442b03785d0ecc0421cf14f95b2c8c06b6f8c3dc318e9dcf6",
+    "xsa_binding_report_sha256": "fa07f13ceff798cbfa13b0c8d5e0a107e960fe9c2f7d89803f129c8008da5ef1",
+    "hwh_match": "all HWH fields equal after ignoring export-root TIMESTAMP only",
+    "ps_init_bytes_equal": true,
+    "embedded_bit_matches": true
+  },
+  "sta": {
+    "WNS_ns": 0.483,
+    "WHS_ns": 0.022,
+    "WPWS_ns": 0.264,
+    "TNS_ns": 0,
+    "THS_ns": 0,
+    "TPWS_ns": 0,
+    "drc_errors": 0,
+    "unconstrained_internal": 0,
+    "adc_lane_edge_min_max_paths": 56,
+    "mailbox_dynamic_endpoints_post_synth": 230,
+    "mailbox_dynamic_endpoints_post_route": 198,
+    "mailbox_constant_endpoints": 24,
+    "mailbox_max_delay_ns": 20,
+    "mailbox_min_slack_ns": 18.128,
+    "raw_signoff": "WNS=0.483 TNS=0.000 WHS=0.022 THS=0.000 WPWS=0.264 TPWS=0.000 DRC_ERRORS=0 LATCHES=0 NO_CLOCK=0 UNCONSTRAINED_INTERNAL=0 NO_INPUT=0 NO_OUTPUT=0 PARTIAL_INPUT=0 PARTIAL_OUTPUT=0 ADC_14LANE_DDR_BOTH_EDGE_MAX_MIN=1 STA_PASS=1"
+  },
+  "cdc_review": {
+    "CDC_10": {
+      "count": 1,
+      "reason": "startup reset assertion decode; synchronous reset release"
+    },
+    "CDC_12": {
+      "count": 2,
+      "reason": "global/startup/PS reset fan-in, eight-stage vector-clock release"
+    },
+    "CDC_11": {
+      "count": 9,
+      "reason": "equal held bundle bits share a source; each endpoint covered by 20 ns max delay"
+    },
+    "raw_warnings_retained": true,
+    "no_mailbox_data_false_path": true,
+    "rationale_sha256": "953ef334aa88efa7c449d8c9a6fdd8063790ec586eec410a9e99d43c087629e8"
+  },
+  "offline_regression": {
+    "capture_checks": 786634,
+    "capture_full_snapshots": 4,
+    "capture_samples": 524288,
+    "axil_checks": 4740,
+    "pn9_assertions": 45288,
+    "pn9_acquisitions": 23,
+    "adc_config_checks": 44161,
+    "adc_config_cases": 37,
+    "protocol_assertions": 2906,
+    "waveform_cases_passed": 45,
+    "ps_core_assertions": 88,
+    "ps_capture_controller_assertions": 11193,
+    "pattern_cases": 57,
+    "gui_fake_cases": 10,
+    "network_negative_tests": "exact patched PHY/init/MDIO functions; bounded failure/retry/resource tests PASS"
+  },
+  "hardware": {
+    "volatile_jtag_loads": 2,
+    "flash_or_sd_written": false,
+    "ddr_exported_snapshots": 13,
+    "ddr_exported_samples": 1703936,
+    "pn9_snapshots": 7,
+    "checker_snapshots": 4,
+    "normal_format_only_snapshots": 2,
+    "all_ddr_checks_pass": true,
+    "cancel_then_rearm_pass": true,
+    "mode_switch_and_reload_pass": true,
+    "frame_goldens_pass": 3,
+    "synthetic_waveform_samples": 131072,
+    "synthetic_waveform_elapsed_ms": 278,
+    "gui_actual_serial": "status/selftest/waveformtest/normal capture/no-frame decode/training capture PASS",
+    "network": "Final firmware fails cleanly with no unique PHY; status/selftest continue. Earlier v6 repeated this three times. Not Ethernet-link acceptance.",
+    "rf_set_sent": false,
+    "final_state": "training snapshot ready; network OFF, armed OFF, auto OFF"
+  },
+  "runs": [
+    {
+      "request": {
+        "mode": "normal",
+        "channel": 0,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "9",
+        "config_epoch": "10",
+        "source": "ADC_NORMAL",
+        "channel": "0",
+        "k": "0",
+        "first": "-14",
+        "last": "-12"
+      },
+      "independent_ddr_check": {
+        "kind": "normal",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -17,
+        "maximum": -5,
+        "unique_codes": 13,
+        "first": [
+          -14,
+          -9,
+          -12,
+          -12,
+          -13,
+          -11,
+          -12,
+          -11
+        ],
+        "last": [
+          -10,
+          -12,
+          -12,
+          -11,
+          -12,
+          -10,
+          -13,
+          -12
+        ],
+        "sha256": "e581a4e5388e954a5d5fcc96d082ce84137227f6f2776ff6852cbeb492917575",
+        "pass": true,
+        "scope": "Sample format only; no external signal or decoded command proven"
+      },
+      "id": "m2_r4c_20261027/normal_a_k0",
+      "evidence_sha256": {
+        "result.json": "238b49bd04bf6403c8475576fbf6908a29156ffac641a3d3d2c3a241d2808f79",
+        "uart.txt": "d63e095f2506b13728d0c1ed4d8f05bc38e8cce5c090b676ac31c4339e08bc43",
+        "uart_events.json": "ec7374e2405ad162b5907e7c4988bb019e48587215b836727d74a7249287cfdb",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "normal",
+        "channel": 1,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "10",
+        "config_epoch": "11",
+        "source": "ADC_NORMAL",
+        "channel": "1",
+        "k": "0",
+        "first": "32",
+        "last": "32"
+      },
+      "independent_ddr_check": {
+        "kind": "normal",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": 27,
+        "maximum": 38,
+        "unique_codes": 12,
+        "first": [
+          32,
+          32,
+          36,
+          29,
+          33,
+          32,
+          36,
+          32
+        ],
+        "last": [
+          32,
+          33,
+          34,
+          31,
+          32,
+          30,
+          29,
+          32
+        ],
+        "sha256": "51b439d653b80ea1ddf60d3ae875eab2b83751309b32c5ebb6c6cf4a09b7f656",
+        "pass": true,
+        "scope": "Sample format only; no external signal or decoded command proven"
+      },
+      "id": "m2_r4c_20261027/normal_b_k0",
+      "evidence_sha256": {
+        "result.json": "f731e5e0cba7bdd9b14884e6d60fab91b55c5e32739778965a7f5a8cd4af483c",
+        "uart.txt": "4685276a5024be070bdf6797277784bbd07994af7cefed04e53004b8f9221403",
+        "uart_events.json": "2a21d14b542605871e16580a102da68efede1d41d8e2d04bc04c01001546dbbc",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "12",
+        "config_epoch": "14",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "0",
+        "first": "4336",
+        "last": "3906"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          4336,
+          -3794,
+          -7245,
+          -1781,
+          4614,
+          93,
+          -5854,
+          -6001
+        ],
+        "last": [
+          -7588,
+          1895,
+          -3562,
+          -7155,
+          186,
+          4676,
+          4383,
+          3906
+        ],
+        "sha256": "ef8253f1564ce69922df5c1c8304021ffda58f76acfa829620b9d7b9cb04e089",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_a_after_cancel",
+      "evidence_sha256": {
+        "result.json": "2c6dbfb70e736540849c6188e11dadcdc5713eef6d554a3afa683a15edae4ec0",
+        "uart.txt": "56a0c5130dedb821bf5bbb464f69fdbbe8ae79ce9d7621f65c2ce5846aff9cb1",
+        "uart_events.json": "cb4fcc40236400358299bd241106254da872e252a03be03004d08396897865f1",
+        "dump.txt": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "11",
+        "config_epoch": "12",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "0",
+        "first": "2950",
+        "last": "-5939"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          2950,
+          -4882,
+          712,
+          434,
+          5966,
+          2207,
+          -7183,
+          -6071
+        ],
+        "last": [
+          6621,
+          1425,
+          869,
+          -4452,
+          4414,
+          2019,
+          4243,
+          -5939
+        ],
+        "sha256": "df197df1acb67d3a7d6949a15e9bbb062b487e674ab304b3d1786861485dc3a7",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_a_after_normal",
+      "evidence_sha256": {
+        "result.json": "579efff1dd553d8376c5e3a23aca024764d2759cf0dc21519beb048bc25c8c27",
+        "uart.txt": "b260b29acbe7021edacb891a5dd1c3c27da3e7116e0493622cde48fd1afb2da1",
+        "uart_events.json": "f1875e8ed07077c0216458938dc663cfb272cab49ed47bf2d5b61009e59d9d64",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "1",
+        "config_epoch": "2",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "0",
+        "first": "836",
+        "last": "4181"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          836,
+          -6595,
+          526,
+          -3467,
+          -530,
+          -2582,
+          3326,
+          -6504
+        ],
+        "last": [
+          3194,
+          1053,
+          -6934,
+          -1060,
+          -5164,
+          6652,
+          3376,
+          4181
+        ],
+        "sha256": "d15b8683072b6dc959684e3580afcffb3aaff594777f920cc67e11dabee24436",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_a_k0",
+      "evidence_sha256": {
+        "result.json": "1f26e115b6e98fdb61f3162aa85754abda912c93840c99d0199ae49ac960989e",
+        "uart.txt": "81aa5944fcd62eb744adebdd3a1a5239c1a853abc06dd0a80a58875e9f0ad5db",
+        "uart_events.json": "8ea49c2150490bcca7311e78c5bdf74fdb09c3ad7a020ed8b1c82b4f79793b33",
+        "dump.txt": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 1
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "2",
+        "config_epoch": "3",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "1",
+        "first": "3625",
+        "last": "-2613"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          3625,
+          8010,
+          -3701,
+          2455,
+          -6405,
+          -3639,
+          6357,
+          155
+        ],
+        "last": [
+          -364,
+          -7402,
+          4911,
+          3574,
+          -7278,
+          -3670,
+          310,
+          -2613
+        ],
+        "sha256": "53b993abc7f85767ff267fae8ba640eaafd8ca6b369a73f01fb061720dc9c84a",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_a_k1",
+      "evidence_sha256": {
+        "result.json": "061e71a4ba00d88c92b70137b0f261e435791cf7e98d66dba5a615460fd412a4",
+        "uart.txt": "ef8ab9521bed139cd7b24f0519b73824da308e598cf12fb253db7eaa10ab398c",
+        "uart_events.json": "0c1691ac570ba3d3484460ed8abf7edfb2ea1bc37b8b12fa0cf4a076fbdca61f",
+        "dump.txt": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 2
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "3",
+        "config_epoch": "4",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "2",
+        "first": "-331",
+        "last": "5097"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          -331,
+          -5193,
+          31,
+          -1952,
+          3823,
+          -4979,
+          6955,
+          -2846
+        ],
+        "last": [
+          5999,
+          62,
+          -3903,
+          7647,
+          6427,
+          -2474,
+          -5691,
+          5097
+        ],
+        "sha256": "a1ce61282ec68ff81ac291353b8a1aff3c196ee2ee8a46953c7f2289c89450e0",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_a_k2",
+      "evidence_sha256": {
+        "result.json": "1234b2d5c377ec73274c16ef593da156a7b054f63ac2b2628d07212cdfe0baea",
+        "uart.txt": "ee4babb8a2d8405e6d3891dfdfcfac4034fdca84e882997d4eb26864d2a7a49b",
+        "uart_events.json": "09cb6e84399e530323e2bfb6f04128a4a0f7c1203cbb16f548a6c58d053a2952",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 3
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "4",
+        "config_epoch": "5",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "3",
+        "first": "279",
+        "last": "5002"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          279,
+          -662,
+          5999,
+          62,
+          -3903,
+          7647,
+          6427,
+          -2474
+        ],
+        "last": [
+          -1324,
+          -4386,
+          124,
+          -7805,
+          -1089,
+          -3529,
+          -4948,
+          5002
+        ],
+        "sha256": "a03a4e47ae89817ad94e466d1e57c1a7807312c47cb9591092f2778f64d8cbd1",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_a_k3",
+      "evidence_sha256": {
+        "result.json": "a89d8c0380f99f1df72878400acca1ad2d1f29eca823730d62fa028dde7868d4",
+        "uart.txt": "83871af10bd00217c5f8ac5cc88f8668d63cac910e1bf15a96fddf1c53c16e3d",
+        "uart_events.json": "501fdb22a294464d68532017a4c29801a0fc7553bb7165d9c2a394c84503e847",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 1,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "5",
+        "config_epoch": "6",
+        "source": "ADC_TEST",
+        "channel": "1",
+        "k": "0",
+        "first": "5461",
+        "last": "5461"
+      },
+      "independent_ddr_check": {
+        "kind": "checker",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": 5461,
+        "maximum": 5461,
+        "unique_codes": 1,
+        "first": [
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461
+        ],
+        "last": [
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461
+        ],
+        "sha256": "b6cd98f405dc0e6dac777fd3bbeb211b1d025267b156b79a4515b93e8f53fddb",
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_b_k0",
+      "evidence_sha256": {
+        "result.json": "35fac0b41ec6887fced58dc56fa987268b75e6f380955f1e3b78894cf1a953f6",
+        "uart.txt": "4e588934b8a426cba23575437774f18bca703f38505b1caf8c5db290c60c5292",
+        "uart_events.json": "b2337bf10168a9f339b8a60fa42665b57ea8ab527ae0bbfa5595bbc86685a8f8",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 1,
+        "k": 1
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "6",
+        "config_epoch": "7",
+        "source": "ADC_TEST",
+        "channel": "1",
+        "k": "1",
+        "first": "-5462",
+        "last": "-5462"
+      },
+      "independent_ddr_check": {
+        "kind": "checker",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -5462,
+        "maximum": -5462,
+        "unique_codes": 1,
+        "first": [
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462
+        ],
+        "last": [
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462
+        ],
+        "sha256": "64e88ba23fdbf160cc78c88fff368767af950aaafc0267a1e9a5401d57db4bdb",
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_b_k1",
+      "evidence_sha256": {
+        "result.json": "97803e07e3ef4880136c14b35ccfe6435f5ac8c44ffd4e94d3a74f838ef61119",
+        "uart.txt": "e46d291625707a39a1cb3ac9e138f626e45180effb83baedfb933e6f67ee12cb",
+        "uart_events.json": "e51c39dcb80ea862096d8633f9cf49ed13fb3e98c18b459999f94f67c0107e83",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 1,
+        "k": 2
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "7",
+        "config_epoch": "8",
+        "source": "ADC_TEST",
+        "channel": "1",
+        "k": "2",
+        "first": "5461",
+        "last": "5461"
+      },
+      "independent_ddr_check": {
+        "kind": "checker",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": 5461,
+        "maximum": 5461,
+        "unique_codes": 1,
+        "first": [
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461
+        ],
+        "last": [
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461,
+          5461
+        ],
+        "sha256": "b6cd98f405dc0e6dac777fd3bbeb211b1d025267b156b79a4515b93e8f53fddb",
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_b_k2",
+      "evidence_sha256": {
+        "result.json": "58c616302b2110f57dfadc542099721db7bfe77fc2c30a491e03ac3758157961",
+        "uart.txt": "5314f9b7da3e2e7f0c47b55d5f7e1d68c21006461f282745bf27ade95e782ad3",
+        "uart_events.json": "c07e34fc0c0fd8a09892fba3b0109436c193634cbb0d370a9e391dcd04f826e7",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 1,
+        "k": 3
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "8",
+        "config_epoch": "9",
+        "source": "ADC_TEST",
+        "channel": "1",
+        "k": "3",
+        "first": "-5462",
+        "last": "-5462"
+      },
+      "independent_ddr_check": {
+        "kind": "checker",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -5462,
+        "maximum": -5462,
+        "unique_codes": 1,
+        "first": [
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462
+        ],
+        "last": [
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462,
+          -5462
+        ],
+        "sha256": "64e88ba23fdbf160cc78c88fff368767af950aaafc0267a1e9a5401d57db4bdb",
+        "pass": true
+      },
+      "id": "m2_r4c_20261027/training_b_k3",
+      "evidence_sha256": {
+        "result.json": "556203b7513eacc6ff1bb59c6e916b21115b57e686d2b36525f265203101bccd",
+        "uart.txt": "30b084cc75e5ca4089379c887dec045dac1321b439f0ff5ee18029220d8025d9",
+        "uart_events.json": "969a7d7e5251c34c48bf61a9936033e8127bea055b575b6b3e1e6f07f3e026ba",
+        "dump.txt": "56397717c31654b8873d8cf4a0f0496db19687066e6224891ea2e837a6ec9333"
+      }
+    },
+    {
+      "request": {
+        "mode": "training",
+        "channel": 0,
+        "k": 0
+      },
+      "uart_snapshot": {
+        "address": "0x011000c0",
+        "bytes": "262144",
+        "epoch": "1",
+        "config_epoch": "2",
+        "source": "ADC_TEST",
+        "channel": "0",
+        "k": "0",
+        "first": "2603",
+        "last": "1150"
+      },
+      "independent_ddr_check": {
+        "kind": "pn9",
+        "samples": 131072,
+        "invalid_sign_extension": 0,
+        "minimum": -8177,
+        "maximum": 8175,
+        "unique_codes": 511,
+        "first": [
+          2603,
+          960,
+          1208,
+          3790,
+          -7124,
+          2075,
+          372,
+          -7031
+        ],
+        "last": [
+          1920,
+          2416,
+          7581,
+          2137,
+          4150,
+          745,
+          2323,
+          1150
+        ],
+        "sha256": "c94ec2e6985e8df6f3b43529491e8353afa6ceda9686dd21bdbad72eb0bb5d86",
+        "pn9_mismatches": 0,
+        "invalid_pn_words": 0,
+        "zero_states": 0,
+        "toggle_mask": "0x3fff",
+        "step_bits": 60,
+        "pass": true
+      },
+      "id": "m2_r4c_reload_20261027/training_a_k0",
+      "evidence_sha256": {
+        "result.json": "11fa5c52d2f6e16640fc8263fc0656c58d8078084c38e63905856c334a2d4199",
+        "uart.txt": "1853df76cbeb8bb812b69642e06be420f7ecbb95ad19d42711dc49b5b59f564e",
+        "uart_events.json": "bbf64fddd66107c6135235b4ad7f95f218d0e81c9d08693a88cf583a47a346be",
+        "dump.txt": "8f5b3e90ff909a7141a6f632e252d2711d53c0e1e4fc82a009cf99e10e54d6a3"
+      }
+    }
+  ],
+  "uart_evidence": {
+    "boot.txt": {
+      "sha256": "68f8ffa6520b180171c4bf9576221ab0dea391e07ddec0588f2c9d061744603c",
+      "bytes": 168
+    },
+    "load.txt": {
+      "sha256": "d587c4e24dcc0f9f8690800e9c6e92bc661b2f1c784772d7009de9d4815b4fbf",
+      "bytes": 906
+    },
+    "selftests.txt": {
+      "sha256": "4061cb2d1d0483b2a435aa5fd07753a323a5d869956f4a703dcfdaafd395821c",
+      "bytes": 800
+    },
+    "cancel.txt": {
+      "sha256": "a4078152c44ecc946624a8ba56f190e43b81bc845c137b14b6aa5dff00956e2f",
+      "bytes": 390
+    },
+    "gui_full.txt": {
+      "sha256": "85999bca1b1d6c34efed39ae9d7c884dbf7430ebcd510f0b9cdac43c54bbc3fc",
+      "bytes": 2793
+    },
+    "gui_full_state.json": {
+      "sha256": "623bee1d7baceb4cc24e3efe858aafb8f2bcc20dac8e0cae886a5c323bcedbe0",
+      "bytes": 430
+    }
+  },
+  "limitations": [
+    "No external 100.5 MHz signal or command reception has been verified.",
+    "Normal snapshots check format and mode switching only.",
+    "MDIO PHY identity is unresolved; Ethernet link, UDP ACK and relay RF changes are not accepted.",
+    "Nominal clocks do not establish calibrated sample frequency or voltage/temperature margin.",
+    "Block demodulation is not gapless real-time processing; no boot-media or long-run acceptance."
+  ]
+}
