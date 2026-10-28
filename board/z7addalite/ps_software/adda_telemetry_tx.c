@@ -130,21 +130,32 @@ int atm_tx_clear(struct atm_tx *t)
 int atm_tx_send(struct atm_tx *t,const struct aps_state *s,uint32_t now)
 {
 #if ADDA_TM_TX_ENABLED
-    uint8_t burst[ATM_BUFFER_BYTES];uint32_t status,diag;unsigned i;int rc;
+    uint8_t burst[ATM_BUFFER_BYTES];int rc;
     if(!t || !s)return AP_EARG;
+    rc=atm_burst(s,t->sequence,now,burst,sizeof(burst));if(rc<0)return rc;
+    rc=atm_tx_send_burst(t,burst,ATM_BURST_BYTES,now);
+    if(rc==AP_OK)++t->sequence;
+    return rc;
+#else
+    (void)t;(void)s;(void)now;return ATM_TX_DISABLED;
+#endif
+}
+int atm_tx_send_burst(struct atm_tx *t,const uint8_t *burst,size_t length,uint32_t now)
+{
+#if ADDA_TM_TX_ENABLED
+    uint32_t status,diag;unsigned i;int rc;
+    if(!t || !burst || length!=ATM_BURST_BYTES)return AP_EARG;
     if(t->pending || t->stopping)return AP_EBUSY;
     rc=atm_tx_status(t,&status,&diag);if(rc<0)return rc;
-    if(status&197u)return AP_EBUSY;
-    rc=atm_burst(s,t->sequence,now,burst,sizeof(burst));if(rc<0)return rc;
-    if(rc*8>4096 || rc!=(int)ATM_BURST_BYTES)return AP_ELENGTH;
+    if((status&197u) || diag)return AP_EBUSY;
     rc=atm_tx_clear(t);if(rc<0)return rc;
     for(i=0;i<ATM_BURST_BYTES/4u;++i)if(wr(t,12,atm_word(burst,ATM_BURST_BYTES,i))<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
     if(wr(t,16,ATM_BURST_BYTES*8u)<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
     t->io.barrier(t->io.context);
     if(wr(t,20,1u)<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
-    t->io.barrier(t->io.context);t->pending=1u;t->started_ms=now;++t->sequence;return AP_OK;
+    t->io.barrier(t->io.context);t->pending=1u;t->started_ms=now;return AP_OK;
 #else
-    (void)t;(void)s;(void)now;return ATM_TX_DISABLED;
+    (void)t;(void)burst;(void)length;(void)now;return ATM_TX_DISABLED;
 #endif
 }
 int atm_tx_poll(struct atm_tx *t,unsigned ready,uint32_t now)

@@ -1,0 +1,233 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "be8b39ccdbebefe521d8baa6ada576e177482107",
+  "scope": "Autonomous bounded ADC_NORMAL -> UDP/ACK -> DAC RF reply, source-only V2 GUI",
+  "firmware_changed": true,
+  "pl_changed": false,
+  "flash_sd_written": false,
+  "business_concurrent": false,
+  "gui_live_transactions": 1,
+  "successful_transactions": 3,
+  "crc_valid_frames": 23,
+  "cases": [
+    {
+      "entry": "controller",
+      "requested": {
+        "rx_mhz": 900,
+        "tx_mhz": 1001,
+        "air_seq": 0
+      },
+      "ack": {
+        "rx_hz": 900000000,
+        "tx_hz": 1000999998,
+        "udp_seq": 1
+      },
+      "events": [
+        1,
+        2,
+        3
+      ],
+      "snapshot_sequence": 0,
+      "frame_count": 7,
+      "elapsed_seconds": 72.65856879999774,
+      "independent_spi": {
+        "relay_rx_hz_readback": 900000000,
+        "relay_tx_hz_readback": 1000999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "iq_recheck": {
+        "path": "D:\\RelayTools\\work\\tc_autonomous_20261028\\acceptance01\\ground\\command_0001",
+        "passed": true,
+        "frame_count": 7,
+        "sha256": "4b7b6395194c4f8173f542ece92a3073b21ea537da1c9b13fa0b7d0c9edb4b0d",
+        "iq_bytes": 1048576,
+        "rms_codes": 27.668778541882833,
+        "clip_components": 0
+      },
+      "frequency_source": "relay_ack_in_rf_return"
+    },
+    {
+      "entry": "controller",
+      "requested": {
+        "rx_mhz": 900,
+        "tx_mhz": 1000,
+        "air_seq": 1
+      },
+      "ack": {
+        "rx_hz": 900000000,
+        "tx_hz": 1000000000,
+        "udp_seq": 2
+      },
+      "events": [
+        4,
+        5,
+        6
+      ],
+      "snapshot_sequence": 1,
+      "frame_count": 8,
+      "elapsed_seconds": 71.41720090000308,
+      "independent_spi": {
+        "relay_rx_hz_readback": 900000000,
+        "relay_tx_hz_readback": 1000000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "iq_recheck": {
+        "path": "D:\\RelayTools\\work\\tc_autonomous_20261028\\acceptance01\\ground\\command_0002",
+        "passed": true,
+        "frame_count": 8,
+        "sha256": "c7fc8a88ad910b361aafb602f6e1c4ef9053e1b3a875c4399de2d3797ff999de",
+        "iq_bytes": 1048576,
+        "rms_codes": 26.75152833084287,
+        "clip_components": 0
+      },
+      "frequency_source": "relay_ack_in_rf_return"
+    },
+    {
+      "entry": "gui",
+      "requested": {
+        "rx_mhz": 900,
+        "tx_mhz": 1001,
+        "air_seq": 0
+      },
+      "ack": {
+        "rx_hz": 900000000,
+        "tx_hz": 1000999998,
+        "udp_seq": 3
+      },
+      "events": [
+        7,
+        8,
+        9
+      ],
+      "snapshot_sequence": 2,
+      "frame_count": 8,
+      "elapsed_seconds": 71.58488360000047,
+      "independent_spi": {
+        "relay_rx_hz_readback": 900000000,
+        "relay_tx_hz_readback": 1000999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "iq_recheck": {
+        "path": "C:\\Users\\Lu\\CCSDSGroundStation\\sessions\\20261029_001208_tc_1c92fed4\\command_0001",
+        "passed": true,
+        "frame_count": 8,
+        "sha256": "6a70129b0ade3b8aa3b139f24f7ab31c2603124e1418de9f1ffc889f2afc824b",
+        "iq_bytes": 1048576,
+        "rms_codes": 26.712227793811884,
+        "clip_components": 0
+      },
+      "frequency_source": "relay_ack_in_rf_return"
+    }
+  ],
+  "tests": {
+    "ground_station": 218,
+    "capture_controller_assertions": 11216,
+    "service_mock": "PASS",
+    "telemetry_enabled_disabled_mock": "PASS",
+    "arm_elf_link": "PASS",
+    "iq_independent_redecode": "PASS",
+    "artifact_source_hash_match": "PASS"
+  },
+  "service_limits": {
+    "lease_ms": 600000,
+    "transactions": 16,
+    "reply_delay_ms": 3000,
+    "reply_window_ms": 20000,
+    "reply_limit": 400
+  },
+  "firmware": {
+    "elf_sha256": "f9e152552fe4f51b47a62512ebef550f535cbb8197918acf0108a6e64762b4a5",
+    "bit_sha256": "1cfd233356baf7cd06715cf9ca638ac96d487b78d849e3ce660ca24386095fba",
+    "ps7_init_sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205"
+  },
+  "final_state": {
+    "before_cleanup_service": [
+      "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=0 udp_seq=3 reply_seq=2 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+      "CLI_RESULT rc=0"
+    ],
+    "service": [
+      "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=0 udp_seq=3 reply_seq=2 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+      "CLI_RESULT rc=0"
+    ],
+    "telemetry": {
+      "uptime_ms": 1123226,
+      "events": 9,
+      "network": 0,
+      "armed": 0,
+      "pending": 0,
+      "decoded": 3,
+      "applied": 3,
+      "failures": 0,
+      "d_valid": 1,
+      "d_event": 7,
+      "d_origin": 1,
+      "d_air_seq": 0,
+      "d_rx_mhz": 900,
+      "d_tx_mhz": 1001,
+      "s_valid": 1,
+      "s_event": 8,
+      "s_origin": 1,
+      "s_air_seq": 0,
+      "s_rx_mhz": 900,
+      "s_tx_mhz": 1001,
+      "s_udp_seq": 3,
+      "s_count": 1,
+      "s_rc": 0,
+      "a_valid": 1,
+      "a_event": 9,
+      "a_origin": 1,
+      "a_air_seq": 0,
+      "a_rx_mhz": 900,
+      "a_tx_mhz": 1001,
+      "a_udp_seq": 3,
+      "a_rc": 0,
+      "a_rx_hz": 900000000,
+      "a_tx_hz": 1000999998,
+      "spi_valid": 0
+    },
+    "dac": {
+      "enabled": 1,
+      "seq": 3,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    },
+    "source": {
+      "tx_powerdown": "1",
+      "rx_buffer": "0",
+      "tx_buffer": "0"
+    },
+    "receiver": {
+      "tx_powerdown": "1",
+      "rx_buffer": "0",
+      "tx_buffer": "0"
+    }
+  },
+  "final_relay_spi": {
+    "relay_rx_hz_readback": 900000000,
+    "relay_tx_hz_readback": 1000999998,
+    "relay_tx_atten_db_readback": 89,
+    "relay_rx_gain_db_readback": 0
+  },
+  "limitations": [
+    "Finite commissioned service; no persistent boot",
+    "V2 text windows still review-only",
+    "Online RX LO 900/901, TX LO 1000/1001 MHz only; no arbitrary-Hz air protocol",
+    "USB/Linux current-session identity, not permanent device authentication",
+    "CRC/sequence association is not cryptographic authentication",
+    "No business concurrency or six-link acceptance"
+  ],
+  "archive": {
+    "path": "D:\\RelayTools\\releases\\telecontrol_autonomous_20261029.zip",
+    "sha256": "ea47d65ee31422d76116f3319865888efe1647351770e2b508c71575c2980852",
+    "bytes": 2685249,
+    "files": 61
+  }
+}

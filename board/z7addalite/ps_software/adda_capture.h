@@ -48,6 +48,9 @@ int ac_start(struct ac_capture *, uint32_t mode, unsigned channel, unsigned k,
               uint32_t now_ms);
 void ac_poll(struct ac_capture *, uint32_t now_ms);
 void ac_cancel(struct ac_capture *, uint32_t now_ms);
+/* Explicit service restart only: clear the local CANCEL terminal state after
+ * read-only identity and PL-IDLE checks. Never clears a real capture fault. */
+int ac_recover_cancel(struct ac_capture *);
 int ac_busy(const struct ac_capture *);
 /* True only after validated BRAM copy AND acknowledged release to IDLE. */
 int ac_normal_ready(const struct ac_capture *);

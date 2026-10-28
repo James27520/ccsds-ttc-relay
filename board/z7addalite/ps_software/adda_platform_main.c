@@ -5,6 +5,7 @@
 #include "adda_controller.h"
 #include "adda_pattern_check.h"
 #include "adda_telemetry_tx.h"
+#include "adda_service.h"
 #include "xparameters.h"
 #include "xuartps.h"
 #include "xuartps_hw.h"
@@ -32,6 +33,7 @@ static struct aps_state core;
 static struct ac_capture capture;
 static struct act_controller controller;
 static struct atm_tx telemetry_tx;
+static struct asv_service service;
 static int16_t adc_samples[TC_SAMPLE_COUNT] __attribute__((aligned(64)));
 static XUartPs uart;
 static XScuGic gic;
@@ -120,6 +122,7 @@ static int network_on(void)
 }
 static void network_off(void)
 {
+    (void)asv_stop(&service,ASV_USER,clock_ms(0));
     (void)atm_tx_stop(&telemetry_tx);
     network_enabled=0u;controller.automatic=0u;core.armed=0u;aps_set_network_ready(&core,0u);
     if(network_initialized)netif_set_down(&network);
@@ -138,8 +141,18 @@ static void network_poll(void)
 }
 static void line_command(char *line)
 {
-    int rc;char text[160];
-    if(!strcmp(line,"network on"))rc=network_on();
+    int rc,cancel_rc=AP_OK;char text[384];
+    if(asv_cancel_command(line))cancel_rc=asv_stop(&service,ASV_USER,clock_ms(0));
+    if(!strcmp(line,"service status")) {
+        rc=asv_status(&service,clock_ms(0),text,sizeof(text));
+        if(rc>=0){uart_log(0,text);rc=AP_OK;}
+    }
+    else if(!strcmp(line,"service on"))rc=asv_start(&service,clock_ms(0));
+    else if(!strcmp(line,"service off"))rc=asv_stop(&service,ASV_USER,clock_ms(0));
+    else if(!asv_command_allowed(&service,line)) {
+        uart_log(0,"SERVICE_BUSY conflicting command rejected\r\n");rc=AP_EBUSY;
+    }
+    else if(!strcmp(line,"network on"))rc=network_on();
     else if(!strcmp(line,"network off")){network_off();rc=0;}
     else if(!strcmp(line,"tmstatus")) {
         uint32_t status=0u,diag=0u;
@@ -161,9 +174,10 @@ static void line_command(char *line)
     else if(!strcmp(line,"tmstop"))rc=atm_tx_stop(&telemetry_tx);
     else if(!strcmp(line,"tmclear"))rc=atm_tx_clear(&telemetry_tx);
     else {
-        if(!strcmp(line,"help"))uart_log(0,"network on/off (explicit, startup OFF) | tmstatus (read only) | tmsend (one finite burst) | tmstop | tmclear (explicit stopped/fault recovery, idle only)\r\n");
+        if(!strcmp(line,"help"))uart_log(0,"network on/off | service on/off/status (600s,16 transactions,400 finite replies each) | tmstatus | tmsend | tmstop | tmclear (explicit idle recovery)\r\n");
         rc=act_command_line(&controller,line);
     }
+    if(cancel_rc<0)rc=cancel_rc;
     (void)snprintf(text,sizeof(text),"CLI_RESULT rc=%d\r\n",rc);uart_log(0,text);
 }
 int main(void)
@@ -184,7 +198,8 @@ int main(void)
     aps_init(&core,&io);ac_init(&capture,&mmio,&policy,adc_samples,TC_SAMPLE_COUNT);
     act_init(&controller,&core,ADDA_CAPTURE_ENABLED?&capture:0,&clock);
     (void)atm_tx_init(&telemetry_tx,&tm_io);
-    uart_log(0,ADDA_TM_TX_ENABLED?"TM_TX opt-in build; matching telemetry PL required; startup STOP, explicit tmsend only\r\n":
+    asv_init(&service,&controller,&telemetry_tx);
+    uart_log(0,ADDA_TM_TX_ENABLED?"TM_TX opt-in build; matching telemetry PL required; startup STOP, service OFF\r\n":
       "TM_TX disabled; DAC registers never accessed by this image\r\n");
     uart_log(0,ADDA_CAPTURE_ENABLED?
       "BOOT ADDA M2 candidate UART115200/8N1 capture=ENABLED no auto/network; matching final PL required\r\n":
@@ -204,6 +219,7 @@ int main(void)
                 if(used<sizeof(line)-1u && !discard)line[used++]=(char)ch;else discard=1u;
             } else discard=1u;
         }
+        asv_poll(&service,clock_ms(0));
         act_poll(&controller);
         if(capture.valid && capture.state==AC_READY && capture.snapshot.epoch!=published_epoch) {
             /* External debugger DDR reads do not snoop dirty CPU cache lines. */

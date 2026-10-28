@@ -24,7 +24,7 @@ linker=linker.replace('_IRQ_STACK_SIZE : 1024','_IRQ_STACK_SIZE : 16384')
 (OUT/'adda.ld').write_text(linker)
 incs=[BSP/'include',ROOT,ROOT/'../telecontrol_system/abi',ROOT/'../software/protocol',ROOT/'../software/demod',ROOT/'../software/fixtures/generated']
 flags=['-std=c99','-mcpu=cortex-a9','-mfpu=vfpv3','-mfloat-abi=hard','-O2','-g','-ffunction-sections','-fdata-sections','-Wall','-Wextra']+['-I'+str(p) for p in incs]
-sources=[ROOT/n for n in ['adda_platform_main.c','adda_ps_core.c','adda_capture.c','adda_controller.c','adda_pattern_check.c','adda_telemetry_tx.c',
+sources=[ROOT/n for n in ['adda_platform_main.c','adda_ps_core.c','adda_capture.c','adda_controller.c','adda_pattern_check.c','adda_telemetry_tx.c','adda_service.c',
  '../software/protocol/adda_protocol.c','../software/demod/adda_demod.c','../software/demod/adda_receiver.c','../software/fixtures/generated/waveform_fixture.c']]
 manifest={'hardware':args.hardware_note,'tm_tx_enabled':args.tm_tx_enabled,'files':{},'inputs':{},'sources':{},'bsp_verification':bsp_verification}
 for label,path in [('xsa',args.xsa),('ps7_init',args.ps_init),('bsp_manifest',BSP/'manifest.json'),('libxil',BSP/'libxil.a'),('liblwip4',BSP/'liblwip4.a'),('xparameters',BSP/'include/xparameters.h')]:

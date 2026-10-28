@@ -2,7 +2,7 @@
 
 本项目面向嵌入式芯片与系统设计竞赛，实现遥控指令接收、频率参数解析和业务信号变频转发。当前遥控板采用 **Z7ADDALite（Zynq-7020 + AD9643）**，由 PL 采集 ADC 数据、PS 执行 C 解调与指令处理，再通过以太网控制 **LDSDR 转发板**。
 
-截至 **2026-10-28**，已完成以下实板验证：
+截至 **2026-10-29**，已完成以下实板验证：
 
 - r4c ADC采集通过全通道、四个抽取位置的内部PN9/checker与独立DDR检查；板载ARM解调自测、网口1000 Mbps协商与PC ping 10/10通过。
 - 真实100.5 MHz指令经ADC_NORMAL、PS解调、UDP及匹配ACK控制LDSDR，独立SPI读回四组频率；[GUI启停及自动控制](docs/validation/2026-10-28-gui-loop.json)另已通过，GUI nettest按钮未实测。
@@ -15,7 +15,8 @@
 - [DAC下行数字实现与板端验证](docs/telemetry-downlink-validation.md)：新增90.5MHz有限状态发送链，完整ADC/DAC时序及板端配置读回、单次发送/取消、PN9和网口回归通过。
 - [测控下行SMA实收](docs/telemetry-rf-validation.md)：J6/DAC1经新增同轴连接SDR RX1A，三次有限发送恢复12个CRC正确帧、3份不同状态快照；五个停发窗口无有效帧。
 - [测控下行GUI采集](docs/telemetry-live-validation.md)：新增会话核验、单次有限发送与真实IQ接收解码，GUI一次约17秒；新增8个CRC正确帧、2份快照，静默对照及采集中关闭清理通过。该阶段返回已有UART网络测试记录。
-- [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。整笔事务使用独立验证入口，尚未合并为GUI一键操作。
+- [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。这是早期由台架工具逐步调度的验证。
+- [板端自主测控与第二版GUI](docs/telecontrol-autonomous-validation.md)：一次台架启用后，遥控板自主完成采样、解调、UDP和有限DAC回报；地面改频窗口只连接本地发送板。两笔控制器事务与一笔GUI操作共恢复23个CRC正确帧，独立SPI另行核对一致；单笔约71–73秒。第二版文本业务接入、全频率协议扩展及持久化启动尚未完成。
 
 结论限当前实物、第一路有线链和离散快照。文本使用实验帧，条件比特比较不是整体BER测量；不能据此宣称完整CCSDS协议符合性、24小时稳定性或无跨窗口漏帧。业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收；新接收板的TX与100.5 MHz能力尚未验证。
 

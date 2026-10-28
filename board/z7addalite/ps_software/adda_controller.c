@@ -18,6 +18,11 @@ static int decode(struct act_controller *c)
       ac_normal_ready(a)?"ADC_NORMAL":"ADC_TEST",(unsigned long)a->snapshot.epoch,rc,(unsigned long)(now(c)-start));
     log_text(c,text);c->consumed=1u;
     if(rc!=1)return rc==0?AP_ENOFRAME:AP_EARG;
+    if(c->filter) {
+        if(!ac_normal_ready(a))return AP_EARG;
+        rc=c->filter(c->filter_context,&frame,now(c));
+        if(rc!=AP_OK)return rc;
+    }
     /* This instant is intentionally not the start time of the slow decoder. */
     return aps_accept_decoded(c->core,&frame,ac_normal_ready(a)?APS_ADC_NORMAL:APS_ADC_TEST,now(c));
 }

@@ -39,6 +39,9 @@ int atm_tx_init(struct atm_tx *tx,const struct atm_io *io);
 int atm_tx_status(struct atm_tx *tx,uint32_t *status,uint32_t *diagnostic);
 int atm_tx_configuration(struct atm_tx *tx,uint32_t *flags,uint32_t *diagnostic);
 int atm_tx_send(struct atm_tx *tx,const struct aps_state *state,uint32_t now_ms);
+/* Submit already serialized immutable bytes; does NOT allocate a sequence.
+ * Autonomous service allocates once on its first successful submission. */
+int atm_tx_send_burst(struct atm_tx *tx,const uint8_t *burst,size_t length,uint32_t now_ms);
 int atm_tx_stop(struct atm_tx *tx);
 /* Explicit recovery of a stopped/faulted buffer; never clears while owned. */
 int atm_tx_clear(struct atm_tx *tx);

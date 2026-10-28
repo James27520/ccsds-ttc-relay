@@ -149,6 +149,13 @@ int main(void)
     for(i=0;i<70u;++i)ac_poll(&cap,model.ms++);CHECK(cap.state==AC_RELEASING && !cap.valid);
     ac_poll(&cap,model.ms+AC_TIMEOUT_MS);CHECK(cap.state==AC_ERROR && cap.error==AC_ETIMEOUT && !cap.valid);
     setup();arm(0);ac_cancel(&cap,model.ms++);drain();CHECK(!cap.valid && cap.error==AC_ECANCEL && model.release_count==1);
+    writes=model.writes;CHECK(ac_recover_cancel(&cap)==AC_OK && cap.state==AC_IDLE && !cap.valid && model.writes==writes);
+    CHECK(ac_recover_cancel(&cap)==AC_EARG);
+    setup();cap.state=AC_ERROR;cap.error=AC_ECANCEL;model.r[TC_REG_STATUS/4]=TC_PHASE_DONE;
+    writes=model.writes;CHECK(ac_recover_cancel(&cap)==AC_EBUSY && cap.state==AC_ERROR && model.writes==writes);
+    setup();cap.state=AC_ERROR;cap.error=AC_ECONFIG;CHECK(ac_recover_cancel(&cap)==AC_EARG && cap.error==AC_ECONFIG);
+    setup();cap.state=AC_ERROR;cap.error=AC_ECANCEL;model.fault_read=1;
+    CHECK(ac_recover_cancel(&cap)==AC_EBUS && cap.state==AC_ERROR);
     setup();CHECK(act_command_line(&ctrl,"auto on")==AP_EBUSY && !ctrl.automatic);
     CHECK(act_command_line(&ctrl,"capture normal 0 4")==AP_EARG);
     CHECK(act_command_line(&ctrl,"capture wrong")==AP_EARG);

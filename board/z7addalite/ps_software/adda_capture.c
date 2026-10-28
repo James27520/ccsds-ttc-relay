@@ -156,6 +156,16 @@ void ac_cancel(struct ac_capture *s,uint32_t now)
     if(phase==TC_PHASE_RELEASING){s->state=AC_RELEASING;s->phase_started_ms=now;return;}
     fail(s,AC_ECANCEL);
 }
+int ac_recover_cancel(struct ac_capture *s)
+{
+    uint32_t status;int rc;
+    if(!s || s->state!=AC_ERROR || s->error!=AC_ECANCEL)return AC_EARG;
+    rc=ac_probe(s);if(rc!=AC_OK)return rc;
+    if(!rd(s,TC_REG_STATUS,&status))return AC_EBUS;
+    if((status&TC_STATUS_PHASE_MASK)!=TC_PHASE_IDLE)return AC_EBUSY;
+    s->state=AC_IDLE;s->error=AC_OK;s->valid=0;
+    return AC_OK;
+}
 void ac_poll(struct ac_capture *s,uint32_t now)
 {
     uint32_t status,phase,epoch,training,word,end,i;int rc;struct ac_metadata check;

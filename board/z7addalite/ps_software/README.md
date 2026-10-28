@@ -1,5 +1,7 @@
 # Z7ADDALite PS 接收与转发
 
+2026-10-29新增 `adda_service.c` 有界自动测控服务，与 candidate04 ADC/DAC PL及 `--tm-tx-enabled` 构建配套。一次台架执行 `network on`、`service on` 后，板端自主完成ADC_NORMAL采样、C解调、UDP/ACK和有限DAC回报，不需要每笔下发capture/decode/tmsend。`service status`只读；`service off`取消并清理。启动默认关闭，服务限600秒/16笔事务，每个空口序号在本次服务中最多接受一次；ACK后延迟3秒，在20秒窗口内至多发送400次同一快照。停止、断网或异常不产生成功回报。实际GUI闭环与限制见[自主测控验证](../../../docs/telecontrol-autonomous-validation.md)，`build_service_tests.ps1`提供无硬件状态机测试。下方记录保留各历史阶段的适用边界。
+
 最新增加[DAC有限下行](../telemetry_downlink/README.md)配套驱动及ATM1二进制状态包。默认构建禁用新MMIO，仍兼容r4c；仅配套新PL时显式使用`build_platform.py --tm-tx-enabled`，输出名含`_tm`。命令为`tmstatus/tmsend/tmstop/tmclear`，启动停发，支持复位延后STOP与取消尾握手检查。本轮新PL/ELF已临时上板，结果及尚未完成的SMA接收见[DAC下行验证](../../../docs/telemetry-downlink-validation.md)。`build_telemetry_tests.ps1`覆盖启用/禁用驱动及ARM编译；`python -m unittest sw.tools.test_telemetry_downlink`从仓库根运行。
 
 2026-10-28更新：增加只读 `telemetry` 命令及[TM1状态帧](../../../docs/telemetry-status.md)，分别保留解码、发送、匹配ACK来源。新PS实板selftest、合成解调、内部PN9、三次UDP/ACK/SPI及网络关闭负例通过，见[本轮验收](../../../docs/station-speed-telemetry-validation.md)。该回传经DEBUG USB，未实现DAC射频下行；r4c PL不变。以下原有网络发布记录为历史证据，新的ELF与来源以本轮摘要为准。

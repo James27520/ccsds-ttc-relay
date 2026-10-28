@@ -9,6 +9,10 @@ struct act_controller {
     struct act_clock clock;
     unsigned automatic, consumed;
     enum ac_state reported_state;
+    /* Optional autonomous-service gate, before records or UDP are mutated.
+     * NULL preserves the existing manual/legacy auto behavior. */
+    void *filter_context;
+    int (*filter)(void *,const struct ap_frame_result *,uint32_t);
 };
 void act_init(struct act_controller *,struct aps_state *,struct ac_capture *,const struct act_clock *);
 /* Platform polls Ethernet/UART/timers before this cooperative iteration.
