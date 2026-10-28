@@ -4,6 +4,8 @@
 
 2026-10-29最新结果：[自主测控及V2改频GUI](telecontrol-autonomous-validation.md)、[V2文本业务GUI](business-v2-validation.md)。V2业务窗口只连接各自本地SDR，外部三板链已恢复两条控制器文本和一条GUI文本；原始IQ复核共53个CRC有效帧。30秒限时停发、停发负例及本地设备交接通过；转发模式和电平仍需预先准备，第二台电脑迁移和六线并发未验。机器可读数据见[业务摘要](validation/2026-10-29-business-v2.json)。
 
+同日新增[业务频率联动验证](validation/2026-10-29-frequency-link.json)：三组900.5/901.5输入、1000.5/1001.5输出业务测试恢复9个正确帧，另一次启动计数检查恢复6帧；261项软件测试通过。计划编辑与真实回读分离，收到真实当前遥控回报后只更新发送待应用计划。此轮转发板频率由台架设置，不能替代新版GUI射频遥控联动验收。启动阶段转发削顶计数有增量，稳定收发检查未继续增长，机制和瞬态消除仍待处理。远端转发启用还缺少显式协议、模式/电平回报及独立超时静音，详见[系统计划](six-link-system-plan.md#远端转发启用尚未纳入遥控协议)。
+
 最新真实ADC与业务分时验证见 [分时验证摘要](validation/2026-10-28-adc-business-staged.json)；独立接收板验证见 [独立接收摘要](validation/2026-10-28-independent-receiver.json)；业务序列与稳定性见 [稳定性验证摘要](validation/2026-10-28-rf-stability.json)；GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成

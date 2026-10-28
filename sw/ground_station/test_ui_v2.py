@@ -13,7 +13,7 @@ from .test_tc_evidence import evidence
 from ._tk_test_support import dispose_tk_test
 from .ui_v2 import ReviewSession, main
 from .ui_v2_model import (command_request, device_choices, frequency_plan,
-                         format_mhz, load_historical_transaction, text_bytes)
+                         format_mhz, load_historical_transaction, text_bytes, business_frequency_plan)
 
 
 PORTS = [dict(port='COM_A', description='USB A', vid=1027, pid=24592, serial='sender-unique'),
@@ -35,6 +35,14 @@ def history_fixture(directory):
 
 
 class ReviewDataTests(unittest.TestCase):
+    def test_authorized_business_profiles_keep_exact_centers_and_original_if(self):
+        for role,center,lo,offset in (('sender','900.5',900000000,500000),('sender','901.5',901000000,500000),
+                                     ('receiver','1000.5',1000750000,-250000),('receiver','1001.5',1001750000,-250000)):
+            self.assertEqual(business_frequency_plan(role,center),dict(center_hz=lo+offset,lo_hz=lo,offset_hz=offset))
+        for role,center in (('sender','902.5'),('sender','900.500001'),('receiver','1001.75'),
+                            ('receiver','NaN'),('control','900.5'),('sender',True)):
+            with self.subTest(role=role,center=center),self.assertRaises(ValueError):
+                business_frequency_plan(role,center)
     def test_rf_center_is_converted_to_lo_without_label_substitution(self):
         self.assertEqual(command_request('900.5', '1001.5', 240),
                          dict(rx_mhz=900, tx_mhz=1001, air_seq=240))
@@ -356,7 +364,8 @@ class OnlineControlTests(unittest.TestCase):
         self.result(dict(request, air_seq=100))
         self.assertNotIn('成功', self.control.reply_title.get())
         self.result(request)
-        self.assertEqual(self.control.reply_title.get(), '执行成功 · 射频回报')
+        self.assertEqual(self.control.reply_title.get(), '改频成功')
+        self.assertIn('转发模式/电平未由本回报报告',self.control.reply_body.get())
         self.assertIn('FAKE_CAPTURE.iq', self.control.reply_body.get())
         self.assertNotIn('独立', self.control.reply_body.get())
         self.assertIsNone(self.control.active_request)

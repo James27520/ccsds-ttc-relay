@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "7b1e124a35a6c1d8fba7d60bfcd63251e3560c14",
+  "passed": true,
+  "scope": "Local business tuning and software-only telecontrol-to-plan UI linkage",
+  "firmware_changed": false,
+  "flash_sd_written": false,
+  "relay_setup_source": "explicit bench CLI",
+  "rf_telecontrol_tested_this_round": false,
+  "new_gui_real_telecontrol_linkage_tested": false,
+  "second_computer_tested": false,
+  "six_link_concurrent_tested": false,
+  "cases": [
+    {
+      "input_center_mhz": 900.5,
+      "output_center_mhz": 1000.5,
+      "sender_lo_readback_hz": 900000000,
+      "receiver_lo_readback_hz": 1000749998,
+      "carrier_hz": 1000500088.4961755,
+      "valid_frames": 3,
+      "text": "900.5 to 1000.5 / 1",
+      "message_id": "29e92e7b:0000",
+      "submit_to_first_decode_seconds": 23.408652782440186,
+      "quiet_configuration_checks_passed": true
+    },
+    {
+      "input_center_mhz": 901.5,
+      "output_center_mhz": 1000.5,
+      "sender_lo_readback_hz": 900999998,
+      "receiver_lo_readback_hz": 1000749998,
+      "carrier_hz": 1000500090.6885201,
+      "valid_frames": 3,
+      "text": "901.5 to 1000.5 / 2",
+      "message_id": "2da04bc5:0000",
+      "submit_to_first_decode_seconds": 23.37753438949585,
+      "quiet_configuration_checks_passed": true
+    },
+    {
+      "input_center_mhz": 901.5,
+      "output_center_mhz": 1001.5,
+      "sender_lo_readback_hz": 900999998,
+      "receiver_lo_readback_hz": 1001750000,
+      "carrier_hz": 1001500093.5464619,
+      "valid_frames": 3,
+      "text": "901.5 to 1001.5 / 3",
+      "message_id": "931252a4:0000",
+      "submit_to_first_decode_seconds": 23.418381929397583,
+      "quiet_configuration_checks_passed": true
+    }
+  ],
+  "matrix_redecode": {
+    "windows": 24,
+    "valid_frames": 9
+  },
+  "startup_investigation": {
+    "muted_lo_gain_changes_clip_delta": 0,
+    "source_start_clip_delta": 266317,
+    "stable_signal_clip_delta": 0,
+    "source_stop_clip_delta": 0,
+    "redecode_windows": 9,
+    "redecode_frames": 6,
+    "internal_cause_confirmed": false,
+    "startup_transient_fixed": false
+  },
+  "tests": {
+    "ground_station": 261,
+    "targeted_subset": 78,
+    "failures": 0
+  },
+  "gui": {
+    "three_window_layout_checked": true,
+    "preview_connected_hardware": false,
+    "clean_close": true,
+    "stderr_empty": true
+  },
+  "final_state": {
+    "endpoints": [
+      {
+        "role": "sender",
+        "port": "COM19",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "receiver",
+        "port": "COM17",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ],
+    "relay": {
+      "relay_rx_hz_readback": 900000000,
+      "relay_tx_hz_readback": 1000999998,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "relay_mode": "2",
+    "adda_service": [
+      "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=0 udp_seq=3 reply_seq=2 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+      "CLI_RESULT rc=0"
+    ],
+    "adda_dac": {
+      "enabled": 1,
+      "seq": 3,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    }
+  },
+  "remaining": [
+    "new GUI real RF result to business plan acceptance",
+    "explicit remote relay enable protocol and feedback",
+    "remote relay enable lease and duplicate handling",
+    "source startup saturation transient"
+  ],
+  "evidence": {
+    "local_work": "D:\\RelayTools\\work\\frequency_link_20261029",
+    "archive": "D:\\RelayTools\\releases\\frequency_link_20261029.zip",
+    "bytes": 1773164,
+    "sha256": "48817cb0ba32ca2f0fbdd8eda40e26eec259b8160820d2380dde10a4ad642400",
+    "manifest_sha256": "1ffa35b4637b0fd2bdde22117342a7729bd20fa67e1f2c3a224f81a48d53c2df"
+  }
+}

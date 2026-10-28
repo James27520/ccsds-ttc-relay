@@ -18,6 +18,7 @@ from .rf_session import SessionRxConsole, _usb_identity, _USB_KEYS
 from .rf_live import Cancelled
 from .tc_hardware import CommandSource
 from .transport import Console
+from .ui_v2_model import business_frequency_plan
 
 
 def _verify_runtime_binding(c):
@@ -47,7 +48,7 @@ class BusinessSource(CommandSource):
         if not self.owned or self._closed:
             raise RuntimeError('业务发送会话未取得控制')
         allowed = {
-            'out_altvoltage1_TX_LO_frequency': {'900000000'},
+            'out_altvoltage1_TX_LO_frequency': {'900000000', '901000000'},
             'out_altvoltage1_TX_LO_powerdown': {'1'},
             'out_voltage_sampling_frequency': {'2500000'},
             'out_voltage_rf_bandwidth': {'3000000'},
@@ -62,14 +63,33 @@ class BusinessSource(CommandSource):
         _verify_runtime_binding(self)
         return Console.write(self, path, value, tolerance)
 
-    def prepare_message(self, text, session, sequence, attenuation_db, check_cancel):
+    def apply_frequency(self, lo_hz, check_cancel):
+        """Explicit local tuning while muted; never starts a DMA or TX guard."""
+        if type(lo_hz) is not int or lo_hz not in (900000000, 901000000):
+            raise ValueError('业务本振仅支持900/901 MHz')
+        self.verify_binding()
+        self.require_idle()
+        if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
+            raise RuntimeError('应用业务频率前本地TX必须关闭')
+        check_cancel()
+        self.owned = True
+        self.mute()
+        check_cancel()
+        got = int(self.write(self.phy+'/out_altvoltage1_TX_LO_frequency', lo_hz, 10))
+        if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
+            raise RuntimeError('本地静音状态未保持')
+        return got
+
+    def prepare_message(self, text, session, sequence, attenuation_db, check_cancel, *, tx_rf_mhz=900.5):
+        plan = business_frequency_plan('sender', tx_rf_mhz)
         if type(attenuation_db) is not int or not 50 <= attenuation_db <= 89:
             raise ValueError('发射衰减须为50–89 dB整数')
         iq, manifest = generate_message_iq(text, session, sequence)
         raw = iq.tobytes()
-        manifest = dict(manifest, sha256=hashlib.sha256(raw).hexdigest())
+        manifest = dict(manifest, sha256=hashlib.sha256(raw).hexdigest(),
+                        business_center_hz=plan['center_hz'], business_lo_hz=plan['lo_hz'])
         self.remote = '/tmp/business_tx_'+uuid.uuid4().hex[:12]
-        self._prepare_waveform(raw, manifest, lo_hz=900000000,
+        self._prepare_waveform(raw, manifest, lo_hz=plan['lo_hz'],
                                attenuation_db=attenuation_db, block_samples=len(iq),
                                check_cancel=check_cancel)
         return manifest
@@ -93,7 +113,7 @@ class BusinessReceiver(SessionRxConsole):
             self.phy+'/in_voltage0_gain_control_mode': {'manual'},
             self.phy+'/in_voltage0_hardwaregain': {'30'},
             self.phy+'/in_voltage0_rf_port_select': {'A_BALANCED'},
-            self.phy+'/out_altvoltage0_RX_LO_frequency': {'1000750000'},
+            self.phy+'/out_altvoltage0_RX_LO_frequency': {'1000750000', '1001750000'},
             self.phy+'/out_altvoltage1_TX_LO_powerdown': {'1'},
             self.phy+'/out_voltage0_hardwaregain': {'-89'},
             self.phy+'/out_voltage1_hardwaregain': {'-89'},
@@ -147,25 +167,29 @@ class BusinessController(StationController):
         self.configured = False
         if self.role == 'sender':
             attenuation = self._finite(values.get('tx_atten_db', 50))
-            if attenuation != int(attenuation) or not 50 <= attenuation <= 89 or set(values)-{'tx_atten_db'}:
-                raise ValueError('当前业务发送仅允许50–89 dB整数衰减')
-            # No remote relay settings, and no local LO change until prepare/send.
-            self.settings = dict(tx_lo_mhz_requested=900, tx_atten_db_requested=int(attenuation),
-                                 sample_rate_hz=FS, expected_rf_hz=900500000)
+            if attenuation != int(attenuation) or not 50 <= attenuation <= 89 or set(values)-{'tx_atten_db', 'tx_rf_mhz'}:
+                raise ValueError('业务发送仅允许受限中心频率和50–89 dB整数衰减')
+            plan = business_frequency_plan('sender', values.get('tx_rf_mhz', 900.5))
+            got = c.apply_frequency(plan['lo_hz'], self._check_cancel)
+            self.settings = dict(tx_lo_mhz_requested=plan['lo_hz']/1e6, tx_lo_hz_readback=int(got),
+                                 tx_atten_db_requested=int(attenuation),
+                                 tx_atten_db_readback=-float(c.read(c.phy+'/out_voltage0_hardwaregain').split()[0]),
+                                 sample_rate_hz=FS, expected_rf_hz=plan['center_hz'])
         else:
             rf = self._finite(values.get('expected_rf_mhz', 1000.5))
-            if rf not in (1000.5, 1001.5) or set(values)-{'expected_rf_mhz'}:
+            if set(values)-{'expected_rf_mhz'}:
                 raise ValueError('本地接收目标只开放1000.5/1001.5 MHz')
+            plan = business_frequency_plan('receiver', rf)
             for name, value in [('in_voltage_sampling_frequency', FS), ('in_voltage_rf_bandwidth', 3000000),
                                 ('in_voltage0_gain_control_mode', 'manual'), ('in_voltage0_hardwaregain', 30),
                                 ('in_voltage0_rf_port_select', 'A_BALANCED')]:
                 self._check_cancel(); c.write(c.phy+'/'+name, value)
-            got = c.write(c.phy+'/out_altvoltage0_RX_LO_frequency', 1000750000, 10)
+            got = c.write(c.phy+'/out_altvoltage0_RX_LO_frequency', plan['lo_hz'], 10)
             for channel, index in [('voltage0','0'), ('voltage1','1')]:
                 if (c.read(c.rx+'/scan_elements/in_'+channel+'_type') != 'le:S12/16>>0' or
                         c.read(c.rx+'/scan_elements/in_'+channel+'_index') != index):
                     raise RuntimeError('接收I/Q格式不匹配')
-            self.settings = dict(rx_lo_mhz_requested=1000.75,rx_lo_hz_readback=int(got),
+            self.settings = dict(rx_lo_mhz_requested=plan['lo_hz']/1e6,rx_lo_hz_readback=int(got),
                                  expected_rf_mhz=rf,rx_gain_db_requested=30,rx_gain_db_readback=30,sample_rate_hz=FS)
         self._check_cancel()
         self.configured = True
@@ -188,7 +212,8 @@ class BusinessController(StationController):
         message_id = f'{self.session}:{sequence:04x}'
         self.status('busy', '正在准备本次文本波形，尚未发射')
         manifest = self.console.prepare_message(text, self.session, sequence,
-                                                self.settings['tx_atten_db_requested'], self._check_cancel)
+                                                self.settings['tx_atten_db_requested'], self._check_cancel,
+                                                tx_rf_mhz=self.settings['expected_rf_hz']/1e6)
         (self.log_dir/(message_id.replace(':','_')+'.tx.json')).write_text(
             json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
         self._check_cancel()
@@ -196,6 +221,8 @@ class BusinessController(StationController):
         self._check_cancel()
         self.settings.update(tx_lo_hz_readback=int(self.console.read(self.console.phy+'/out_altvoltage1_TX_LO_frequency')),
                              tx_atten_db_readback=-float(self.console.read(self.console.phy+'/out_voltage0_hardwaregain').split()[0]))
+        if abs(self.settings['tx_lo_hz_readback']-(self.settings['expected_rf_hz']-500000)) > 10:
+            raise RuntimeError('发送本地本振回读与已应用计划不符')
         self._check_cancel()
         self.active = True; self.last_guard_check = time.monotonic()
         self.event('settings', values=dict(self.settings))

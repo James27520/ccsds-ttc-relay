@@ -16,7 +16,8 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 
 from .ui_v2_model import (command_request, device_choices, format_mhz, frequency_plan,
-                         load_device_aliases, load_historical_transaction, simulated_reply, text_bytes)
+                         load_device_aliases, load_historical_transaction, simulated_reply, text_bytes,
+                         business_frequency_plan, BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS)
 
 
 BG = '#F4F6F8'
@@ -77,6 +78,8 @@ class ReviewSession:
         self.devices = {}
         self.aliases = load_device_aliases() if aliases is None else aliases
         self.next_sequence = 0
+        self.sender_center_plan = '900.5'
+        self.sender_plan_origin = '本地计划'
         self.online_control = online_control
         self.online_business = online_business
         self.business_controller_factory = business_controller_factory
@@ -196,6 +199,21 @@ class ReviewSession:
         page = self.windows.get(other)
         return other if page and page.live and page.local_claimed else None
 
+    def remember_rf_frequency_plan(self, request):
+        """Current RF success proposes a local TX plan; it never submits hardware work."""
+        plan = business_frequency_plan('sender', request['rx_mhz']+.5)
+        self.sender_center_plan = format_mhz(plan['center_hz'])
+        self.sender_plan_origin = '真实 RF 回报'
+        page = self.windows.get('sender')
+        if page and not page.closed and not page.closing:
+            page.setting_rf_plan = True
+            try:
+                page.business_plan_origin = '真实 RF 回报'
+                page.tx_rf.set(self.sender_center_plan)
+                page._refresh_business_plan()
+            finally:
+                page.setting_rf_plan = False
+
 
 class StationReview:
     def __init__(self, session, role):
@@ -212,6 +230,10 @@ class StationReview:
         self.business_tx_row = None
         self.business_capture_info = ''
         self.business_tx_ids = set()
+        self.business_applied_plan = self.business_config_request = None
+        self.business_plan_dirty = True
+        self.business_plan_origin = session.sender_plan_origin if role == 'sender' else '本地计划'
+        self.setting_rf_plan = False
         self.controller = None
         self.events = queue.Queue()
         self.online_state = 'disconnected'
@@ -306,7 +328,7 @@ class StationReview:
             label(self.details, '业务中心以本地本振回读 + 0.5 MHz 显示；不代表远端接收。' if self.business_online else '本振 900 MHz + 基带偏移 0.5 MHz = 业务中心 900.5 MHz。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
         elif self.role == 'receiver':
-            label(self.details, '本地接收本振 1000.75 MHz；计划增益 30 dB。频谱来自接收采样，未采集时不显示曲线。',
+            label(self.details, '本地接收本振=中心+0.25 MHz，增益30 dB；频谱仅来自本地接收采样。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
         else:
             self.mapping = tk.StringVar(self.window, '业务中心减去 0.5 MHz 为协议本振；当前报文的本振精度为 1 MHz。')
@@ -376,7 +398,9 @@ class StationReview:
                                       '断开连接' if self.local_claimed else '连接',
             state='normal' if available and self.controller is not None and
             (self.local_claimed or self.session.devices.get(self.selection.get())) else 'disabled')
-        ready = idle and self.business_configured and self.online_identity is not None
+        ready = idle and self.business_configured and not self.business_plan_dirty and self.online_identity is not None
+        self.business_apply_button.configure(state='normal' if idle and self.online_identity is not None and
+            self.online_state in ('ready', 'stopped') and self.business_plan_dirty else 'disabled')
         self.business_stop_button.configure(state='normal' if available and
             (self.business_pending is not None or self.online_state in ('transmitting', 'receiving')) else 'disabled')
         if self.role == 'sender':
@@ -388,9 +412,44 @@ class StationReview:
                 valid = False
             self.send_button.configure(state='normal' if ready and valid and self.online_state in ('ready', 'stopped', 'transmitting') else 'disabled')
             self.attenuation_spin.configure(state='readonly' if idle and self.online_state in ('disconnected', 'error', 'ready', 'stopped') else 'disabled')
+            self.tx_frequency_combo.configure(state='disabled' if self.closing else 'readonly')
         else:
             self.receive_button.configure(state='normal' if ready and self.online_state in ('ready', 'stopped') else 'disabled')
-            self.expected_combo.configure(state='readonly' if idle and self.online_state in ('disconnected', 'error', 'ready', 'stopped') else 'disabled')
+            self.expected_combo.configure(state='disabled' if self.closing else 'readonly')
+
+    def _business_plan_values(self):
+        center = self.tx_rf.get() if self.role == 'sender' else self.expected_rf.get()
+        plan = business_frequency_plan(self.role, center)
+        if self.role == 'receiver':
+            return dict(expected_rf_mhz=plan['center_hz']/1e6)
+        attenuation = int(self.attenuation.get())
+        if str(attenuation) != self.attenuation.get() or not 50 <= attenuation <= 89:
+            raise ValueError('发射衰减须为50–89 dB整数')
+        return dict(tx_rf_mhz=plan['center_hz']/1e6, tx_atten_db=attenuation)
+
+    def _refresh_business_plan(self, *_):
+        if self.closed or self.closing:
+            return
+        if not self.setting_rf_plan:
+            self.business_plan_origin = '本地编辑'
+        try:
+            plan = self._business_plan_values()
+            self.business_plan_dirty = plan != self.business_applied_plan
+            if self.role == 'sender':
+                self.session.sender_center_plan = self.tx_rf.get()
+                self.session.sender_plan_origin = self.business_plan_origin
+        except ValueError as error:
+            self.business_plan_dirty = True
+            self.business_note.set(str(error))
+        self.plan_status.set(('待应用 · ' if self.business_plan_dirty else '已应用 · ') + self.business_plan_origin)
+        if not self.business_online:
+            if self.role == 'sender':
+                self.sender_frequency.set(self.tx_rf.get())
+                self.sender_frequency_note.set('MHz / 待应用计划，尚未设备回读')
+            return
+        if self.business_plan_dirty:
+            self.business_note.set('计划已修改，尚未应用；当前任务保持原配置，停止后点击应用。')
+        self.session.update_online_controls()
 
     def _business_submit(self, action, **kwargs):
         try:
@@ -429,6 +488,9 @@ class StationReview:
         self.accept_connected = True
         self.online_identity = None
         self.business_configured = self.business_settings_seen = False
+        self.business_applied_plan = self.business_config_request = None
+        self.business_plan_dirty = True
+        self.plan_status.set('待应用 · '+self.business_plan_origin)
         self.business_pending = 'connect'
         self.online_state = 'connecting'
         self.business_accept_tx = self.business_accept_rx = False
@@ -444,22 +506,14 @@ class StationReview:
                 or self.business_pending not in (None, 'connect') or self.online_state in ('transmitting', 'receiving')):
             return
         try:
-            if self.role == 'sender':
-                value = int(self.attenuation.get())
-                if str(value) != self.attenuation.get() or not 50 <= value <= 89:
-                    raise ValueError('发射衰减须为 50–89 dB 整数')
-                values = dict(tx_atten_db=value)
-            else:
-                value = float(self.expected_rf.get())
-                if value not in (1000.5, 1001.5):
-                    raise ValueError('本地接收先验仅支持 1000.5 / 1001.5 MHz')
-                values = dict(expected_rf_mhz=value)
+            values = self._business_plan_values()
         except ValueError as error:
             self.business_configured = False
             self.business_note.set(str(error))
             self.update_business_controls()
             return
         self.business_configured = self.business_settings_seen = False
+        self.business_config_request = dict(values)
         self.business_pending = 'configure'
         self.online_state = 'busy'
         self.connection_status.set('●  配置本地设备')
@@ -469,6 +523,7 @@ class StationReview:
     def send_business(self):
         if (not self.business_online or self.role != 'sender' or self.closing or self.cancel_pending
                 or self.business_pending is not None or not self.business_configured or self.online_identity is None
+                or self.business_plan_dirty
                 or self.online_state not in ('ready', 'stopped', 'transmitting') or self.session.other_owner(self.role)):
             return
         text = self.message_input.get('1.0', 'end-1c')
@@ -488,6 +543,7 @@ class StationReview:
     def receive_business(self):
         if (not self.business_online or self.role != 'receiver' or self.closing or self.cancel_pending
                 or self.business_pending is not None or not self.business_configured or self.online_identity is None
+                or self.business_plan_dirty
                 or self.online_state not in ('ready', 'stopped')):
             return
         self.business_accept_rx = True
@@ -527,8 +583,8 @@ class StationReview:
 
     def _clear_business_readback(self):
         if self.role == 'sender':
-            self.sender_frequency.set('900.500')
-            self.sender_frequency_note.set('MHz / 计划中心 · 尚未设备回读')
+            self.sender_frequency.set('—')
+            self.sender_frequency_note.set('MHz / 本地实际中心 · 尚未回读')
             self.sender_readback.set('设备回读：—')
             self.attenuation_note.set('  本地配置尚未确认。')
         else:
@@ -544,6 +600,9 @@ class StationReview:
         self.accept_connected = self.cancel_pending = False
         self.business_accept_tx = self.business_accept_rx = False
         self.business_configured = self.business_settings_seen = False
+        self.business_applied_plan = self.business_config_request = None
+        self.business_plan_dirty = True
+        self.plan_status.set('待应用 · '+self.business_plan_origin)
         self.business_pending = None
         self.online_state = state
         self.connection_status.set('●  业务异常 · 已断开' if state == 'error' else '●  未连接')
@@ -591,10 +650,6 @@ class StationReview:
                 return
             values = event.get('values', {})
             if self.role == 'sender':
-                if values.get('configured') is True:
-                    self.business_settings_seen = True
-                    if 'tx_lo_hz_readback' not in values:
-                        self.attenuation_note.set('  发送配置已登记；实际 LO / 衰减待发送后回读。')
                 lo = values.get('tx_lo_hz_readback')
                 if self._finite_business(lo):
                     self.sender_frequency.set(f'{(lo+500_000)/1e6:.3f}')
@@ -606,8 +661,10 @@ class StationReview:
                 lo = values.get('rx_lo_hz_readback')
                 if self._finite_business(lo):
                     self.receiver_plan_note.set(f'本地 LO {lo/1e6:.3f} MHz\n先验 {values.get("expected_rf_mhz", self.expected_rf.get())} MHz · 远端状态未知')
-                    if values.get('configured') is True:
-                        self.business_settings_seen = True
+            if self.business_pending == 'configure' and values.get('configured') is True and self.business_config_request:
+                key = 'tx_rf_mhz' if self.role == 'sender' else 'expected_rf_mhz'
+                plan = business_frequency_plan(self.role, self.business_config_request[key])
+                self.business_settings_seen = self._finite_business(lo) and abs(lo-plan['lo_hz']) <= 10
         elif kind == 'status':
             state = event.get('state')
             message = str(event.get('message', state))
@@ -629,10 +686,17 @@ class StationReview:
                     if self.online_identity is None or not self.business_settings_seen:
                         return  # Connect-ready is not configure-ready.
                     self.business_configured = True
+                    if self.business_pending == 'configure':
+                        self.business_applied_plan = dict(self.business_config_request)
                     self.business_pending = None
                     self.online_state = 'ready'
                     self.connection_status.set('●  本地配置就绪')
                     self.business_note.set('本地配置已确认；业务收发前须确认业务接线。')
+                    self.setting_rf_plan = True
+                    try:
+                        self._refresh_business_plan()
+                    finally:
+                        self.setting_rf_plan = False
                     if self.role == 'receiver':
                         self.received_meta.set('本地接收已就绪 · 等待开始接收；历史消息见下方记录。')
                         self.capture_note.set('已就绪 · 待开始')
@@ -1003,17 +1067,19 @@ class StationReview:
             self._reset_reply()
             self.last_evidence = dict(iq_path=str(event.get('iq_path', '未提供')),
                                       report_path=str(event.get('report_path', '未提供')))
-            self.reply_title.set('执行成功 · 射频回报')
+            self.reply_title.set('改频成功')
             self.connection_status.set('●  回报核对通过')
             self.reply_heading.configure(fg=TEAL)
             self.reply_body.set(f'{count} 个 CRC 正确帧 · 本次指令关联通过\n'
                                 f'回报本振：RX {ack["rx_hz"]/1e6:.6f} / TX {ack["tx_hz"]/1e6:.6f} MHz\n\n'
+                                '已确认频率；转发模式/电平未由本回报报告。\n'
                                 f'接收 IQ：{Path(self.last_evidence["iq_path"]).name}\n'
                                 f'报告：{Path(self.last_evidence["report_path"]).name}\n完整路径见“设备与参数”。')
             self.update_details()
             for index, (item, text) in enumerate(zip(self.step_labels, ('已提交指令', '上行已发送', '收到射频回报', '核对通过')), 1):
                 item.configure(text=f'0{index}   {text}', fg=TEAL)
             self._record_online('在线 · 执行成功，射频回报')
+            self.session.remember_rf_frequency_plan(request)
             self.active_request = self.active_plan = None
             self.request_note.set('本次事务完成；下一条指令需重新生成，序号不会复用。')
         elif kind == 'log' and event.get('level') in ('error', 'warning'):
@@ -1081,21 +1147,35 @@ class StationReview:
         rail.grid(row=0, column=1, sticky='nsew', pady=(0, 14))
         frequency = card(rail, '业务发送频率')
         frequency.edge.pack(fill='x', pady=(0, 14))
-        self.sender_frequency = tk.StringVar(self.window, '900.500')
-        self.sender_frequency_note = tk.StringVar(self.window, 'MHz / 计划中心 · 尚未设备回读' if self.business_online else 'MHz / 计划信号中心')
+        self.tx_rf = tk.StringVar(self.window, self.session.sender_center_plan)
+        self.plan_status = tk.StringVar(self.window, '待应用 · '+self.business_plan_origin)
+        self.sender_frequency = tk.StringVar(self.window, '—' if self.business_online else self.tx_rf.get())
+        self.sender_frequency_note = tk.StringVar(self.window, 'MHz / 本地实际中心 · 尚未回读' if self.business_online else 'MHz / 计划信号中心')
         self.sender_readback = tk.StringVar(self.window, '设备回读：—')
         label(frequency, variable=self.sender_frequency, size=25, bold=True, color=TEAL).pack(anchor='w', pady=(10, 0))
         label(frequency, variable=self.sender_frequency_note, color=MUTED, size=9).pack(anchor='w', pady=(0, 10))
         label(frequency, variable=self.sender_readback, color=MUTED, size=9, wrap=240).pack(anchor='w')
+        plan_row = tk.Frame(frequency, bg=PAPER)
+        self.tx_frequency_combo = ttk.Combobox(plan_row, textvariable=self.tx_rf, values=BUSINESS_TX_CENTERS,
+                                               state='readonly', style='V2.TCombobox', width=8)
+        self.business_apply_button = button(plan_row, '应用', self.configure_business, disabled=True)
+        if self.business_online:
+            plan_row.pack(fill='x', pady=(10, 4))
+            label(plan_row, '计划 MHz', size=9, color=MUTED).pack(side='left')
+            self.business_apply_button.pack(side='right')
+            self.tx_frequency_combo.pack(side='left', padx=5)
+            label(frequency, variable=self.plan_status, color=MUTED, size=9).pack(anchor='w')
         self.business_note = tk.StringVar(self.window, '业务发送前须确认业务接线；切换窗口不会换线。')
         if self.business_online:
-            label(frequency, variable=self.business_note, color=MUTED, size=9, wrap=240).pack(anchor='w', pady=(12, 0))
+            hint = label(frequency, variable=self.business_note, color=MUTED, size=9, wrap=240)
+            hint.configure(height=2)
+            hint.pack(anchor='w', pady=(12, 0))
         history, self.history = self._history(self.body, '发送记录', [
             ('time', '时间', 90), ('id', '消息编号', 140), ('content', '文本内容', 450), ('status', '发送状态', 130)])
         history.edge.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.history_card = history
-        if self.business_online:
-            self.attenuation.trace_add('write', lambda *_: self.configure_business())
+        self.tx_rf.trace_add('write', self._refresh_business_plan)
+        self.attenuation.trace_add('write', self._refresh_business_plan)
 
     def _text_changed(self, _event=None):
         if not self.message_input.edit_modified():
@@ -1145,7 +1225,11 @@ class StationReview:
         expectation.pack(fill='x')
         label(expectation, '接收目标', size=9).pack(side='left')
         self.expected_rf = tk.StringVar(self.window, '1000.5')
-        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=('1000.5', '1001.5'),
+        self.plan_status = tk.StringVar(self.window, '待应用 · 本地计划')
+        self.business_apply_button = button(expectation, '应用', self.configure_business, disabled=True)
+        if self.business_online:
+            self.business_apply_button.pack(side='left', padx=5)
+        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=BUSINESS_RX_CENTERS,
                      state='readonly', style='V2.TCombobox', width=8)
         self.expected_combo.pack(side='right')
         self.receiver_plan_note = tk.StringVar(self.window, 'MHz · 本地接收计划，未应用')
@@ -1171,7 +1255,7 @@ class StationReview:
         self.history_card = history
         if self.business_online:
             self.history.configure(height=2)
-            self.expected_rf.trace_add('write', lambda *_: self.configure_business())
+            self.expected_rf.trace_add('write', self._refresh_business_plan)
 
     def _empty_spectrum(self, event):
         self.spectrum.delete('all')

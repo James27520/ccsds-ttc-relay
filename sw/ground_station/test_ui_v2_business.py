@@ -1,10 +1,11 @@
 """Business v2 UI checks use fake controllers only, never serial or real workers."""
 import threading
+import tempfile
 import tkinter as tk
 import unittest
 from unittest.mock import patch
 
-from .test_ui_v2 import ALIASES, PORTS, FakeTelecontrolController
+from .test_ui_v2 import ALIASES, PORTS, FakeTelecontrolController, history_fixture
 from ._tk_test_support import dispose_tk_test
 from .ui_v2 import ReviewSession, main
 
@@ -49,7 +50,10 @@ class BusinessWindowTests(unittest.TestCase):
         self.assertFalse(page.business_configured)
         values = dict(configured=True)
         if page.role == 'receiver':
-            values.update(rx_lo_hz_readback=1000750000, expected_rf_mhz=1000.5)
+            center=float(page.expected_rf.get())
+            values.update(rx_lo_hz_readback=int((center+.25)*1e6), expected_rf_mhz=center)
+        else:
+            values.update(tx_lo_hz_readback=int((float(page.tx_rf.get())-.5)*1e6),tx_atten_db_readback=89)
         self.event(page, 'settings', values=values)
         self.event(page, 'status', state='ready', message='configured local profile')
         self.assertTrue(page.business_configured)
@@ -98,16 +102,17 @@ class BusinessWindowTests(unittest.TestCase):
         self.text('hello')
         self.connect(self.sender)
         self.assertEqual(self.sender.controller.calls, [('connect', dict(port='COM_A')),
-                                                      ('configure', dict(tx_atten_db=50))])
+                                                      ('configure', dict(tx_atten_db=50,tx_rf_mhz=900.5))])
         self.event(self.sender, 'status', state='ready', message='connection ready')
         self.assertTrue(self.sender.send_button.instate(['disabled']))
         self.event(self.sender, 'settings', values=dict(configured=True, tx_atten_db_requested=50))
         self.assertTrue(self.sender.send_button.instate(['disabled']))
+        self.event(self.sender, 'settings', values=dict(configured=True,tx_lo_hz_readback=900000000,tx_atten_db_readback=89))
         self.event(self.sender, 'status', state='ready', message='software profile configured')
         self.assertFalse(self.sender.send_button.instate(['disabled']))
         self.assertEqual(self.sender.sender_frequency.get(), '900.500')
-        self.assertIn('计划', self.sender.sender_frequency_note.get())
-        self.assertEqual(self.sender.sender_readback.get(), '设备回读：—')
+        self.assertIn('本地回读', self.sender.sender_frequency_note.get())
+        self.assertIn('900.000000',self.sender.sender_readback.get())
         self.assertEqual(sum(action=='configure' for action,_ in self.sender.controller.calls), 1)
 
     def test_startup_status_and_wrong_or_late_identity_never_rebind(self):
@@ -124,7 +129,10 @@ class BusinessWindowTests(unittest.TestCase):
 
     def test_real_sender_readback_changes_frequency_without_claiming_remote_delivery(self):
         self.ready(self.sender)
+        self.sender.tx_rf.set('901.5')
+        self.sender.configure_business()
         self.event(self.sender, 'settings', values=dict(configured=True,tx_lo_hz_readback=901000000,tx_atten_db_readback=50))
+        self.event(self.sender,'status',state='ready',message='frequency applied while muted')
         self.assertEqual(self.sender.sender_frequency.get(), '901.500')
         self.assertIn('本地回读', self.sender.sender_frequency_note.get())
         self.assertIn('901.000000', self.sender.sender_readback.get())
@@ -180,15 +188,122 @@ class BusinessWindowTests(unittest.TestCase):
         self.assertIn('待开始',self.receiver.capture_note.get())
         self.assertFalse(any(action=='receive' for action,_ in self.receiver.controller.calls))
         self.receiver.expected_rf.set('1001.5')
+        self.assertTrue(self.receiver.business_plan_dirty)
+        self.assertTrue(self.receiver.receive_button.instate(['disabled']))
+        self.assertEqual(self.receiver.controller.calls[-1],('configure',dict(expected_rf_mhz=1000.5)))
+        self.receiver.business_apply_button.invoke()
         self.assertEqual(self.receiver.controller.calls[-1],('configure',dict(expected_rf_mhz=1001.5)))
-        self.event(self.receiver,'settings',values=dict(configured=True,rx_lo_hz_readback=1000750000,expected_rf_mhz=1001.5))
+        self.event(self.receiver,'settings',values=dict(configured=True,rx_lo_hz_readback=1001750000,expected_rf_mhz=1001.5))
         self.event(self.receiver,'status',state='ready',message='local prior updated')
-        self.assertIn('1000.750',self.receiver.receiver_plan_note.get())
+        self.assertIn('1001.750',self.receiver.receiver_plan_note.get())
         self.assertIn('远端状态未知',self.receiver.receiver_plan_note.get())
         self.ready(self.sender)
         self.sender.attenuation.set('55')
-        self.assertEqual(self.sender.controller.calls[-1],('configure',dict(tx_atten_db=55)))
+        self.assertEqual(self.sender.controller.calls[-1],('configure',dict(tx_atten_db=50,tx_rf_mhz=900.5)))
+        self.sender.business_apply_button.invoke()
+        self.assertEqual(self.sender.controller.calls[-1],('configure',dict(tx_atten_db=55,tx_rf_mhz=900.5)))
         self.assertEqual(self.control.controller.calls,[])
+
+    def test_busy_edit_only_changes_pending_plan_until_stop_and_explicit_apply(self):
+        self.ready(self.sender)
+        self.text('actual business text');self.sender.send_business();self.tx()
+        before=list(self.sender.controller.calls)
+        self.sender.tx_rf.set('901.5')
+        self.assertEqual(self.sender.controller.calls,before)
+        self.assertTrue(self.sender.business_plan_dirty)
+        self.assertEqual(self.sender.sender_frequency.get(),'900.500')
+        self.assertTrue(self.sender.business_apply_button.instate(['disabled']))
+        self.assertTrue(self.sender.send_button.instate(['disabled']))
+        self.sender.configure_business()
+        self.assertEqual(self.sender.controller.calls,before)
+        self.sender.stop_business();self.event(self.sender,'status',state='stopped',message='quiet')
+        self.assertFalse(self.sender.business_apply_button.instate(['disabled']))
+        self.sender.business_apply_button.invoke()
+        self.assertEqual(self.sender.controller.calls[-1],('configure',dict(tx_rf_mhz=901.5,tx_atten_db=50)))
+        self.event(self.sender,'settings',values=dict(configured=True,tx_lo_hz_readback=901000000,tx_atten_db_readback=89))
+        self.event(self.sender,'status',state='ready',message='applied, muted')
+        self.assertFalse(self.sender.business_plan_dirty)
+        self.assertEqual(sum(action=='send' for action,_ in self.sender.controller.calls),1)
+
+    def test_edit_during_configure_does_not_claim_new_plan_was_applied(self):
+        self.ready(self.sender);self.text('next text')
+        self.sender.tx_rf.set('901.5');self.sender.configure_business()
+        self.sender.tx_rf.set('900.5')
+        self.event(self.sender,'settings',values=dict(configured=True,tx_lo_hz_readback=901000000,tx_atten_db_readback=89))
+        self.event(self.sender,'status',state='ready',message='earlier requested profile applied')
+        self.assertEqual(self.sender.business_applied_plan['tx_rf_mhz'],901.5)
+        self.assertEqual(self.sender.tx_rf.get(),'900.5')
+        self.assertEqual(self.sender.sender_frequency.get(),'901.500')
+        self.assertTrue(self.sender.business_plan_dirty)
+        self.assertTrue(self.sender.send_button.instate(['disabled']))
+        self.assertFalse(self.sender.business_apply_button.instate(['disabled']))
+        self.assertEqual(sum(action=='configure' for action,_ in self.sender.controller.calls),2)
+
+    def test_receiver_edit_while_receiving_keeps_old_local_iq_profile(self):
+        self.ready(self.receiver);self.receiver.receive_business()
+        self.event(self.receiver,'status',state='receiving',message='current IQ snapshots')
+        before=list(self.receiver.controller.calls)
+        self.receiver.expected_rf.set('1001.5')
+        self.receiver.configure_business()
+        self.assertEqual(self.receiver.controller.calls,before)
+        self.assertTrue(self.receiver.business_accept_rx)
+        self.assertTrue(self.receiver.business_apply_button.instate(['disabled']))
+        self.rx()
+        self.assertEqual(self.receiver.carrier_frequency.get(),'1000.500123')
+        self.assertIn('1000.750',self.receiver.receiver_plan_note.get())
+        self.receiver.stop_business();self.event(self.receiver,'status',state='stopped',message='capture stopped')
+        self.receiver.business_apply_button.invoke()
+        self.assertEqual(self.receiver.controller.calls[-1],('configure',dict(expected_rf_mhz=1001.5)))
+        self.assertEqual(sum(action=='receive' for action,_ in self.receiver.controller.calls),1)
+
+    def control_request(self):
+        self.control.connect_online()
+        self.event(self.control,'connected',source=dict(port='COM_A',model='fake',usb_serial='fake'))
+        self.control.input_frequency.set('901.5')
+        self.control.generate_command();self.control.send_online()
+        return dict(self.control.active_request)
+
+    def control_result(self,request,**changes):
+        event=dict(passed=True,requested=request,ack=dict(rx_hz=901000000,tx_hz=1001000000),
+                   frame_count=2,iq_path='FAKE_RF_IQ.bin',report_path='FAKE_RF_REPORT.json')
+        event.update(changes)
+        self.event(self.control,'result',**event)
+
+    def test_only_current_real_control_success_proposes_sender_plan_without_commands(self):
+        request=self.control_request()
+        self.assertEqual(self.sender.tx_rf.get(),'900.5')
+        self.control_result(dict(request,air_seq=255))
+        self.assertEqual(self.sender.tx_rf.get(),'900.5')
+        self.control_result(request)
+        self.assertEqual(self.control.reply_title.get(),'改频成功')
+        self.assertIn('转发模式/电平未由本回报报告',self.control.reply_body.get())
+        self.assertEqual(self.sender.tx_rf.get(),'901.5')
+        self.assertTrue(self.sender.business_plan_dirty)
+        self.assertIn('真实 RF 回报',self.sender.plan_status.get())
+        self.assertEqual(self.sender.controller.calls,[])
+        self.assertEqual(self.receiver.expected_rf.get(),'1000.5')
+        self.assertEqual(self.receiver.controller.calls,[])
+
+    def test_control_plan_is_retained_for_sender_opened_after_rf_success(self):
+        self.session.close('sender');self.event(self.sender,'closed')
+        request=self.control_request();self.control_result(request)
+        sender=self.session.show('sender')
+        self.assertEqual(sender.tx_rf.get(),'901.5')
+        self.assertTrue(sender.business_plan_dirty)
+        self.assertEqual(sender.controller.calls,[])
+
+    def test_drafts_simulation_and_history_cannot_change_sender_plan(self):
+        container=tk.Toplevel(self.root)
+        offline=ReviewSession(container,port_provider=lambda:PORTS,aliases=ALIASES)
+        control=offline.show('control');sender=offline.show('sender')
+        control.input_frequency.set('901.5');control.generate_command()
+        control.preview_report()
+        self.assertEqual(sender.tx_rf.get(),'900.5')
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertTrue(control.load_record(history_fixture(directory)))
+        self.assertEqual(sender.tx_rf.get(),'900.5')
+        self.assertEqual(offline.sender_center_plan,'900.5')
+        for role in tuple(offline.windows):offline.close(role)
 
     def test_receiver_reconnect_ready_replaces_released_summary_and_rms_is_compact(self):
         self.event(self.receiver,'status',state='disconnected',message='本地已释放')

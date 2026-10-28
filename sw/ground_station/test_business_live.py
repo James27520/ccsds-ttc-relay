@@ -54,7 +54,28 @@ class AdapterTests(unittest.TestCase):
             self.assertEqual(args.kwargs['attenuation_db'],50)
             self.assertEqual(manifest['application']['text'],text)
         self.assertNotEqual(dirs[0],dirs[1])
+        manifest=s.prepare_message('901 profile','1234abcd',2,50,lambda:None,tx_rf_mhz=901.5)
+        self.assertEqual(s._prepare_waveform.call_args.kwargs['lo_hz'],901000000)
+        self.assertEqual(manifest['business_center_hz'],901500000)
         with self.assertRaises(ValueError):s.prepare_message('x','1234abcd',2,30,lambda:None)
+        with self.assertRaises(ValueError):s.prepare_message('x','1234abcd',2,50,lambda:None,tx_rf_mhz=902.5)
+
+    def test_apply_frequency_is_muted_local_tuning_without_dma_or_guard(self):
+        s=BusinessSource.__new__(BusinessSource)
+        s.owned=False;s.phy='/phy';s.verify_binding=Mock();s.require_idle=Mock()
+        s.read=Mock(return_value='1');s.mute=Mock();s.write=Mock(return_value='901000000')
+        s.start=Mock();s.run=Mock()
+        self.assertEqual(s.apply_frequency(901000000,lambda:None),901000000)
+        self.assertTrue(s.owned)
+        s.write.assert_called_once_with('/phy/out_altvoltage1_TX_LO_frequency',901000000,10)
+        s.mute.assert_called_once();s.start.assert_not_called();s.run.assert_not_called()
+        for reason in ('busy','tx-on'):
+            s.owned=False;s.mute.reset_mock();s.write.reset_mock()
+            s.require_idle.side_effect=RuntimeError('busy') if reason=='busy' else None
+            s.read.return_value='0'
+            with self.assertRaises(RuntimeError):s.apply_frequency(900000000,lambda:None)
+            self.assertFalse(s.owned);s.mute.assert_not_called();s.write.assert_not_called()
+        with self.assertRaises(ValueError):s.apply_frequency(100000000,lambda:None)
 
     def test_identity_failure_prevents_stop_writes(self):
         s=BusinessSource.__new__(BusinessSource);s.owned=True
@@ -85,6 +106,7 @@ class FakeBoard:
         self.calls=[];self.guard='enabled';self.closed=False;self.powerdown='1'
         self.download_hook=None;self.stop_error=False;self.prepare_error=False
         self.guard_alive=True;self.remaining=20
+        self.tx_lo=900000000;self.rx_lo=1000750000;self.attenuation=89
         iq,_=generate_message_iq('来自接收采样','2345abcd',3,offset_hz=-250000)
         self.raw=(np.resize(iq,(32768,2))//64).astype('<i2').tobytes()
     def verify_binding(self):self.calls.append('identity')
@@ -96,21 +118,30 @@ class FakeBoard:
         if path.endswith('/guard_owned'):return '124 457'
         if path.endswith('buffer/enable'):return '0'
         if path.endswith('guard_state'):return self.guard
-        if path.endswith('TX_LO_frequency'):return '900000000'
-        if path.endswith('hardwaregain'):return '-50'
+        if path.endswith('TX_LO_frequency'):return str(self.tx_lo)
+        if path.endswith('RX_LO_frequency'):return str(self.rx_lo)
+        if path.endswith('hardwaregain'):return str(-self.attenuation)
         if path.endswith('_type'):return 'le:S12/16>>0'
         if path.endswith('_index'):return '0' if 'voltage0' in path else '1'
         return '0'
-    def write(self,path,value,tolerance=0):self.calls.append(('write',path,value));return str(value)
+    def write(self,path,value,tolerance=0):
+        self.calls.append(('write',path,value))
+        if path.endswith('TX_LO_frequency'):self.tx_lo=int(value)
+        if path.endswith('RX_LO_frequency'):self.rx_lo=int(value)
+        return str(value)
     def run(self,command,**kwargs):
         self.calls.append(command)
         if 'echo $((' in command:return str(self.remaining)
         if 'test "$(awk' in command and not self.guard_alive:raise RuntimeError('guard disappeared')
         return '0' if 'echo $?' in command else ''
-    def mute(self):self.calls.append('mute')
+    def mute(self):self.calls.append('mute');self.powerdown='1';self.attenuation=89
     def close(self):self.closed=True;self.calls.append('close')
-    def prepare_message(self,text,session,sequence,atten,check):
+    def apply_frequency(self,lo_hz,check):
+        check();self.mute();self.tx_lo=lo_hz;self.owned=True
+        self.calls.append(('apply_frequency',lo_hz));return lo_hz
+    def prepare_message(self,text,session,sequence,atten,check,*,tx_rf_mhz=900.5):
         check();self.calls.append(('prepare',text,sequence));self.owned=True
+        self.calls.append(('prepare_rf',tx_rf_mhz));self.tx_lo=int((tx_rf_mhz-.5)*1e6);self.attenuation=atten
         if self.prepare_error:raise RuntimeError('prepare failed')
         return dict(fixture=True)
     def start(self):self.calls.append('start');self.powerdown='0'
@@ -150,7 +181,8 @@ class WorkerTests(unittest.TestCase):
         self.make();self.connect();b=self.boards[-1]
         self.assertIsNone(self.c.relay)
         self.assertTrue(self.c.settings['configured'])
-        self.assertNotIn('tx_lo_hz_readback',self.c.settings)
+        self.assertEqual(self.c.settings['tx_lo_hz_readback'],900000000)
+        self.assertNotIn('start',b.calls)
         ids=[]
         for text in ['Hello V2','第二条']:
             self.c.submit('send',text=text);ids.append(self.wait('tx')['message_id']);self.wait('status','transmitting')
@@ -159,6 +191,44 @@ class WorkerTests(unittest.TestCase):
         self.wait('status','stopped');self.assertEqual(b.powerdown,'1')
         self.c.submit('disconnect');self.wait('status','disconnected')
         self.assertTrue(b.closed);self.connect()
+
+    def test_both_sender_centers_apply_while_muted_and_send_uses_applied_lo(self):
+        self.make();self.connect();b=self.boards[-1]
+        self.assertEqual(b.powerdown,'1')
+        self.assertEqual(self.c.settings['expected_rf_hz'],900500000)
+        self.c.submit('configure',tx_rf_mhz=901.5,tx_atten_db=55)
+        settings=self.wait('settings')['values'];self.wait('status','ready')
+        self.assertEqual(settings['tx_lo_hz_readback'],901000000)
+        self.assertEqual(settings['tx_atten_db_requested'],55)
+        self.assertEqual(settings['tx_atten_db_readback'],89)
+        self.assertEqual(b.powerdown,'1');self.assertNotIn('start',b.calls)
+        self.c.submit('send',text='new frequency')
+        self.wait('tx');self.wait('status','transmitting')
+        self.assertIn(('prepare_rf',901.5),b.calls)
+        self.assertEqual(self.c.settings['tx_lo_hz_readback'],901000000)
+        self.assertEqual(self.c.settings['expected_rf_hz'],901500000)
+
+    def test_receiver_actually_retunes_lo_for_independent_target_and_decodes_its_iq(self):
+        self.make('receiver');self.connect();b=self.boards[-1]
+        self.c.submit('configure',expected_rf_mhz=1001.5)
+        values=self.wait('settings')['values'];self.wait('status','ready')
+        self.assertEqual(values['rx_lo_hz_readback'],1001750000)
+        self.assertEqual(values['expected_rf_mhz'],1001.5)
+        self.assertIn(('write','/phy/out_altvoltage0_RX_LO_frequency',1001750000),b.calls)
+        self.assertNotIn('start',b.calls)
+        self.c.submit('receive');self.wait('status','receiving')
+        received=self.wait('rx')
+        self.assertEqual(received['messages'][0]['text'],'来自接收采样')
+        self.assertAlmostEqual(received['carrier_hz'],1001500000,delta=10000)
+
+    def test_unapproved_sender_frequency_rejects_before_tuning_and_never_starts(self):
+        self.make();self.connect();b=self.boards[-1]
+        count=sum(isinstance(call,tuple) and call[0]=='apply_frequency' for call in b.calls)
+        self.c.submit('configure',tx_rf_mhz=902.5,tx_atten_db=50)
+        self.wait('status','error')
+        self.assertEqual(sum(isinstance(call,tuple) and call[0]=='apply_frequency' for call in b.calls),count)
+        self.assertNotIn('start',b.calls)
+        self.assertTrue(b.closed)
     def test_busy_or_open_failure_never_mutes_unowned_board_and_releases_lease(self):
         b=FakeBoard('TEST',None);b.powerdown='0'
         self.make(factory=lambda *_:b);self.c.submit('connect',port='TEST')

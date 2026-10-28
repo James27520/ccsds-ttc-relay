@@ -10,6 +10,25 @@ from pathlib import Path
 
 MIN_CENTER_MHZ = Decimal('70.5')
 MAX_CENTER_MHZ = Decimal('6000.5')
+BUSINESS_TX_CENTERS = ('900.5', '901.5')
+BUSINESS_RX_CENTERS = ('1000.5', '1001.5')
+
+
+def business_frequency_plan(role, center_mhz):
+    """The two authorized local profiles, separate from any remote board state."""
+    choices = {'sender': BUSINESS_TX_CENTERS, 'receiver': BUSINESS_RX_CENTERS}
+    if role not in choices:
+        raise ValueError('业务角色须为 sender / receiver')
+    try:
+        center = Decimal(str(center_mhz))
+    except InvalidOperation as error:
+        raise ValueError('业务中心频率无效') from error
+    if not center.is_finite() or center not in tuple(map(Decimal, choices[role])):
+        raise ValueError('本阶段业务中心仅支持 '+ ' / '.join(choices[role])+' MHz')
+    center_hz = int(center*1_000_000)
+    # Preserve the original 1000.5 MHz / 1000.75 MHz RX operating offset.
+    offset_hz = 500_000 if role == 'sender' else -250_000
+    return dict(center_hz=center_hz, lo_hz=center_hz-offset_hz, offset_hz=offset_hz)
 
 
 def frequency_plan(input_mhz, output_mhz):
