@@ -5,6 +5,9 @@
 | 文档 | 内容 |
 |---|---|
 | [项目首页](../README.md) | Z7ADDALite 遥控板、LDSDR 转发板和当前系统范围 |
+| [双端桌面站](../sw/ground_station/README.md) | 浅色发送/接收 GUI、独立设备、安装与操作 |
+| [桌面站验证](ground-station-validation.md) | 动态文本、真实硬件链路、异常与重连测试 |
+| [六线系统计划](six-link-system-plan.md) | 双向业务及双向测控的功能分配、共用本振限制与待办 |
 | [遥控链路 V2](telecontrol-v2.md) | 100.5 MHz 指令链、8 字节 body、金标准及 UDP 接口 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |
 | [业务转发联调](rf-forward-bringup.md) | 第一条有线单音链、RX I/Q修正、改频和关闭信号对照 |

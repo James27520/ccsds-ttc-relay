@@ -1,0 +1,749 @@
+{
+  "date": "2026-10-28",
+  "phase": "two independent desktop stations over wired forward RF chain",
+  "passed": true,
+  "physical_computers": 1,
+  "native_gui_processes": 2,
+  "sma_cables_in_use": 2,
+  "software_tests": {
+    "passed": 50,
+    "failed": 0,
+    "python": "3.13.5",
+    "numpy": "2.4.1",
+    "pyserial": "3.5",
+    "command": "python -B -m unittest discover -s sw/ground_station -t . -v",
+    "output_sha256": "6328a70290341d5c9fb3ce68368725679dc29e8b8c3be205efc4fb52a65df38d"
+  },
+  "boards": {
+    "source": {
+      "port_this_pc": "COM17",
+      "usb_serial": "000000000069B"
+    },
+    "relay": {
+      "port_this_pc": "COM13",
+      "usb_serial": "0ABC01B",
+      "elf_sha256": "2fed9cd6927a2b364217741d6a02a7219ad582735ccf01b8d7c8f9bf4c50ee06"
+    },
+    "receiver": {
+      "port_this_pc": "COM18",
+      "iio_serial": "104473023196000bf5ff1a00aae12c3ca8"
+    },
+    "telecommand": {
+      "port_this_pc": "COM10",
+      "model": "Z7ADDALite"
+    }
+  },
+  "parameters": {
+    "source_tx_lo_hz": 900000000,
+    "source_offset_hz": 500000,
+    "source_tx_atten_db_active": 50,
+    "relay_rx_lo_hz": 900000000,
+    "relay_tx_lo_hz": 1000000000,
+    "relay_tx_atten_db_active": 50,
+    "receiver_rx_lo_hz_readback": 1000749998,
+    "receiver_gain_db": 30,
+    "sample_rate_hz": 2500000,
+    "symbol_rate": 100000,
+    "capture_complex_samples": 32768,
+    "capture_bytes": 131072,
+    "capture_rf_seconds": 0.0131072,
+    "debug_baud": 115200,
+    "body_max_utf8_bytes": 32
+  },
+  "controller_regression": {
+    "passed": true,
+    "windows": 15,
+    "crc_valid_application_frames": 26,
+    "crc_rejected_candidates": 2,
+    "cleanup_errors": [],
+    "cases": [
+      {
+        "name": "baseline",
+        "event": {
+          "messages": [],
+          "valid_frames": 0,
+          "crc_rejected": 1,
+          "rms_codes": 2.069420503595904,
+          "carrier_hz": null,
+          "capture_seconds": 23.829172900004778,
+          "received_at": 1793162626.018716
+        }
+      },
+      {
+        "name": "text",
+        "sent": {
+          "type": "tx",
+          "message_id": "8914d843:0000",
+          "text": "hello world",
+          "payload_bytes": 11
+        },
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 0,
+              "first_symbol_sample": 5894,
+              "carrier_offset_hz": -249895.63602302744,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": false
+            },
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 1,
+              "first_symbol_sample": 12494,
+              "carrier_offset_hz": -249895.63602302744,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 2,
+              "first_symbol_sample": 19094,
+              "carrier_offset_hz": -249895.63602302744,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 3,
+              "first_symbol_sample": 25694,
+              "carrier_offset_hz": -249895.63602302744,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 4,
+          "crc_rejected": 0,
+          "rms_codes": 5.165513104694017,
+          "carrier_hz": 1000500102.363977,
+          "capture_seconds": 23.821009699982824,
+          "received_at": 1793162674.175131
+        }
+      },
+      {
+        "name": "duplicate",
+        "message_id": "8914d843:0000",
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 0,
+              "first_symbol_sample": 688,
+              "carrier_offset_hz": -249892.34266802386,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 1,
+              "first_symbol_sample": 7288,
+              "carrier_offset_hz": -249892.34266802386,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 2,
+              "first_symbol_sample": 13888,
+              "carrier_offset_hz": -249892.34266802386,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0000",
+              "session_id": "8914d843",
+              "sequence": 0,
+              "text": "hello world",
+              "payload_bytes": 11,
+              "frame_index": 3,
+              "first_symbol_sample": 20488,
+              "carrier_offset_hz": -249892.34266802386,
+              "crc16": 37488,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 4,
+          "crc_rejected": 0,
+          "rms_codes": 5.146703402004348,
+          "carrier_hz": 1000500105.657332,
+          "capture_seconds": 23.81725059999735,
+          "received_at": 1793162698.2533267
+        }
+      },
+      {
+        "name": "text",
+        "sent": {
+          "type": "tx",
+          "message_id": "8914d843:0001",
+          "text": "你好，NTN！",
+          "payload_bytes": 15
+        },
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 0,
+              "first_symbol_sample": 2596,
+              "carrier_offset_hz": -249897.14619596038,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": false
+            },
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 1,
+              "first_symbol_sample": 9996,
+              "carrier_offset_hz": -249897.14619596038,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 2,
+              "first_symbol_sample": 17396,
+              "carrier_offset_hz": -249897.14619596038,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 3,
+              "first_symbol_sample": 24796,
+              "carrier_offset_hz": -249897.14619596038,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 4,
+          "crc_rejected": 0,
+          "rms_codes": 5.1665911925350985,
+          "carrier_hz": 1000500100.853804,
+          "capture_seconds": 23.821549199987203,
+          "received_at": 1793162746.409198
+        }
+      },
+      {
+        "name": "duplicate",
+        "message_id": "8914d843:0001",
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 0,
+              "first_symbol_sample": 4257,
+              "carrier_offset_hz": -249891.0429020717,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 1,
+              "first_symbol_sample": 11657,
+              "carrier_offset_hz": -249891.0429020717,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0001",
+              "session_id": "8914d843",
+              "sequence": 1,
+              "text": "你好，NTN！",
+              "payload_bytes": 15,
+              "frame_index": 2,
+              "first_symbol_sample": 19057,
+              "carrier_offset_hz": -249891.0429020717,
+              "crc16": 12319,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 3,
+          "crc_rejected": 0,
+          "rms_codes": 5.191760416342719,
+          "carrier_hz": 1000500106.9570979,
+          "capture_seconds": 23.824896899983287,
+          "received_at": 1793162770.493221
+        }
+      },
+      {
+        "name": "text",
+        "sent": {
+          "type": "tx",
+          "message_id": "8914d843:0002",
+          "text": "12345678901234567890123456789012",
+          "payload_bytes": 32
+        },
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0002",
+              "session_id": "8914d843",
+              "sequence": 2,
+              "text": "12345678901234567890123456789012",
+              "payload_bytes": 32,
+              "frame_index": 0,
+              "first_symbol_sample": 9302,
+              "carrier_offset_hz": -249894.9117412613,
+              "crc16": 491,
+              "crc_valid": true,
+              "duplicate": false
+            },
+            {
+              "message_id": "8914d843:0002",
+              "session_id": "8914d843",
+              "sequence": 2,
+              "text": "12345678901234567890123456789012",
+              "payload_bytes": 32,
+              "frame_index": 1,
+              "first_symbol_sample": 20102,
+              "carrier_offset_hz": -249894.9117412613,
+              "crc16": 491,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 2,
+          "crc_rejected": 0,
+          "rms_codes": 5.190519993481807,
+          "carrier_hz": 1000500103.0882587,
+          "capture_seconds": 23.82658779999474,
+          "received_at": 1793162818.6450367
+        }
+      },
+      {
+        "name": "duplicate",
+        "message_id": "8914d843:0002",
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0002",
+              "session_id": "8914d843",
+              "sequence": 2,
+              "text": "12345678901234567890123456789012",
+              "payload_bytes": 32,
+              "frame_index": 0,
+              "first_symbol_sample": 1037,
+              "carrier_offset_hz": -249895.603973803,
+              "crc16": 491,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0002",
+              "session_id": "8914d843",
+              "sequence": 2,
+              "text": "12345678901234567890123456789012",
+              "payload_bytes": 32,
+              "frame_index": 1,
+              "first_symbol_sample": 11837,
+              "carrier_offset_hz": -249895.603973803,
+              "crc16": 491,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 2,
+          "crc_rejected": 0,
+          "rms_codes": 5.189249869584657,
+          "carrier_hz": 1000500102.3960263,
+          "capture_seconds": 23.824214599997504,
+          "received_at": 1793162842.7234879
+        }
+      },
+      {
+        "name": "stopped_0",
+        "event": {
+          "messages": [],
+          "valid_frames": 0,
+          "crc_rejected": 0,
+          "rms_codes": 3.482793748547547,
+          "carrier_hz": null,
+          "capture_seconds": 23.82973690002109,
+          "received_at": 1793162866.8056831
+        }
+      },
+      {
+        "name": "stopped_1",
+        "event": {
+          "messages": [],
+          "valid_frames": 0,
+          "crc_rejected": 0,
+          "rms_codes": 2.0657083237732885,
+          "carrier_hz": null,
+          "capture_seconds": 23.82024790000287,
+          "received_at": 1793162890.8782766
+        }
+      },
+      {
+        "name": "receiver_reconnect",
+        "sent": {
+          "type": "tx",
+          "message_id": "8914d843:0003",
+          "text": "reconnect OK",
+          "payload_bytes": 12
+        },
+        "received": {
+          "messages": [
+            {
+              "message_id": "8914d843:0003",
+              "session_id": "8914d843",
+              "sequence": 3,
+              "text": "reconnect OK",
+              "payload_bytes": 12,
+              "frame_index": 0,
+              "first_symbol_sample": 3151,
+              "carrier_offset_hz": -249897.14857558598,
+              "crc16": 53505,
+              "crc_valid": true,
+              "duplicate": false
+            },
+            {
+              "message_id": "8914d843:0003",
+              "session_id": "8914d843",
+              "sequence": 3,
+              "text": "reconnect OK",
+              "payload_bytes": 12,
+              "frame_index": 1,
+              "first_symbol_sample": 9951,
+              "carrier_offset_hz": -249897.14857558598,
+              "crc16": 53505,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0003",
+              "session_id": "8914d843",
+              "sequence": 3,
+              "text": "reconnect OK",
+              "payload_bytes": 12,
+              "frame_index": 2,
+              "first_symbol_sample": 16751,
+              "carrier_offset_hz": -249897.14857558598,
+              "crc16": 53505,
+              "crc_valid": true,
+              "duplicate": true
+            },
+            {
+              "message_id": "8914d843:0003",
+              "session_id": "8914d843",
+              "sequence": 3,
+              "text": "reconnect OK",
+              "payload_bytes": 12,
+              "frame_index": 3,
+              "first_symbol_sample": 23551,
+              "carrier_offset_hz": -249897.14857558598,
+              "crc16": 53505,
+              "crc_valid": true,
+              "duplicate": true
+            }
+          ],
+          "valid_frames": 4,
+          "crc_rejected": 0,
+          "rms_codes": 5.208313151002564,
+          "carrier_hz": 1000500100.8514245,
+          "capture_seconds": 23.829303000005893,
+          "received_at": 1793162944.3085847
+        }
+      }
+    ]
+  },
+  "native_gui_acceptance": {
+    "sent": {
+      "time": 1793164064.455048,
+      "type": "tx",
+      "message_id": "b54fedc1:0000",
+      "text": "你好，NTN 1028",
+      "payload_bytes": 17
+    },
+    "windows": 23,
+    "crc_valid_application_frames": 28,
+    "crc_rejected_candidates": 2,
+    "new_messages": 1,
+    "duplicate_messages": 27,
+    "capture_seconds_min": 23.812913100002334,
+    "capture_seconds_max": 23.833044599974528,
+    "sender_status": [
+      {
+        "time": 1793163623.1875608,
+        "type": "status",
+        "state": "disconnected",
+        "message": "请选择本端SDR的DEBUG串口"
+      },
+      {
+        "time": 1793163881.4053564,
+        "type": "status",
+        "state": "connecting",
+        "message": "读取Linux / IIO身份…"
+      },
+      {
+        "time": 1793163886.1126733,
+        "type": "status",
+        "state": "ready",
+        "message": "身份已读取，TX已关闭；请应用本端配置"
+      },
+      {
+        "time": 1793163943.140863,
+        "type": "status",
+        "state": "ready",
+        "message": "配置及读回通过；本阶段为有线业务演示，使用本地转发设置"
+      },
+      {
+        "time": 1793164047.495189,
+        "type": "status",
+        "state": "busy",
+        "message": "正在上传新消息波形并校验；尚未发射"
+      },
+      {
+        "time": 1793164064.455095,
+        "type": "status",
+        "state": "transmitting",
+        "message": "循环发射当前消息；板端45秒租约保护已启用"
+      },
+      {
+        "time": 1793164277.4345365,
+        "type": "status",
+        "state": "stopped",
+        "message": "本端任务已停止；历史消息保留"
+      },
+      {
+        "time": 1793164434.3971334,
+        "type": "status",
+        "state": "disconnected",
+        "message": "已断开设备"
+      }
+    ],
+    "receiver_status": [
+      {
+        "time": 1793163623.19029,
+        "type": "status",
+        "state": "disconnected",
+        "message": "请选择本端SDR的DEBUG串口"
+      },
+      {
+        "time": 1793163684.2005174,
+        "type": "status",
+        "state": "connecting",
+        "message": "读取Linux / IIO身份…"
+      },
+      {
+        "time": 1793163687.5464754,
+        "type": "status",
+        "state": "ready",
+        "message": "身份已读取，TX已关闭；请应用本端配置"
+      },
+      {
+        "time": 1793163720.952687,
+        "type": "status",
+        "state": "ready",
+        "message": "配置及读回通过；本阶段为有线业务演示，使用本地转发设置"
+      },
+      {
+        "time": 1793163784.6168222,
+        "type": "status",
+        "state": "receiving",
+        "message": "正在轮询真实I/Q快照；串口回传存在采样空档"
+      },
+      {
+        "time": 1793164338.7084467,
+        "type": "status",
+        "state": "stopped",
+        "message": "本端任务已停止；历史消息保留"
+      },
+      {
+        "time": 1793164384.7011158,
+        "type": "status",
+        "state": "disconnected",
+        "message": "已断开设备"
+      }
+    ],
+    "closed_normally": true
+  },
+  "independent_redecode": {
+    "matched_original_reports": true,
+    "windows": 55,
+    "valid_frames": 82,
+    "crc_rejected_candidates": 9,
+    "clipped_components": 0,
+    "per_session": {
+      "acceptance3/receiver": {
+        "windows": 15,
+        "valid_frames": 26,
+        "crc_rejected": 2,
+        "clips": 0
+      },
+      "gui_receiver2": {
+        "windows": 17,
+        "valid_frames": 28,
+        "crc_rejected": 5,
+        "clips": 0
+      },
+      "gui_receiver3": {
+        "windows": 23,
+        "valid_frames": 28,
+        "crc_rejected": 2,
+        "clips": 0
+      }
+    },
+    "capture_hash_manifest_sha256": "507ac6be4bd6547b9da680bc283f0104263d7a2d4372d3fd586e7303ad76f9b6"
+  },
+  "source_guard": {
+    "passed": true,
+    "lease_seconds": 45,
+    "poll_seconds": 2,
+    "method": "terminate owned sender host process; not a physical USB removal test",
+    "observed_after_host_kill_seconds": 53.055932499992196,
+    "readback": {
+      "guard_state": "expired",
+      "lo_powerdown": "1",
+      "tx0_gain": "-89.000000 dB",
+      "tx1_gain": "-89.000000 dB",
+      "tx_buffer": "0"
+    },
+    "relay_has_independent_guard": false
+  },
+  "final_readback": {
+    "source": {
+      "port": "COM17",
+      "lo_powerdown": "1",
+      "tx0": "-89.000000 dB",
+      "tx1": "-89.000000 dB",
+      "tx_buffer": "0",
+      "rx_buffer": "0",
+      "dds": [
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000"
+      ]
+    },
+    "receiver": {
+      "port": "COM18",
+      "lo_powerdown": "1",
+      "tx0": "-89.000000 dB",
+      "tx1": "-89.000000 dB",
+      "tx_buffer": "0",
+      "rx_buffer": "0",
+      "dds": [
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000"
+      ]
+    },
+    "relay": {
+      "status": "STAT mode=2 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=89 rxlo=900 txlo=1000 fs=30720000 in=3597455356 out=3597455341 clip=19411836 rc=0\r\r\n",
+      "rfdiag": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n"
+    },
+    "adda": "CONTROLLER auto=0 capture_state=6 capture_valid=1 consumed=1\r\nSTATUS network=0 armed=0 decoded=244 applied=34 pending=0 retries=1 failures=0 gain=0 att=89\r\nCLI_RESULT rc=0\r\n",
+    "passed": true
+  },
+  "source_sha256": {
+    "start_receiver.bat": "d9ac70c60f037462bf963751bfbe9c7904a6368ff3a92c9d18665800eaf902a8",
+    "start_sender.bat": "b57369750f2104646cb2058c0ac8c141b80e6e8c8e2c7a553a058506211a0453",
+    "sw/ccsds/ccsds_tm_tx.py": "02768cd2fee17f9431f0a76bd445131485347aa9014ca635b32e825b37a40c9b",
+    "sw/ground_station/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sw/ground_station/__main__.py": "df31115060a120a08d109affc18642a9a8737a8361f489c30bfc59eeb1f88712",
+    "sw/ground_station/app.py": "858708967dc5b42cc76ff8718cd1e5b219ebd2ede08714ecbc6f6844d00fb5f8",
+    "sw/ground_station/controller.py": "2b256b3f0ec95256b16c4db01511091500d110150963d756963ffb0eae5c09ff",
+    "sw/ground_station/protocol.py": "f17a8e41c844b2dfd62068dd59230180d056ce73f34c7906f1d1a8233657d842",
+    "sw/ground_station/relay.py": "33a9194e18c852641296db8ee88d4711ad4890dae839c99674c70b92daba8a03",
+    "sw/ground_station/test_app.py": "85aba6d9194c9ea534372d4acdf3049c8f324e52a1437e4ed7edfba36970b636",
+    "sw/ground_station/test_controller.py": "3b6d107e0dce80b8038faf432c023aefd405e749c4d653b12ceeb8ea173eda8d",
+    "sw/ground_station/test_protocol.py": "53d8396abb3641b4330064874cb7a659dc93761470aaa92a4a7b683c32098d93",
+    "sw/ground_station/test_relay.py": "6f615b3d55c2ad3bfda070e3adccd1ad418190128d2d5e2bf2911c0680bd0741",
+    "sw/ground_station/test_transport.py": "5829f1856351c5c9de2f612c0d4990ee972955f36f392b3826d14d231e94e188",
+    "sw/ground_station/transport.py": "a91bc67a19c849e83d7be11321d293915726a0a16672a1e3e8033d29753e7098",
+    "sw/tools/rf_text_link.py": "50241d8f7ee3a5961e2e0c867c91cc7523b91c2ea955bb938639c2503f01fc38"
+  },
+  "evidence": {
+    "archive_local_path": "D:/RelayTools/releases/ground_station_20261028.zip",
+    "bytes": 3874227,
+    "sha256": "e9c7936ebc30646bd5aec586f08b0985f79d8d9a3cc3c62c3290dc80c3b6bd25",
+    "zip_crc_check": "passed",
+    "captures_are_in_local_archive": true,
+    "console_readback_sha256": "dc570e1ea5ae468a32b96184c675511534994ecbcb69bc1748ba23e546cd8627",
+    "final_readback_sha256": "81d2d7630d3801b7d9019298a5a06c29b8f2e378379bc34cddf7c8900754b6e7"
+  },
+  "limitations": [
+    "Experimental text frame, not complete CCSDS or 3GPP NTN conformance",
+    "Second physical PC not tested; two independent processes on one PC tested",
+    "Snapshot transfer approximately 24 seconds with RF sampling gaps; not continuous reception",
+    "CRC acceptance and candidate rejection counts are not a BER measurement",
+    "Source-side lease does not independently mute LDSDR after host failure",
+    "Six-wire duplex, DAC telemetry, shared-LO allocation and persistent boot remain future work",
+    "UI screenshots precede the final compact-axis tick spacing adjustment; RF/controller unchanged"
+  ]
+}
