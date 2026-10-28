@@ -1,6 +1,8 @@
 # 验证记录与未完成项
 
-记录日期：2026-10-28。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
+记录更新至：2026-10-29。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
+
+2026-10-29最新结果：[自主测控及V2改频GUI](telecontrol-autonomous-validation.md)、[V2文本业务GUI](business-v2-validation.md)。V2业务窗口只连接各自本地SDR，外部三板链已恢复两条控制器文本和一条GUI文本；原始IQ复核共53个CRC有效帧。30秒限时停发、停发负例及本地设备交接通过；转发模式和电平仍需预先准备，第二台电脑迁移和六线并发未验。机器可读数据见[业务摘要](validation/2026-10-29-business-v2.json)。
 
 最新真实ADC与业务分时验证见 [分时验证摘要](validation/2026-10-28-adc-business-staged.json)；独立接收板验证见 [独立接收摘要](validation/2026-10-28-independent-receiver.json)；业务序列与稳定性见 [稳定性验证摘要](validation/2026-10-28-rf-stability.json)；GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 

@@ -2,19 +2,21 @@
 
 Run: python -m sw.ground_station.ui_v2 --all
 Add --online-control to enable the control window's finite hardware transactions.
-Text windows remain offline while the shared local SDR is used for control.
+Add --online-business for local text TX/RX. PC1 roles require an explicit handoff.
 """
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
+import math
 from pathlib import Path
 import queue
+import threading
 import tkinter as tk
 from tkinter import filedialog, ttk
 
 from .ui_v2_model import (command_request, device_choices, format_mhz, frequency_plan,
-                         load_device_aliases, load_historical_transaction, simulated_reply)
+                         load_device_aliases, load_historical_transaction, simulated_reply, text_bytes)
 
 
 BG = '#F4F6F8'
@@ -62,11 +64,12 @@ def card(parent, title=None, subtitle=None, padding=18):
 class ReviewSession:
     """Shares only local device selection across the two PC1 windows.
 
-    Text and received content are never shared across business windows. The
-    optional online controller belongs to the control window; text stays offline.
+    Received text never comes from another window. Enabled windows own separate
+    backends; PC1 sender/control share selection and require explicit handoff.
     """
     def __init__(self, root, port_provider=None, aliases=None, *, online_control=False,
-                 controller_factory=None, log_dir=None):
+                 controller_factory=None, log_dir=None, online_business=False,
+                 business_controller_factory=None):
         self.root = root
         self.source_selection = tk.StringVar(root)
         self.receiver_selection = tk.StringVar(root)
@@ -75,6 +78,8 @@ class ReviewSession:
         self.aliases = load_device_aliases() if aliases is None else aliases
         self.next_sequence = 0
         self.online_control = online_control
+        self.online_business = online_business
+        self.business_controller_factory = business_controller_factory
         self.controller_factory, self.log_dir = controller_factory, log_dir
         self.port_provider = port_provider or self._ports
         self._style()
@@ -143,35 +148,70 @@ class ReviewSession:
         page = self.windows.get(role)
         if page is None:
             return
-        if page.online and page.controller is not None:
-            page.close_online()
+        if page.live and page.controller is not None:
+            page.close_business() if page.business_online else page.close_online()
             return
         self._destroy_page(role)
 
     def _destroy_page(self, role):
+        if threading.current_thread() is not threading.main_thread():
+            raise RuntimeError('Tk windows must be disposed on the main thread')
         page = self.windows.pop(role)
         page.closed = True
         page.selection.trace_remove('write', page.selection_trace)
+        # Window.destroy does not remove Variable traces: a callback bound to
+        # page can retain a page/Variable/interpreter cycle until a worker's GC.
+        for value in vars(page).values():
+            if isinstance(value, tk.Variable) and value is not page.selection:
+                for modes, command in value.trace_info():
+                    value.trace_remove(modes, command)
+        if page._poll_id:
+            page.window.after_cancel(page._poll_id)
+            page._poll_id = None
         page.window.destroy()
+        for name, value in tuple(vars(page).items()):
+            if isinstance(value, (tk.Variable, tk.Misc)) or (isinstance(value, list) and
+                    any(isinstance(item, (tk.Variable, tk.Misc)) for item in value)):
+                setattr(page, name, None)
+        value = None
         if not self.windows:
             self.root.destroy()
+            self.source_selection = self.receiver_selection = self.root = None
 
     def update_online_controls(self):
-        owner = self.windows.get('control')
-        occupied = bool(owner and owner.online and
-                        (owner.online_state not in ('disconnected', 'error', 'closed') or owner.cancel_pending))
         for role, page in self.windows.items():
-            if page.online:
+            if page.business_online:
+                page.update_business_controls()
+            elif page.online:
                 page.update_online_controls()
             elif role == 'sender' and self.online_control:
+                occupied = self.other_owner(role) is not None
                 page.port_combo.configure(state='disabled' if occupied else 'readonly')
                 page.refresh_button.configure(state='disabled' if occupied else 'normal')
+
+    def other_owner(self, role):
+        if role not in ('sender', 'control'):
+            return None
+        other = 'control' if role == 'sender' else 'sender'
+        page = self.windows.get(other)
+        return other if page and page.live and page.local_claimed else None
 
 
 class StationReview:
     def __init__(self, session, role):
         self.session, self.role = session, role
         self.online = session.online_control and role == 'control'
+        self.business_online = session.online_business and role in ('sender', 'receiver')
+        self.live = self.online or self.business_online
+        self.local_claimed = False
+        self._blocked_by = None
+        self.business_pending = None
+        self.business_configured = self.business_settings_seen = False
+        self.business_accept_tx = self.business_accept_rx = False
+        self.business_text = None
+        self.business_tx_row = None
+        self.business_capture_info = ''
+        self.business_tx_ids = set()
         self.controller = None
         self.events = queue.Queue()
         self.online_state = 'disconnected'
@@ -201,6 +241,8 @@ class StationReview:
         self.update_details()
         if self.online:
             self._start_online()
+        elif self.business_online:
+            self._start_business()
 
     def _build(self):
         main = tk.Frame(self.window, bg=BG, padx=26, pady=20)
@@ -208,8 +250,8 @@ class StationReview:
         mast = tk.Frame(main, bg=BG)
         mast.pack(fill='x')
         label(mast, 'NTN   /   卫星测控与变频转发', color=MUTED, size=10, bg=BG).pack(side='left')
-        badge = label(mast, ' 在线测控 ' if self.online else ' 界面审阅 ',
-                      color=TEAL if self.online else AMBER, size=9, bg=PALE if self.online else '#FBF2DE')
+        badge = label(mast, ' 在线测控 ' if self.online else ' 在线业务 ' if self.business_online else ' 界面审阅 ',
+                      color=TEAL if self.live else AMBER, size=9, bg=PALE if self.live else '#FBF2DE')
         badge.pack(side='right', padx=(15, 0))
         label(mast, ROLES[self.role][3], color=TEAL, bold=True, bg=BG).pack(side='right')
 
@@ -231,10 +273,10 @@ class StationReview:
         self.port_combo.pack(side='left')
         self.refresh_button = button(connection, '刷新', self.session.refresh_devices)
         self.refresh_button.pack(side='left', padx=8)
-        self.connect_button = button(connection, '连接', self.connect_online, disabled=True)
+        self.connect_button = button(connection, '连接', self.connect_business if self.business_online else self.connect_online, disabled=True)
         self.connect_button.pack(side='left')
         self.connection_status = tk.StringVar(self.window, '●  未连接')
-        if self.session.online_control and self.role == 'sender':
+        if self.session.online_control and self.role == 'sender' and not self.business_online:
             self.connection_status.set('●  测控模式 · 文本禁发')
         label(connection, variable=self.connection_status, color=MUTED, size=9).pack(side='left', padx=15)
         self.details_button = button(connection, '设备与参数  ▾', self.toggle_details)
@@ -256,10 +298,12 @@ class StationReview:
             row.pack(fill='x', pady=(8, 0))
             label(row, '发射衰减  dB', size=9).pack(side='left', padx=(0, 10))
             self.attenuation = tk.StringVar(self.window, '50')
-            ttk.Spinbox(row, from_=50, to=89, width=6, textvariable=self.attenuation,
-                        state='readonly', style='V2.TSpinbox').pack(side='left')
-            label(row, '  计划值 · 数值越大，信号越弱；未应用到设备。', color=MUTED, size=9).pack(side='left')
-            label(self.details, '本振 900 MHz + 基带偏移 0.5 MHz = 业务中心 900.5 MHz。',
+            self.attenuation_spin = ttk.Spinbox(row, from_=50, to=89, width=6, textvariable=self.attenuation,
+                        state='readonly', style='V2.TSpinbox')
+            self.attenuation_spin.pack(side='left')
+            self.attenuation_note = tk.StringVar(self.window, '  计划值 · 数值越大，信号越弱；未应用到设备。')
+            label(row, variable=self.attenuation_note, color=MUTED, size=9).pack(side='left')
+            label(self.details, '业务中心以本地本振回读 + 0.5 MHz 显示；不代表远端接收。' if self.business_online else '本振 900 MHz + 基带偏移 0.5 MHz = 业务中心 900.5 MHz。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
         elif self.role == 'receiver':
             label(self.details, '本地接收本振 1000.75 MHz；计划增益 30 dB。频谱来自接收采样，未采集时不显示曲线。',
@@ -272,21 +316,396 @@ class StationReview:
 
     def update_details(self):
         device = self.session.devices.get(self.selection.get())
-        if self.online and self.connecting_port and (not device or device['port'] != self.connecting_port):
+        if self.live and self.connecting_port and (not device or device['port'] != self.connecting_port):
             if not self.cancel_pending and not self.closing:
-                self.cancel_online('disconnect')
+                self.stop_business('disconnect') if self.business_online else self.cancel_online('disconnect')
         if self.online_identity is not None and device and device['port'] == self.online_identity.get('port'):
             identity = self.online_identity
             self.device_detail.set(f'在线核验：{identity["port"]} · {identity.get("model", "本地 SDR")} · '
-                                   f'USB 序号 {identity.get("usb_serial", "未知")}；远端就绪由实际事务确认。')
+                                   f'USB 序号 {identity.get("usb_serial", "未知")}；' +
+                                   ('仅为本地身份，不代表远端状态。' if self.business_online else '远端就绪由实际事务确认。'))
+            if self.business_capture_info:
+                self.device_detail.set(self.device_detail.get()+'\n'+self.business_capture_info)
+            if self.business_online:
+                self.device_detail.set(self.device_detail.get()+'\n'+self.business_note.get())
             if self.last_evidence:
                 self.device_detail.set(self.device_detail.get()+
                     f'\n本次接收 IQ：{self.last_evidence["iq_path"]}\n本次报告：{self.last_evidence["report_path"]}')
             return
         self.device_detail.set(f'接口：{device["port"]} · {device["description"]} · USB 序号 {device.get("serial") or "未知"}；待在线核验。'
                                if device else '尚未选择本地设备；USB 列表不代表已确认板卡身份。')
-        if self.online:
+        if self.business_online:
+            self.device_detail.set(self.device_detail.get()+'\n'+self.business_note.get())
+        if self.business_online:
+            self.update_business_controls()
+        elif self.online:
             self.update_online_controls()
+
+    def _start_business(self):
+        try:
+            factory = self.session.business_controller_factory
+            if factory is None:
+                from .business_live import BusinessController
+                factory = BusinessController
+            self.controller = factory(self.role, self.events.put, log_dir=None)
+        except Exception as error:
+            self.online_state = 'error'
+            self.business_note.set(f'在线业务启动失败：{error}')
+        else:
+            self._poll_id = self.window.after(60, self._drain_online_events)
+        self.update_business_controls()
+
+    def update_business_controls(self):
+        if not self.business_online or not hasattr(self, 'business_note'):
+            return
+        blocked = self.session.other_owner(self.role)
+        if blocked:
+            self._blocked_by = blocked
+            self.connection_status.set('●  改频控制占用')
+            self.business_note.set('发送板由改频控制占用，请先在该窗口断开；切换窗口不会换线。')
+        elif self._blocked_by:
+            self._blocked_by = None
+            self.connection_status.set('●  未连接')
+            self.business_note.set('占用已释放，请连接本地设备；业务收发前须确认业务接线。')
+        available = not self.closing and not self.cancel_pending and not blocked
+        idle = available and self.business_pending is None
+        disconnected = self.online_state in ('disconnected', 'error')
+        self.port_combo.configure(state='readonly' if idle and disconnected else 'disabled')
+        self.refresh_button.configure(state='normal' if idle and disconnected else 'disabled')
+        self.connect_button.configure(text='断开中' if self.cancel_pending else '取消连接' if self.accept_connected else
+                                      '断开连接' if self.local_claimed else '连接',
+            state='normal' if available and self.controller is not None and
+            (self.local_claimed or self.session.devices.get(self.selection.get())) else 'disabled')
+        ready = idle and self.business_configured and self.online_identity is not None
+        self.business_stop_button.configure(state='normal' if available and
+            (self.business_pending is not None or self.online_state in ('transmitting', 'receiving')) else 'disabled')
+        if self.role == 'sender':
+            text = self.message_input.get('1.0', 'end-1c')
+            try:
+                text_bytes(text)
+                valid = True
+            except ValueError:
+                valid = False
+            self.send_button.configure(state='normal' if ready and valid and self.online_state in ('ready', 'stopped', 'transmitting') else 'disabled')
+            self.attenuation_spin.configure(state='readonly' if idle and self.online_state in ('disconnected', 'error', 'ready', 'stopped') else 'disabled')
+        else:
+            self.receive_button.configure(state='normal' if ready and self.online_state in ('ready', 'stopped') else 'disabled')
+            self.expected_combo.configure(state='readonly' if idle and self.online_state in ('disconnected', 'error', 'ready', 'stopped') else 'disabled')
+
+    def _business_submit(self, action, **kwargs):
+        try:
+            self.controller.submit(action, **kwargs)
+            return True
+        except Exception as error:
+            self.business_accept_tx = self.business_accept_rx = False
+            self.business_note.set(f'{action} 提交失败：{error}；等待断开清理。')
+            self.business_pending = 'disconnect'
+            self.cancel_pending = True
+            self.connection_status.set('●  等待清理回执')
+            if action == 'close':
+                self.closing = False
+            else:
+                try:
+                    self.controller.submit('disconnect')
+                except Exception:
+                    self.business_note.set(f'{action} 提交失败：{error}；请关闭窗口重试清理。')
+            self.session.update_online_controls()
+            return False
+
+    def connect_business(self):
+        if not self.business_online or self.closing or self.cancel_pending or self.controller is None:
+            return
+        if self.session.other_owner(self.role):
+            self.session.update_online_controls()
+            return
+        if self.local_claimed:
+            self.stop_business('disconnect')
+            return
+        device = self.session.devices.get(self.selection.get())
+        if not device:
+            return
+        self.local_claimed = True
+        self.connecting_port = device['port']
+        self.accept_connected = True
+        self.online_identity = None
+        self.business_configured = self.business_settings_seen = False
+        self.business_pending = 'connect'
+        self.online_state = 'connecting'
+        self.business_accept_tx = self.business_accept_rx = False
+        self.business_capture_info = ''
+        self._clear_business_readback()
+        self.connection_status.set('●  正在核验本地设备')
+        self.business_note.set('正在连接本地设备；连接和配置不会自动发送或接收。')
+        self._business_submit('connect', port=self.connecting_port)
+        self.session.update_online_controls()
+
+    def configure_business(self):
+        if (not self.business_online or self.closing or self.cancel_pending or self.online_identity is None
+                or self.business_pending not in (None, 'connect') or self.online_state in ('transmitting', 'receiving')):
+            return
+        try:
+            if self.role == 'sender':
+                value = int(self.attenuation.get())
+                if str(value) != self.attenuation.get() or not 50 <= value <= 89:
+                    raise ValueError('发射衰减须为 50–89 dB 整数')
+                values = dict(tx_atten_db=value)
+            else:
+                value = float(self.expected_rf.get())
+                if value not in (1000.5, 1001.5):
+                    raise ValueError('本地接收先验仅支持 1000.5 / 1001.5 MHz')
+                values = dict(expected_rf_mhz=value)
+        except ValueError as error:
+            self.business_configured = False
+            self.business_note.set(str(error))
+            self.update_business_controls()
+            return
+        self.business_configured = self.business_settings_seen = False
+        self.business_pending = 'configure'
+        self.online_state = 'busy'
+        self.connection_status.set('●  配置本地设备')
+        self._business_submit('configure', **values)
+        self.session.update_online_controls()
+
+    def send_business(self):
+        if (not self.business_online or self.role != 'sender' or self.closing or self.cancel_pending
+                or self.business_pending is not None or not self.business_configured or self.online_identity is None
+                or self.online_state not in ('ready', 'stopped', 'transmitting') or self.session.other_owner(self.role)):
+            return
+        text = self.message_input.get('1.0', 'end-1c')
+        try:
+            text_bytes(text)
+        except ValueError as error:
+            self.business_note.set(str(error))
+            return
+        self.business_text = text
+        self.business_accept_tx = True
+        self.business_pending = 'send'
+        self.online_state = 'busy'
+        self.business_note.set('正在提交本地限时循环发送；不代表电脑2已收到。')
+        self._business_submit('send', text=text)
+        self.session.update_online_controls()
+
+    def receive_business(self):
+        if (not self.business_online or self.role != 'receiver' or self.closing or self.cancel_pending
+                or self.business_pending is not None or not self.business_configured or self.online_identity is None
+                or self.online_state not in ('ready', 'stopped')):
+            return
+        self.business_accept_rx = True
+        self.business_pending = 'receive'
+        self.online_state = 'receiving'
+        self.received_text.set('等待本次接收文本')
+        self.received_hero.configure(fg='#9BADA9')
+        self.received_meta.set('尚无本次 CRC 有效消息；历史记录保留在下方。')
+        self.capture_note.set('正在采集')
+        self.carrier_frequency.set('—')
+        self.frame_stats.set('本次有效帧 — / CRC 失败 —')
+        self.spectrum.set_spectrum(None)
+        self._business_submit('receive')
+        self.session.update_online_controls()
+
+    def stop_business(self, action='stop'):
+        if not self.business_online or self.closing or self.cancel_pending or self.controller is None or not self.local_claimed:
+            return
+        self.business_accept_tx = self.business_accept_rx = False
+        self.business_pending = action
+        self.cancel_pending = True
+        self.online_state = 'busy'
+        self.connection_status.set('●  正在停止' if action == 'stop' else '●  正在断开')
+        self.business_note.set('等待本端停止回执；当前窗口仍占用本地板卡。')
+        self._business_submit(action)
+        self.session.update_online_controls()
+
+    def close_business(self):
+        if self.closing:
+            return
+        self.closing = True
+        self.business_accept_tx = self.business_accept_rx = False
+        self.connection_status.set('●  正在关闭')
+        self.business_note.set('等待本地收发停止并释放串口后关闭窗口。')
+        self._business_submit('close')
+        self.session.update_online_controls()
+
+    def _clear_business_readback(self):
+        if self.role == 'sender':
+            self.sender_frequency.set('900.500')
+            self.sender_frequency_note.set('MHz / 计划中心 · 尚未设备回读')
+            self.sender_readback.set('设备回读：—')
+            self.attenuation_note.set('  本地配置尚未确认。')
+        else:
+            self.carrier_frequency.set('—')
+            self.receiver_plan_note.set('MHz · 本地先验尚未应用，远端状态未知')
+            self.frame_stats.set('有效帧 — / CRC 失败 —')
+            self.spectrum.set_spectrum(None)
+
+    def _business_released(self, message, state='disconnected'):
+        self.local_claimed = False
+        self.online_identity = None
+        self.connecting_port = None
+        self.accept_connected = self.cancel_pending = False
+        self.business_accept_tx = self.business_accept_rx = False
+        self.business_configured = self.business_settings_seen = False
+        self.business_pending = None
+        self.online_state = state
+        self.connection_status.set('●  业务异常 · 已断开' if state == 'error' else '●  未连接')
+        self.business_note.set(str(message))
+        self._clear_business_readback()
+        if self.role == 'receiver':
+            self.capture_note.set('已断开')
+            self.received_meta.set('历史接收记录 · 本地连接已释放；尚无新的接收结果。')
+        elif self.business_tx_row:
+            self.history.set(self.business_tx_row, 'status', '本地异常 / 结果未知' if state == 'error' else '本地已停发 / 已断开')
+        self.update_details()
+
+    @staticmethod
+    def _finite_business(value):
+        return type(value) in (int, float) and math.isfinite(value)
+
+    def _handle_business_event(self, event):
+        if self.closed:
+            return
+        kind = event.get('type')
+        if kind == 'closed':
+            if self._poll_id:
+                self.window.after_cancel(self._poll_id)
+                self._poll_id = None
+            self.controller = None
+            self.session._destroy_page(self.role)
+            self.session.update_online_controls()
+            return
+        if self.closing:
+            return
+        if kind == 'identity':
+            if not self.accept_connected or self.cancel_pending:
+                return
+            identity = event.get('identity', {})
+            device = self.session.devices.get(self.selection.get())
+            if not isinstance(identity, dict) or identity.get('port') != self.connecting_port or not device or device['port'] != self.connecting_port:
+                self.stop_business('disconnect')
+                return
+            self.accept_connected = False
+            self.online_identity = dict(identity)
+            self.update_details()
+            self.configure_business()
+        elif kind == 'settings':
+            if self.online_identity is None or (self.cancel_pending and self.business_pending != 'stop'):
+                return
+            values = event.get('values', {})
+            if self.role == 'sender':
+                if values.get('configured') is True:
+                    self.business_settings_seen = True
+                    if 'tx_lo_hz_readback' not in values:
+                        self.attenuation_note.set('  发送配置已登记；实际 LO / 衰减待发送后回读。')
+                lo = values.get('tx_lo_hz_readback')
+                if self._finite_business(lo):
+                    self.sender_frequency.set(f'{(lo+500_000)/1e6:.3f}')
+                    self.sender_frequency_note.set('MHz / 本地回读 LO + 0.5 MHz')
+                    attenuation = values.get('tx_atten_db_readback', '—')
+                    self.sender_readback.set(f'本地 LO {lo/1e6:.6f} MHz\n衰减回读 {attenuation} dB')
+                    self.attenuation_note.set(f'  本地衰减回读 {attenuation} dB；发送计划 {self.attenuation.get()} dB。')
+            else:
+                lo = values.get('rx_lo_hz_readback')
+                if self._finite_business(lo):
+                    self.receiver_plan_note.set(f'本地 LO {lo/1e6:.3f} MHz\n先验 {values.get("expected_rf_mhz", self.expected_rf.get())} MHz · 远端状态未知')
+                    if values.get('configured') is True:
+                        self.business_settings_seen = True
+        elif kind == 'status':
+            state = event.get('state')
+            message = str(event.get('message', state))
+            if state in ('error', 'disconnected'):
+                if state == 'disconnected' and self.accept_connected and not self.cancel_pending:
+                    return  # Queued startup status, before this Connect click.
+                if state == 'error' and self.cancel_pending and (event.get('category') == 'cancelled' or '取消' in message):
+                    self.online_identity = None
+                    self.business_configured = False
+                    self.business_note.set(message+'；等待本次停止/断开最终回执。')
+                    self._clear_business_readback()
+                    self.session.update_online_controls()
+                    return
+                self._business_released(message, state)
+            elif self.local_claimed:
+                if self.cancel_pending and state != 'stopped':
+                    return
+                if state == 'ready':
+                    if self.online_identity is None or not self.business_settings_seen:
+                        return  # Connect-ready is not configure-ready.
+                    self.business_configured = True
+                    self.business_pending = None
+                    self.online_state = 'ready'
+                    self.connection_status.set('●  本地配置就绪')
+                    self.business_note.set('本地配置已确认；业务收发前须确认业务接线。')
+                    if self.role == 'receiver':
+                        self.received_meta.set('本地接收已就绪 · 等待开始接收；历史消息见下方记录。')
+                        self.capture_note.set('已就绪 · 待开始')
+                elif state == 'stopped':
+                    if self.business_pending in ('disconnect', 'close'):
+                        return
+                    if self.online_identity is None:
+                        self._business_released('取消清理完成，本地连接已释放。')
+                        self.session.update_online_controls()
+                        return
+                    self.cancel_pending = False
+                    self.business_pending = None
+                    self.business_accept_tx = self.business_accept_rx = False
+                    self.online_state = 'stopped'
+                    self.connection_status.set('●  本端已停止')
+                    self.business_note.set(message)
+                    if self.role == 'sender' and self.business_tx_row:
+                        self.history.set(self.business_tx_row, 'status', '本地已停发 / 静音')
+                    elif self.role == 'receiver':
+                        self.capture_note.set('接收已停止')
+                elif self.online_identity is not None:
+                    if state == 'transmitting' and not self.business_accept_tx or state == 'receiving' and not self.business_accept_rx:
+                        return
+                    if state in ('busy', 'transmitting', 'receiving'):
+                        self.online_state = state
+                        self.connection_status.set('●  本地限时发送' if state == 'transmitting' else '●  正在接收' if state == 'receiving' else '●  本地处理中')
+                        self.business_note.set(message)
+                        if state == 'receiving' and self.business_pending == 'receive':
+                            self.business_pending = None
+        elif kind == 'tx':
+            if not self.business_accept_tx or self.cancel_pending or self.online_identity is None or event.get('text') != self.business_text:
+                return
+            message_id = event.get('message_id')
+            if not isinstance(message_id, str) or message_id in self.business_tx_ids:
+                return
+            self.business_tx_ids.add(message_id)
+            self.business_pending = None
+            self.business_tx_row = self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'),
+                message_id, event['text'], '本地限时循环发送'))
+            self.business_note.set('本地约 30 秒有界循环发送；未表示电脑2已收到。')
+        elif kind == 'rx':
+            if not self.business_accept_rx or self.cancel_pending or self.online_identity is None:
+                return
+            self._business_rx(event)
+        elif kind == 'log' and event.get('level') in ('warning', 'error'):
+            self.business_note.set(str(event.get('message', '')))
+        self.session.update_online_controls()
+
+    def _business_rx(self, event):
+        stamp = event.get('received_at')
+        try:
+            timestamp = datetime.fromtimestamp(stamp, tz=timezone.utc).astimezone().strftime('%H:%M:%S')
+        except (TypeError, ValueError, OSError, OverflowError):
+            timestamp = '未知时间'
+        messages = event.get('messages', [])
+        valid = [message for message in messages if isinstance(message, dict) and message.get('crc_valid') is True
+                 and isinstance(message.get('text'), str) and isinstance(message.get('message_id'), str)]
+        for message in valid:
+            status = 'CRC 有效 / 重复' if message.get('duplicate') else 'CRC 有效 / 新消息'
+            self.history.insert('', 0, values=(timestamp, message['message_id'], message['text'], status))
+            self.received_text.set(message['text'])
+            self.received_hero.configure(fg=INK)
+            self.received_meta.set(f'{message["message_id"]}  /  {timestamp}  /  {status}')
+        carrier = event.get('carrier_hz')
+        self.carrier_frequency.set(f'{carrier/1e6:.6f}' if valid and self._finite_business(carrier) else '—')
+        rms = event.get('rms_codes')
+        rms_text = f'{rms:.2f}'.rstrip('0').rstrip('.') if self._finite_business(rms) else '—'
+        self.frame_stats.set(f'有效帧 {event.get("valid_frames", "—")} / CRC 失败 {event.get("crc_rejected", "—")} / '
+                             f'RMS {rms_text}')
+        self.capture_note.set(f'最后采集 {timestamp}')
+        self.spectrum.set_spectrum(event.get('spectrum'))
+        self.business_capture_info = f'最后接收 IQ：{event.get("capture_file", "未提供")} / {timestamp}；本次流程 {event.get("capture_seconds", "未知")} s'
+        self.update_details()
 
     def _start_online(self):
         self._reset_reply()
@@ -313,16 +732,25 @@ class StationReview:
     def update_online_controls(self):
         if not self.online or not hasattr(self, 'command_send_button'):
             return
+        blocked = self.session.other_owner(self.role)
+        if blocked:
+            self._blocked_by = blocked
+            self.connection_status.set('●  文本发送占用')
+            self.request_note.set('发送板由文本发送占用，请先在该窗口断开；切换窗口不会换线。')
+        elif self._blocked_by:
+            self._blocked_by = None
+            self.connection_status.set('●  未连接')
+            self.request_note.set('占用已释放，请连接本地发送板。')
         idle = not self.closing and not self.cancel_pending and self.active_request is None
         local_ready = self.online_state == 'connected' and self.online_identity is not None
         disconnected = self.online_state in ('disconnected', 'error')
         selected = self.session.devices.get(self.selection.get())
-        self.port_combo.configure(state='readonly' if idle and disconnected else 'disabled')
-        self.refresh_button.configure(state='normal' if idle and disconnected else 'disabled')
+        self.port_combo.configure(state='readonly' if idle and disconnected and not blocked else 'disabled')
+        self.refresh_button.configure(state='normal' if idle and disconnected and not blocked else 'disabled')
         self.connect_button.configure(text=('取消连接' if self.accept_connected else
                                            '断开中' if self.cancel_pending else
                                            '断开连接' if not disconnected else '连接'),
-                                      state='normal' if not self.closing and not self.cancel_pending and self.controller is not None
+                                      state='normal' if not self.closing and not self.cancel_pending and not blocked and self.controller is not None
                                       and (bool(selected) or not disconnected) else 'disabled')
         sendable = bool(idle and local_ready and self.draft and self.draft.get('body_hex') and self.draft.get('request')
                         and self.draft['request']['air_seq'] == self.session.next_sequence < 256)
@@ -345,6 +773,7 @@ class StationReview:
             else:
                 # A rejected/uncertain queue submission is not proof that hardware is idle.
                 self.cancel_pending = True
+                self.local_claimed = True
                 self.online_state = 'stopping'
                 self.connection_status.set('●  等待停止回执')
                 try:
@@ -357,6 +786,9 @@ class StationReview:
     def connect_online(self):
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
             return
+        if self.session.other_owner(self.role):
+            self.session.update_online_controls()
+            return
         if self.online_state not in ('disconnected', 'error') or self.accept_connected:
             self.cancel_online('disconnect')
             return
@@ -367,6 +799,7 @@ class StationReview:
         self.active_request = self.active_plan = None
         self.online_identity = None
         self.connecting_port = device['port']
+        self.local_claimed = True
         self.accept_connected = True
         self.online_state = 'connecting'
         self.connection_status.set('●  正在核验本地设备')
@@ -454,6 +887,7 @@ class StationReview:
         self.connecting_port = None
         self.accept_connected = False
         self.cancel_pending = awaiting_cancel
+        self.local_claimed = awaiting_cancel
         self.online_state = 'stopping' if awaiting_cancel else 'error'
         self.connection_status.set('●  正在断开' if awaiting_cancel else '●  已断开 · 请重新连接')
         self.update_details()
@@ -461,6 +895,9 @@ class StationReview:
 
     def _handle_online_event(self, event):
         if self.closed:
+            return
+        if self.business_online:
+            self._handle_business_event(event)
             return
         kind = event.get('type')
         state = event.get('state')
@@ -517,6 +954,7 @@ class StationReview:
                 was_cancelled = self.cancel_pending
                 had_request = self.active_request is not None
                 self.online_identity = None
+                self.local_claimed = False
                 self.connecting_port = None
                 self.active_request = self.active_plan = None
                 self.accept_connected = self.cancel_pending = False
@@ -592,6 +1030,7 @@ class StationReview:
             self._poll_id = self.window.after(60, self._drain_online_events)
 
     def toggle_details(self):
+        self.update_details()
         self.details_open = not self.details_open
         if self.details_open:
             self.history_card.edge.grid_remove()
@@ -631,21 +1070,32 @@ class StationReview:
         self.byte_count = tk.StringVar(self.window, '0 / 32 字节')
         self.byte_label = label(toolbar, variable=self.byte_count, color=MUTED, size=9)
         self.byte_label.pack(side='left')
-        self.send_button = button(toolbar, '发送文本', primary=True, disabled=True)
+        self.send_button = button(toolbar, '发送文本', self.send_business, primary=True, disabled=True)
         self.send_button.pack(side='right')
+        self.business_stop_button = button(toolbar, '停止', self.stop_business, disabled=True)
+        if self.business_online:
+            self.business_stop_button.pack(side='right', padx=(8, 0))
         button(toolbar, '清空', lambda: self.message_input.delete('1.0', 'end')).pack(side='right', padx=8)
 
         rail = tk.Frame(self.body, bg=BG)
         rail.grid(row=0, column=1, sticky='nsew', pady=(0, 14))
         frequency = card(rail, '业务发送频率')
         frequency.edge.pack(fill='x', pady=(0, 14))
-        label(frequency, '900.500', size=25, bold=True, color=TEAL).pack(anchor='w', pady=(10, 0))
-        label(frequency, 'MHz  /  计划信号中心', color=MUTED, size=9).pack(anchor='w', pady=(0, 10))
-        label(frequency, '设备回读：—', color=MUTED, size=9).pack(anchor='w')
+        self.sender_frequency = tk.StringVar(self.window, '900.500')
+        self.sender_frequency_note = tk.StringVar(self.window, 'MHz / 计划中心 · 尚未设备回读' if self.business_online else 'MHz / 计划信号中心')
+        self.sender_readback = tk.StringVar(self.window, '设备回读：—')
+        label(frequency, variable=self.sender_frequency, size=25, bold=True, color=TEAL).pack(anchor='w', pady=(10, 0))
+        label(frequency, variable=self.sender_frequency_note, color=MUTED, size=9).pack(anchor='w', pady=(0, 10))
+        label(frequency, variable=self.sender_readback, color=MUTED, size=9, wrap=240).pack(anchor='w')
+        self.business_note = tk.StringVar(self.window, '业务发送前须确认业务接线；切换窗口不会换线。')
+        if self.business_online:
+            label(frequency, variable=self.business_note, color=MUTED, size=9, wrap=240).pack(anchor='w', pady=(12, 0))
         history, self.history = self._history(self.body, '发送记录', [
             ('time', '时间', 90), ('id', '消息编号', 140), ('content', '文本内容', 450), ('status', '发送状态', 130)])
         history.edge.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.history_card = history
+        if self.business_online:
+            self.attenuation.trace_add('write', lambda *_: self.configure_business())
 
     def _text_changed(self, _event=None):
         if not self.message_input.edit_modified():
@@ -659,6 +1109,8 @@ class StationReview:
         count = len(text.encode('utf-8'))
         self.byte_count.set(f'{count} / 32 字节'+(' · 内容过长' if count > 32 else ''))
         self.byte_label.configure(fg='#B64242' if count > 32 else MUTED)
+        if self.business_online:
+            self.update_business_controls()
 
     def _build_receiver(self):
         self.body.columnconfigure(0, weight=1)
@@ -670,35 +1122,56 @@ class StationReview:
         text_box.pack(fill='both', expand=True, pady=(10, 12))
         self.received_text = tk.StringVar(self.window, '等待接收文本')
         hero = label(text_box, variable=self.received_text, size=23, color='#9BADA9', bg='#F6FAF9', wrap=540)
+        self.received_hero = hero
         hero.pack(fill='both', expand=True)
         hero.bind('<Configure>', lambda event: hero.configure(wraplength=max(180, event.width-10)))
-        label(latest, '消息编号  —      接收时间  —      校验结果  —', color=MUTED, size=9).pack(anchor='w')
+        self.received_meta = tk.StringVar(self.window, '消息编号  —      接收时间  —      校验结果  —')
+        label(latest, variable=self.received_meta, color=MUTED, size=9, wrap=580).pack(anchor='w')
         controls = tk.Frame(latest, bg=PAPER)
         controls.pack(fill='x', pady=(15, 0))
-        self.receive_button = button(controls, '开始接收', primary=True, disabled=True)
+        self.receive_button = button(controls, '开始接收', self.receive_business, primary=True, disabled=True)
         self.receive_button.pack(side='left')
-        button(controls, '停止接收', disabled=True).pack(side='left', padx=8)
-        label(controls, '尚未采集', color=MUTED, size=9).pack(side='right')
+        self.business_stop_button = button(controls, '停止接收', self.stop_business, disabled=True)
+        self.business_stop_button.pack(side='left', padx=8)
+        self.capture_note = tk.StringVar(self.window, '尚未采集')
+        label(controls, variable=self.capture_note, color=MUTED, size=9).pack(side='right')
 
         signal = card(self.body, '接收信号')
         signal.edge.grid(row=0, column=1, sticky='nsew', pady=(0, 14))
-        label(signal, '—', size=27, bold=True, color=TEAL).pack(anchor='w', pady=(5, 0))
+        self.carrier_frequency = tk.StringVar(self.window, '—')
+        label(signal, variable=self.carrier_frequency, size=27, bold=True, color=TEAL).pack(anchor='w', pady=(5, 0))
         label(signal, 'MHz  /  实际载波估计', color=MUTED, size=9).pack(anchor='w', pady=(0, 14))
         expectation = tk.Frame(signal, bg=PAPER)
         expectation.pack(fill='x')
         label(expectation, '接收目标', size=9).pack(side='left')
         self.expected_rf = tk.StringVar(self.window, '1000.5')
-        ttk.Combobox(expectation, textvariable=self.expected_rf, values=('1000.5', '1001.5'),
-                     state='readonly', style='V2.TCombobox', width=8).pack(side='right')
-        label(signal, 'MHz · 本地接收计划，未应用', color=MUTED, size=9).pack(anchor='w', pady=(5, 14))
-        self.spectrum = tk.Canvas(signal, bg='#F8FAFC', height=100, highlightthickness=0)
+        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=('1000.5', '1001.5'),
+                     state='readonly', style='V2.TCombobox', width=8)
+        self.expected_combo.pack(side='right')
+        self.receiver_plan_note = tk.StringVar(self.window, 'MHz · 本地接收计划，未应用')
+        label(signal, variable=self.receiver_plan_note, color=MUTED, size=9, wrap=250).pack(anchor='w', pady=(5, 14))
+        if self.business_online:
+            from .app import SpectrumCanvas
+            self.spectrum = SpectrumCanvas(signal)
+            self.spectrum.configure(height=100)
+        else:
+            self.spectrum = tk.Canvas(signal, bg='#F8FAFC', height=100, highlightthickness=0)
+            self.spectrum.bind('<Configure>', self._empty_spectrum)
         self.spectrum.pack(fill='both', expand=True)
-        self.spectrum.bind('<Configure>', self._empty_spectrum)
-        label(signal, '有效帧  —    校验失败  —', color=MUTED, size=9).pack(anchor='w', pady=(12, 0))
+        self.frame_stats = tk.StringVar(self.window, '有效帧  —    校验失败  —')
+        label(signal, variable=self.frame_stats, color=MUTED, size=9, wrap=250).pack(anchor='w', pady=(12, 0))
+        self.business_note = tk.StringVar(self.window, '本端真实 IQ 接收；先验不会改变远端转发板状态。')
+        if self.business_online:
+            hint = label(signal, variable=self.business_note, color=MUTED, size=9, wrap=250)
+            hint.configure(height=2)
+            hint.pack(anchor='w', pady=(6, 0))
         history, self.history = self._history(self.body, '接收记录', [
             ('time', '接收时间', 90), ('id', '消息编号', 140), ('content', '实际收到的文本', 430), ('status', '校验 / 重复', 140)])
         history.edge.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.history_card = history
+        if self.business_online:
+            self.history.configure(height=2)
+            self.expected_rf.trace_add('write', lambda *_: self.configure_business())
 
     def _empty_spectrum(self, event):
         self.spectrum.delete('all')
@@ -922,12 +1395,13 @@ def main(argv=None):
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--all', action='store_true', help='打开三个审阅窗口')
     group.add_argument('--role', choices=tuple(ROLES))
-    parser.add_argument('--online-control', action='store_true', help='仅启用改频控制窗口的实板事务；文本窗口仍禁发')
+    parser.add_argument('--online-control', action='store_true', help='启用改频窗口实板事务；文本业务另由 --online-business 启用')
+    parser.add_argument('--online-business', action='store_true', help='启用本地文本发送/接收；与改频窗口须显式断开交接')
     args = parser.parse_args(argv)
     root = tk.Tk()
     root.withdraw()
     root.tk.call('tk', 'scaling', 1.33)
-    session = ReviewSession(root, online_control=args.online_control)
+    session = ReviewSession(root, online_control=args.online_control, online_business=args.online_business)
     for role in ROLES if args.all else (args.role,):
         session.show(role)
     root.mainloop()

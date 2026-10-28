@@ -1,13 +1,16 @@
 """Review UI: no radio actions, no invented receive results, explicit history."""
 import json
+import gc
 from pathlib import Path
 import tempfile
 import threading
 import tkinter as tk
 import unittest
+import weakref
 from unittest.mock import patch
 
 from .test_tc_evidence import evidence
+from ._tk_test_support import dispose_tk_test
 from .ui_v2 import ReviewSession, main
 from .ui_v2_model import (command_request, device_choices, frequency_plan,
                          format_mhz, load_historical_transaction, text_bytes)
@@ -104,11 +107,10 @@ class ReviewWindowTests(unittest.TestCase):
         self.session = ReviewSession(self.root, port_provider=lambda: PORTS, aliases=ALIASES)
 
     def tearDown(self):
-        self.serial_patch.stop()
         try:
-            self.root.destroy()
-        except tk.TclError:
-            pass
+            dispose_tk_test(self)
+        finally:
+            self.serial_patch.stop()
 
     def test_three_windows_share_only_pc1_selection_and_never_receive_a_draft(self):
         sender, receiver, control = [self.session.show(role) for role in ('sender', 'receiver', 'control')]
@@ -246,13 +248,10 @@ class OnlineControlTests(unittest.TestCase):
         self.controller = self.control.controller
 
     def tearDown(self):
-        self.serial_patch.stop()
         try:
-            for callback in self.root.tk.call('after', 'info'):
-                self.root.after_cancel(callback)
-            self.root.destroy()
-        except tk.TclError:
-            pass
+            dispose_tk_test(self)
+        finally:
+            self.serial_patch.stop()
 
     def connected(self, next_sequence=None):
         self.control.connect_online()
@@ -537,6 +536,36 @@ class OnlineControlTests(unittest.TestCase):
         self.assertNotIn('control', self.session.windows)
         self.control._handle_online_event(dict(type='connected', source=dict(port='COM_A')))
         self.control._handle_online_event(dict(type='result', passed=True, requested=request))
+
+    def test_closed_page_releases_private_tk_objects_before_other_worker_gc(self):
+        sender = self.session.show('sender')
+        private_variable = weakref.ref(self.control.input_frequency)
+        private_window = weakref.ref(self.control.window)
+        removed_trace = self.control.selection_trace
+        self.session.close('control')
+        self.control._handle_online_event(dict(type='status', state='closed'))
+        self.assertIsNone(private_variable())
+        self.assertIsNone(private_window())
+        self.assertIsNone(self.control.input_frequency)
+        self.assertIsNone(self.control.window)
+        self.assertTrue(self.control.closed)
+        self.assertNotIn(removed_trace, [command for _, command in self.session.source_selection.trace_info()])
+        self.session.source_selection.set('接收板（上次识别） · COM_B')
+        self.assertIn('COM_B', sender.device_detail.get())
+        collected = []
+        worker = threading.Thread(target=lambda: collected.append(gc.collect()))
+        worker.start(); worker.join()
+        self.assertEqual(len(collected), 1)
+
+    def test_last_page_releases_session_variables_on_main_thread(self):
+        source_selection = weakref.ref(self.session.source_selection)
+        receiver_selection = weakref.ref(self.session.receiver_selection)
+        self.session.close('control')
+        self.control._handle_online_event(dict(type='status', state='closed'))
+        self.assertIsNone(source_selection())
+        self.assertIsNone(receiver_selection())
+        self.assertIsNone(self.session.root)
+        self.assertEqual(self.session.windows, {})
 
     def test_online_minimum_layout_keeps_action_row_and_history_visible(self):
         self.control.window.geometry('1040x800')

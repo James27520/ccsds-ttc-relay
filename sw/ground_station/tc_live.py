@@ -14,6 +14,7 @@ import time
 import uuid
 
 from .tc_hardware import CommandSource, request_values
+from .device_lease import PortLease
 from .transport import Console
 from .rf_live import Cancelled, FS, SAMPLES
 from .tc_evidence import _integer, _json_finite
@@ -171,6 +172,7 @@ class TelecontrolController:
         self.interrupt = threading.Event()
         self.closing = False
         self.radio = None
+        self.port_lease = None
         self.used_sequences = set()
         self.previous = None
         self.index = 0
@@ -210,6 +212,7 @@ class TelecontrolController:
         if self.radio:
             raise RuntimeError('请先断开当前会话')
         self.status('connecting', '正在核验本地发送板')
+        self.port_lease = PortLease(source_port)
         self.radio = self.radio_factory(source_port, self.record)
         self.radio.require_idle()
         if self.radio.read(self.radio.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
@@ -301,6 +304,9 @@ class TelecontrolController:
             except Exception as exc:
                 errors.append('串口关闭：'+str(exc))
         self.radio = None
+        if self.port_lease:
+            self.port_lease.close()
+            self.port_lease = None
         if errors:
             raise RuntimeError('；'.join(errors))
 

@@ -75,7 +75,7 @@ class OwnershipTests(unittest.TestCase):
 
     def test_busy_source_does_not_become_owned_or_mute(self):
         s=CommandSource.__new__(CommandSource)
-        s.owned=False;s.verify_binding=Mock();s.require_idle=Mock(side_effect=RuntimeError('busy'))
+        s.owned=False;s.prepared=False;s.verify_binding=Mock();s.require_idle=Mock(side_effect=RuntimeError('busy'))
         s.mute=Mock()
         with self.assertRaisesRegex(RuntimeError,'busy'):
             s.prepare(request_values(900,1000,240),wiring_confirmed=True)
@@ -84,6 +84,7 @@ class OwnershipTests(unittest.TestCase):
     def test_missing_guard_keeps_lo_off(self):
         s=CommandSource.__new__(CommandSource)
         s.prepared=True;s.remote='/tmp/test';s.phy='/phy';s.tx='/tx'
+        s.block_samples=4000;s.attenuation_db=30
         s.manifest={'sha256':'abcdef'}
         s.verify_binding=Mock();s.require_idle=Mock();s.run=Mock(return_value='abcdef  /tmp/test/waveform.bin')
         s.read=Mock(side_effect=['1','bad guard identity']);s.write=Mock()
@@ -99,6 +100,7 @@ class OwnershipTests(unittest.TestCase):
     def test_failed_mute_keeps_guard_armed(self):
         s=CommandSource.__new__(CommandSource)
         s.owned=True;s.remote='/tmp/test';s.tx='/tx'
+        s.verify_binding=Mock()
         s.mute=Mock(side_effect=RuntimeError('mute failed'));s.run=Mock(return_value='')
         s.read=Mock(return_value='0')
         with self.assertRaisesRegex(RuntimeError,'mute failed'):s.stop()

@@ -9,6 +9,7 @@ import tkinter as tk
 import unittest
 
 from .app import StationApp
+from ._tk_test_support import dispose_tk_test
 from .rf_telemetry_window import validated_snapshots
 from .test_app import FakeController
 from .test_telemetry_window import FakeTelemetryController
@@ -71,13 +72,8 @@ class RFWindowTests(unittest.TestCase):
         if not self.window.closed:
             self.window.close()
             self.window._handle_event(dict(type="closed"))
-        try:
-            for callback in self.root.tk.call("after", "info"):
-                self.root.after_cancel(callback)
-            self.root.destroy()
-        except tk.TclError:
-            pass
         self.temp.cleanup()
+        dispose_tk_test(self)
 
     def wait_loaded(self):
         deadline = time.monotonic() + 5

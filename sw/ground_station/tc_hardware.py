@@ -113,6 +113,22 @@ class CommandSource(SessionRxConsole):
         request_values(**requested)
         if wiring_confirmed is not True:
             raise ValueError('需要先确认TX1A到ADC1/J5的接线')
+        iq = command_iq(requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], .1)
+        manifest = make_manifest('cmd', iq, .1, requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'])
+        self._prepare_waveform(iq.tobytes(), manifest, lo_hz=100000000,
+                               attenuation_db=30, block_samples=len(iq))
+        self.record(kind='tc_source_prepared', requested=requested, manifest=self.manifest)
+        return self.manifest
+
+    def _prepare_waveform(self, raw, manifest, *, lo_hz, attenuation_db, block_samples,
+                          check_cancel=lambda: None):
+        """Internal helper; each adapter's write whitelist still gates its profile."""
+        if self.prepared or type(block_samples) is not int or not 1 <= block_samples <= 262144:
+            raise ValueError('发送波形状态或长度无效')
+        if len(raw) != block_samples*4:
+            raise ValueError('发送波形字节数不符')
+        self.block_samples, self.attenuation_db = block_samples, attenuation_db
+        check_cancel()
         self.verify_binding()
         self.require_idle()
         if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
@@ -120,15 +136,14 @@ class CommandSource(SessionRxConsole):
         self.owned = True
         self.mute()
         self.run('mkdir '+self.remote)
-        for name, value in [('out_altvoltage1_TX_LO_frequency', 100000000),
+        for name, value in [('out_altvoltage1_TX_LO_frequency', lo_hz),
                             ('out_voltage_sampling_frequency', 2500000),
                             ('out_voltage_rf_bandwidth', 3000000),
                             ('out_voltage0_rf_port_select', 'A')]:
+            check_cancel()
             self.write(self.phy+'/'+name, value, 10 if 'frequency' in name else 0)
-        iq = command_iq(requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], .1)
-        raw = iq.tobytes()
-        self.manifest = make_manifest('cmd', iq, .1, requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'])
-        Console.upload(self, self.remote+'/waveform.bin', raw)
+        self.manifest = manifest
+        Console.upload(self, self.remote+'/waveform.bin', raw, lambda _fraction: check_cancel())
         # Only this board-side guard can enable LO. A delayed host request after
         # expiry cannot re-enable TX; it merely creates an unused request file.
         guard = ('cleanup() {\n'
@@ -149,10 +164,9 @@ class CommandSource(SessionRxConsole):
                  f'echo 0 > {self.phy}/out_altvoltage1_TX_LO_powerdown || '+ '{ cleanup; exit 1; }\n'
                  f'enabled=1; echo enabled > {self.remote}/guard_state\n'
                  'fi\nsleep .05\ndone\n').encode('ascii')
-        Console.upload(self, self.remote+'/guard.sh', guard)
+        check_cancel()
+        Console.upload(self, self.remote+'/guard.sh', guard, lambda _fraction: check_cancel())
         self.prepared = True
-        self.record(kind='tc_source_prepared', requested=requested, manifest=self.manifest)
-        return self.manifest
 
     def start(self):
         if not self.prepared:
@@ -164,7 +178,7 @@ class CommandSource(SessionRxConsole):
         digest = self.run('sha256sum '+self.remote+'/waveform.bin').split()[0]
         if digest != self.manifest['sha256']:
             raise RuntimeError('板端指令波形摘要变化')
-        self.run(f'iio_writedev -u local: -b 4000 -c cf-ad9361-dds-core-lpc voltage0 voltage1 '
+        self.run(f'iio_writedev -u local: -b {self.block_samples} -c cf-ad9361-dds-core-lpc voltage0 voltage1 '
                  f'< {self.remote}/waveform.bin > {self.remote}/writer.log 2>&1 & p=$!; '
                  't=$(awk \'{print $22}\' /proc/$p/stat); '
                  f'if test -n "$t"; then echo "$p $t" > {self.remote}/owned; '
@@ -174,7 +188,7 @@ class CommandSource(SessionRxConsole):
                  f'test "$(cat {self.tx}/scan_elements/out_voltage1_en)" = 1 && '
                  f'test "$(cat {self.tx}/scan_elements/out_voltage2_en)" = 0 && '
                  f'test "$(cat {self.tx}/scan_elements/out_voltage3_en)" = 0')
-        self.write(self.phy+'/out_voltage0_hardwaregain', -30)
+        self.write(self.phy+'/out_voltage0_hardwaregain', -self.attenuation_db)
         self.run(f'sh {self.remote}/guard.sh </dev/null > {self.remote}/guard.log 2>&1 & p=$!; '
                  't=$(awk \'{print $22}\' /proc/$p/stat); '
                  f'test -n "$t" && echo "$p $t" > {self.remote}/guard_owned')
@@ -193,11 +207,12 @@ class CommandSource(SessionRxConsole):
                  f'test $(( $(cat {self.remote}/deadline) - $(cut -d. -f1 /proc/uptime) )) -gt 10')
         if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '0':
             raise RuntimeError('指令源本振开启未确认')
-        self.record(kind='tc_source_started', guard_seconds=30, attenuation_db=30)
+        self.record(kind='guarded_source_started', guard_seconds=30, attenuation_db=self.attenuation_db)
 
     def stop(self):
         if not self.owned:
             return
+        self.verify_binding()
         errors = []
         try:
             # Cancels a delayed enable request too. Wait for the guard to finish

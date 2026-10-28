@@ -16,7 +16,8 @@
 - [测控下行SMA实收](docs/telemetry-rf-validation.md)：J6/DAC1经新增同轴连接SDR RX1A，三次有限发送恢复12个CRC正确帧、3份不同状态快照；五个停发窗口无有效帧。
 - [测控下行GUI采集](docs/telemetry-live-validation.md)：新增会话核验、单次有限发送与真实IQ接收解码，GUI一次约17秒；新增8个CRC正确帧、2份快照，静默对照及采集中关闭清理通过。该阶段返回已有UART网络测试记录。
 - [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。这是早期由台架工具逐步调度的验证。
-- [板端自主测控与第二版GUI](docs/telecontrol-autonomous-validation.md)：一次台架启用后，遥控板自主完成采样、解调、UDP和有限DAC回报；地面改频窗口只连接本地发送板。两笔控制器事务与一笔GUI操作共恢复23个CRC正确帧，独立SPI另行核对一致；单笔约71–73秒。第二版文本业务接入、全频率协议扩展及持久化启动尚未完成。
+- [板端自主测控与第二版GUI](docs/telecontrol-autonomous-validation.md)：一次台架启用后，遥控板自主完成采样、解调、UDP和有限DAC回报；地面改频窗口只连接本地发送板。两笔控制器事务与一笔GUI操作共恢复23个CRC正确帧，独立SPI另行核对一致；单笔约71–73秒。全频率协议扩展及持久化启动尚未完成。
+- [第二版业务GUI](docs/business-v2-validation.md)：发送、接收窗口各自只连接本地SDR，经外部发送板→LDSDR→独立接收板传输新文本。两条控制器文本与一条GUI文本通过，接收原始IQ另行重解码；30秒限时停发、停发负例与发送/改频窗口设备互斥通过。台架预先准备转发模式和电平，业务GUI不操作转发板管理口。
 
 结论限当前实物、第一路有线链和离散快照。文本使用实验帧，条件比特比较不是整体BER测量；不能据此宣称完整CCSDS协议符合性、24小时稳定性或无跨窗口漏帧。业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收；新接收板的TX与100.5 MHz能力尚未验证。
 
@@ -35,7 +36,7 @@ Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已�
 
 旧草图下方的名称仍为“遥控板”，现在由 Z7ADDALite 承担。2026-10-28已确认资料对应关系：`LDSDR（7010_rev3.1）`属于转发板，`7010_AD9363_SDR`属于新发送板，是两块独立实物。两套资料均描述通过固件扩展AD9363功能；Linux中的`ad9361-phy`及设备树型号不能作为实物装有AD9361的证据。接口依据和频段限制见[真实输入联调](docs/signal-input-bringup.md)。
 
-COM号仅对应各报告当时的会话。下行联调发现COM17/COM19的固件身份与历史角色记录不一致；本次RF实收来自受当前启动身份约束的COM19接收会话。常规业务GUI仍拒绝缺少稳定身份的设备，RF下行窗口另有显式、当前进程有效的接收会话绑定；不能直接沿用旧COM号发射，见[身份与会话说明](docs/telemetry-live-validation.md)。
+COM号仅对应各报告当时的会话。下行联调曾发现COM17/COM19的固件身份与历史角色记录不一致，见[身份与会话说明](docs/telemetry-live-validation.md)。2026-10-29新版业务实测重新核验COM19发送、COM17接收；V2使用当前进程的USB、Linux启动编号和IIO映射绑定，不据此建立永久角色身份。不能直接沿用旧COM号发射；第一版工具的稳定身份限制仍保留。
 
 下面给出目标联动结构中的指令链和一条业务方向，不包含全部双向端口。真实指令设置保留后，换线验证独立接收业务链已通过；当前双端桌面程序仍在电脑1运行。总体目标已按[六线功能计划](docs/six-link-system-plan.md)登记，独立指令源、共用本振资源和测控回传需要单独完成，不能仅凭增加同轴线实现全系统并发。
 
@@ -82,7 +83,7 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 
 ## 仓库内容与使用范围
 
-双端桌面演示：先按[安装和操作说明](sw/ground_station/README.md)安装 Python 依赖，再分别运行 [start_sender.bat](start_sender.bat) 与 [start_receiver.bat](start_receiver.bat)。接收端迁移到另一台电脑时只启动接收程序。当前DEBUG快照周期约2.9秒；一条新文本从提交到首次解码约15.8秒，包含启停和设备检查，仍为有空档的分段采样。
+双端桌面演示：先按[安装和操作说明](sw/ground_station/README.md)安装Python依赖，再分别运行 [start_sender_v2.bat](start_sender_v2.bat) 与 [start_receiver_v2.bat](start_receiver_v2.bat)；本机三窗口用 [start_station_v2.bat](start_station_v2.bat)。接收端迁移到另一台电脑时只启动接收程序。V2本轮快照处理约3.2秒，首条文本提交到首次解码约18.2秒；仍为有空档的分段采样。第一版入口保留作台架工具。
 
 | 路径 | 当前内容 | 适用范围 |
 |---|---|---|

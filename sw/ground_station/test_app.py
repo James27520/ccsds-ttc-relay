@@ -4,6 +4,7 @@ import tkinter as tk
 import unittest
 
 from .app import StationApp
+from ._tk_test_support import dispose_tk_test
 
 
 class FakeController:
@@ -21,12 +22,7 @@ class StationAppTests(unittest.TestCase):
         self.app = None
 
     def tearDown(self):
-        try:
-            for callback in self.root.tk.call("after", "info"):
-                self.root.after_cancel(callback)
-            self.root.destroy()
-        except tk.TclError:
-            pass
+        dispose_tk_test(self)
 
     def make_app(self, role):
         self.app = StationApp(self.root, role, controller_factory=FakeController)

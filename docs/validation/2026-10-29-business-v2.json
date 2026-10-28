@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "b81cc25a0a278535fba4ee8a917f6d2532025e5c",
+  "scope": "Local-SDR V2 business GUIs through external three-board forward path",
+  "passed": true,
+  "firmware_changed": false,
+  "flash_sd_written": false,
+  "business_concurrent_with_tc": false,
+  "second_computer_tested": false,
+  "relay_prepared_outside_gui": {
+    "mode": 1,
+    "rx_gain_db": 30,
+    "tx_atten_db": 50,
+    "lo_written": false,
+    "spi": {
+      "relay_rx_hz_readback": 900000000,
+      "relay_tx_hz_readback": 1000999998,
+      "relay_tx_atten_db_readback": 50,
+      "relay_rx_gain_db_readback": 30
+    }
+  },
+  "controller_cases": [
+    {
+      "text": "NTN V2 20261029",
+      "message_id": "73b53d78:0000",
+      "submit_to_first_rx_seconds": 18.246086597442627
+    },
+    {
+      "text": "外部链路·第二段",
+      "message_id": "73b53d78:0001",
+      "submit_to_first_rx_seconds": 25.990530014038086
+    }
+  ],
+  "controller_redecode": {
+    "passed": true,
+    "windows": 22,
+    "signal_windows": 10,
+    "frames": 30
+  },
+  "gui": {
+    "passed": true,
+    "text": "GUI 实测 2026",
+    "message_id": "a89eddfe:0000",
+    "windows": 27,
+    "signal_windows": 7,
+    "valid_frames": 23,
+    "tx_report_to_first_receive_seconds": 4.512746334075928,
+    "capture_seconds_range": [
+      3.219067300000461,
+      3.2497566000020015
+    ],
+    "carrier_hz_range": [
+      1001500083.4940684,
+      1001500091.759423
+    ],
+    "automatic_stop": {
+      "time": 1793207926.2648797,
+      "type": "status",
+      "state": "stopped",
+      "message": "本次限时发送结束；可再次发送新文本"
+    },
+    "post_stop_zero_windows": 6,
+    "tc_handover_connected": true,
+    "tc_handover_closed": true
+  },
+  "final_state": {
+    "endpoints": [
+      {
+        "role": "sender",
+        "port": "COM19",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "receiver",
+        "port": "COM17",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ],
+    "relay": {
+      "relay_rx_hz_readback": 900000000,
+      "relay_tx_hz_readback": 1000999998,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "relay_mode": "2",
+    "adda_service": [
+      "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=0 udp_seq=3 reply_seq=2 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+      "CLI_RESULT rc=0"
+    ],
+    "adda_dac": {
+      "enabled": 1,
+      "seq": 3,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    },
+    "adda_pending": 0
+  },
+  "tests": {
+    "full_suite_before_display_only_fix": 249,
+    "ui_tests_after_display_only_fix": 55,
+    "failed": 0
+  },
+  "retained_failed_attempt": {
+    "name": "acceptance01",
+    "reason": "Bench released relay handle before cleanup; active-board gate rejected reopen",
+    "recovery": "relay_cleanup_recovery.json",
+    "retry": "acceptance02"
+  },
+  "raw_window_samples": 32768,
+  "sample_rate_hz": 2500000,
+  "rf_window_ms": 13.1072,
+  "evidence": {
+    "local_work": "D:\\RelayTools\\work\\business_v2_20261029",
+    "archive": "D:\\RelayTools\\releases\\business_v2_20261029.zip",
+    "bytes": 3103918,
+    "sha256": "39063badd6933291c1281ae54fe77274478b092205af7d12752b024a7ccabb76",
+    "manifest_sha256": "3288a8ef1f967c8c26c4b9cd2a342937aa948451d31c8a28929cc08bd3377549"
+  }
+}

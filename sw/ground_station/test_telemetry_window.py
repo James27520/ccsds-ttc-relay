@@ -5,6 +5,7 @@ import tkinter as tk
 import unittest
 
 from .app import StationApp
+from ._tk_test_support import dispose_tk_test
 from .test_app import FakeController
 
 
@@ -28,12 +29,7 @@ class TelemetryWindowTests(unittest.TestCase):
         self.root.update()
 
     def tearDown(self):
-        try:
-            for callback in self.root.tk.call("after", "info"):
-                self.root.after_cancel(callback)
-            self.root.destroy()
-        except tk.TclError:
-            pass
+        dispose_tk_test(self)
 
     def snapshot(self, **values):
         self.monitor._handle_event(dict(type="telemetry", received_at=time.time(), snapshot=values))

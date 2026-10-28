@@ -358,9 +358,17 @@ class StationController:
         if c.read(c.rx+'/buffer/enable') != '0':
             raise RuntimeError('采集buffer未释放')
         self.capture_owned = False
+        self._publish_capture(raw, stem, begin)
+
+    def _publish_capture(self, raw, stem, begin):
+        """Decode only local IQ; shared with the source-only V2 station."""
+        if self.interrupt.is_set():
+            return
         (self.log_dir/(stem+'.bin')).write_bytes(raw)
         report = decode_capture(raw, expected_offset_hz=self.settings['expected_rf_mhz']*1e6-
                                 self.settings['rx_lo_hz_readback'])
+        if self.interrupt.is_set():
+            return
         if report['clip_components'] or report['rms_codes'] > 1000:
             raise RuntimeError('采样出现削顶或超过本次已验证输入范围，接收已停止')
         messages = []
@@ -381,6 +389,8 @@ class StationController:
         points = dict(freq_mhz=frequencies.reshape(-1, 8).mean(axis=1).tolist(),
                       dbfs=(20*np.log10(np.maximum(spectrum, 1e-8))).reshape(-1, 8).max(axis=1).tolist())
         carrier = self.settings['rx_lo_hz_readback']+report['carrier_offset_hz'] if messages else None
+        if self.interrupt.is_set():
+            return
         self.event('rx', messages=messages, valid_frames=len(messages),
                    crc_rejected=report['crc_rejected_frames'], rms_codes=report['rms_codes'],
                    carrier_hz=carrier, spectrum=points, capture_seconds=time.monotonic()-begin,
