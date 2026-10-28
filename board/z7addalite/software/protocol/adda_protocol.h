@@ -11,6 +11,8 @@
 #define AP_CODE_BITS 128u
 #define AP_FRAME_BITS 160u
 #define AP_RF_BYTES 26u
+#define AP_CONTROL_BYTES 34u
+#define AP_CONTROL_ACK_BYTES 50u
 #define AP_ACK_MAX_BYTES 96u
 
 enum ap_status {
@@ -58,6 +60,12 @@ int ap_find_frame(const uint8_t *bits, size_t bit_count, size_t start_bit,
                    struct ap_frame_result *result);
 
 struct ap_ack { int32_t rc; uint16_t seq; uint64_t rx_hz; uint64_t tx_hz; };
+struct ap_relay_status {
+    uint8_t operation,flags,mode,rx1_gain,rx2_gain;
+    uint32_t tx1_mdB,tx2_mdB,remaining_ms,uptime_ms;
+};
+int ap_control_packet(const struct ap_command *,uint16_t,uint8_t *,size_t);
+int ap_control_ack_parse(const uint8_t *,size_t,struct ap_ack *,struct ap_relay_status *);
 /* Existing LDSDR UDP RF_SET wire format, not the UART CLI. gain/attenuation
  * must be supplied explicitly. 70..6000 MHz is a wire limit, not RF assurance. */
 int ap_rf_packet(const struct ap_command *command, uint16_t transaction_seq,
@@ -75,6 +83,7 @@ int ap_ack_parse(const uint8_t *text, size_t length, struct ap_ack *ack);
 struct ap_transaction {
     unsigned pending;
     unsigned applied_valid;
+    unsigned control_sequence_used;
     uint16_t next_transaction_seq;
     uint16_t pending_transaction_seq;
     struct ap_command pending_command;
@@ -83,7 +92,8 @@ struct ap_transaction {
     uint8_t pending_attenuation;
     uint8_t applied_gain;
     uint8_t applied_attenuation;
-    uint8_t packet[AP_RF_BYTES];
+    size_t packet_length;
+    uint8_t packet[AP_CONTROL_BYTES];
 };
 void ap_transaction_init(struct ap_transaction *state, uint16_t first_transaction_seq);
 int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *command,
@@ -92,6 +102,7 @@ int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *
  * decides retry versus abort. tolerance_hz <=10000 matches legacy apply check. */
 int ap_transaction_ack(struct ap_transaction *state, const struct ap_ack *ack,
                         uint32_t tolerance_hz);
+int ap_transaction_control_ack(struct ap_transaction *,const struct ap_ack *,const struct ap_relay_status *,uint32_t);
 /* Ends an unsuccessful attempt without marking applied. Next begin uses a new
  * UDP sequence. Does not cancel a datagram already in flight on the server. */
 void ap_transaction_abort(struct ap_transaction *state);

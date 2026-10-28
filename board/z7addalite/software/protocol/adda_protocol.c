@@ -7,7 +7,8 @@ static const uint8_t ap_asm[4] = {0x1a, 0xcf, 0xfc, 0x1d};
 static int command_valid(const struct ap_command *command)
 {
     if (!command) return AP_EARG;
-    if (command->version != 1u) return AP_EVERSION;
+    if (command->version != 1u && command->version != 0x21u &&
+        command->version != 0x22u && command->version != 0x23u) return AP_EVERSION;
     if (command->rx_mhz < 70u || command->rx_mhz > 6000u ||
         command->tx_mhz < 70u || command->tx_mhz > 6000u) return AP_ERANGE;
     return AP_OK;
@@ -239,6 +240,7 @@ int ap_rf_packet(const struct ap_command *command, uint16_t transaction_seq,
     int rc = command_valid(command);
     if (!output) return AP_EARG;
     if (rc != AP_OK) return rc;
+    if (command->version != 1u) return AP_EVERSION;
     if (transaction_seq > 0x3fffu || rx_gain_db > 76u || tx_att_db > 89u) return AP_ERANGE;
     temporary[0] = 0x01u; temporary[1] = 0x01u;
     temporary[2] = (uint8_t)(0xc0u | (transaction_seq >> 8));
@@ -251,6 +253,41 @@ int ap_rf_packet(const struct ap_command *command, uint16_t transaction_seq,
     temporary[24] = (uint8_t)(crc >> 8); temporary[25] = (uint8_t)crc;
     memcpy(output, temporary, sizeof(temporary));
     return AP_OK;
+}
+
+static uint32_t get32(const uint8_t *p)
+{ return (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3]; }
+static uint64_t get64(const uint8_t *p) { return (uint64_t)get32(p)<<32 | get32(p+4); }
+int ap_control_packet(const struct ap_command *c,uint16_t seq,uint8_t *out,size_t capacity)
+{
+    uint8_t p[AP_CONTROL_BYTES];uint16_t crc;int rc=command_valid(c);
+    if(!out)return AP_EARG;
+    if(rc!=AP_OK)return rc;
+    if(c->version==1u)return AP_EVERSION;
+    if(seq>0x3fffu)return AP_ERANGE;
+    if(capacity<sizeof(p))return AP_ELENGTH;
+    memset(p,0,sizeof(p));p[0]=1;p[1]=0x20;p[2]=(uint8_t)(0xc0u|(seq>>8));p[3]=(uint8_t)seq;
+    p[5]=27;p[6]=1;p[7]=c->version;
+    if(c->version==0x21u){p[8]=1;p[9]=30;p[10]=50;p[13]=4;p[14]=0x93;p[15]=0xe0;}
+    put_be64(p+16,(uint64_t)c->rx_mhz*UINT64_C(1000000));
+    put_be64(p+24,(uint64_t)c->tx_mhz*UINT64_C(1000000));
+    crc=ap_crc16(p,32);p[32]=(uint8_t)(crc>>8);p[33]=(uint8_t)crc;
+    memcpy(out,p,sizeof(p));return AP_OK;
+}
+int ap_control_ack_parse(const uint8_t *p,size_t length,struct ap_ack *ack,struct ap_relay_status *status)
+{
+    struct ap_ack a;struct ap_relay_status s;
+    if(!p || !ack || !status)return AP_EARG;
+    if(length!=AP_CONTROL_ACK_BYTES)return AP_ELENGTH;
+    if(ap_crc16(p,48)!=(uint16_t)((uint16_t)p[48]<<8|p[49]))return AP_ECRC;
+    if(p[0]!=2 || p[1]!=0x20 || (p[2]&0xc0u)!=0xc0u || p[4] || p[5]!=43 || p[6]!=1 ||
+       p[7]<0x21 || p[7]>0x23 || (p[8]&0xf0u) || p[9]>3)return AP_EACK;
+    a.seq=(uint16_t)(((p[2]&0x3fu)<<8)|p[3]);a.rx_hz=get64(p+28);a.tx_hz=get64(p+36);
+    {uint32_t rc=get32(p+44);a.rc=rc<=INT32_MAX?(int32_t)rc:(int32_t)(-1-(int64_t)(UINT32_MAX-rc));}
+    s.operation=p[7];s.flags=p[8];s.mode=p[9];s.rx1_gain=p[10];s.rx2_gain=p[11];
+    s.tx1_mdB=get32(p+12);s.tx2_mdB=get32(p+16);s.remaining_ms=get32(p+20);s.uptime_ms=get32(p+24);
+    if((s.flags&1u) && (s.rx1_gain>76 || s.rx2_gain>76 || s.tx1_mdB>89000 || s.tx2_mdB>89000))return AP_EACK;
+    *ack=a;*status=s;return AP_OK;
 }
 
 struct parser { const uint8_t *text; size_t length; size_t position; };
@@ -313,17 +350,18 @@ void ap_transaction_init(struct ap_transaction *state, uint16_t first_transactio
 {
     if (!state) return;
     memset(state, 0, sizeof(*state));
-    state->next_transaction_seq = first_transaction_seq & 0x3fffu;
+    state->next_transaction_seq = first_transaction_seq;
 }
 
 int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *command,
                            uint8_t rx_gain_db, uint8_t tx_att_db)
 {
-    uint8_t packet[AP_RF_BYTES];
+    uint8_t packet[AP_CONTROL_BYTES];size_t length;
     int rc;
     if (!state || !command) return AP_EARG;
-    rc = ap_rf_packet(command, state->next_transaction_seq, rx_gain_db, tx_att_db, packet);
-    if (rc != AP_OK) return rc;
+    length=command->version==1u?AP_RF_BYTES:AP_CONTROL_BYTES;
+    rc = command->version==1u?ap_rf_packet(command, state->next_transaction_seq, rx_gain_db, tx_att_db, packet):
+         ap_control_packet(command,state->next_transaction_seq,packet,sizeof(packet));
     if (state->applied_valid && command->seq == state->applied_command.seq) {
         if (same_command(command, &state->applied_command) && rx_gain_db == state->applied_gain &&
             tx_att_db == state->applied_attenuation) return AP_DUPLICATE;
@@ -335,9 +373,12 @@ int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *
             tx_att_db == state->pending_attenuation) return AP_PENDING;
         return AP_ECONFLICT;
     }
-    memcpy(state->packet, packet, sizeof(packet));
+    if (rc != AP_OK) return rc;
+    memcpy(state->packet, packet, length);state->packet_length=length;
     state->pending_transaction_seq = state->next_transaction_seq;
-    state->next_transaction_seq = (uint16_t)((state->next_transaction_seq+1u) & 0x3fffu);
+    if(command->version!=1u)state->control_sequence_used=1u;
+    state->next_transaction_seq = (uint16_t)(state->next_transaction_seq+1u);
+    if(!state->control_sequence_used)state->next_transaction_seq &= 0x3fffu;
     state->pending_command = *command;
     state->pending_gain = rx_gain_db;
     state->pending_attenuation = tx_att_db;
@@ -353,6 +394,7 @@ int ap_transaction_ack(struct ap_transaction *state, const struct ap_ack *ack,
     if (!state || !ack) return AP_EARG;
     if (tolerance_hz > 10000u) return AP_ERANGE;
     if (!state->pending || ack->seq != state->pending_transaction_seq) return AP_ESTALE;
+    if(state->pending_command.version!=1u)return AP_EACK;
     if (ack->rc != 0) return AP_EREMOTE;
     if (distance(ack->rx_hz, (uint64_t)state->pending_command.rx_mhz*UINT64_C(1000000)) > tolerance_hz ||
         distance(ack->tx_hz, (uint64_t)state->pending_command.tx_mhz*UINT64_C(1000000)) > tolerance_hz)
@@ -363,6 +405,25 @@ int ap_transaction_ack(struct ap_transaction *state, const struct ap_ack *ack,
     state->applied_valid = 1u;
     state->pending = 0u;
     return AP_OK;
+}
+
+int ap_transaction_control_ack(struct ap_transaction *s,const struct ap_ack *a,const struct ap_relay_status *r,uint32_t tolerance)
+{
+    if(!s || !a || !r)return AP_EARG;
+    if(tolerance>10000u)return AP_ERANGE;
+    if(!s->pending || a->seq!=s->pending_transaction_seq)return AP_ESTALE;
+    if(s->pending_command.version==1u || r->operation!=s->pending_command.version)return AP_EACK;
+    if(a->rc)return AP_EREMOTE;
+    if(!(r->flags&1u))return AP_EMISMATCH;
+    if(r->operation==0x21u &&
+       (distance(a->rx_hz,(uint64_t)s->pending_command.rx_mhz*UINT64_C(1000000))>tolerance ||
+        distance(a->tx_hz,(uint64_t)s->pending_command.tx_mhz*UINT64_C(1000000))>tolerance ||
+        r->mode!=1u || r->rx1_gain!=30 || r->rx2_gain!=30 || r->tx1_mdB!=50000 || r->tx2_mdB!=50000 ||
+        !(r->flags&2u) || (r->flags&8u) || !r->remaining_ms || r->remaining_ms>get32(s->packet+12)))return AP_EMISMATCH;
+    if(r->operation==0x22u && (r->mode!=2u || r->rx1_gain || r->rx2_gain ||
+       r->tx1_mdB!=89000 || r->tx2_mdB!=89000 || (r->flags&2u) || r->remaining_ms))return AP_EMISMATCH;
+    s->applied_command=s->pending_command;s->applied_gain=s->pending_gain;
+    s->applied_attenuation=s->pending_attenuation;s->applied_valid=1;s->pending=0;return AP_OK;
 }
 
 void ap_transaction_abort(struct ap_transaction *state)

@@ -12,6 +12,7 @@ static int tx_ready(struct asv_service *s)
 }
 static int same(const struct aps_command_record *r,const struct ap_command *c)
 {return r->valid && r->origin==APS_ADC_NORMAL && r->command.seq==c->seq &&
+ r->command.version==c->version &&
  r->command.rx_mhz==c->rx_mhz && r->command.tx_mhz==c->tx_mhz;}
 static int filter(void *context,const struct ap_frame_result *frame,uint32_t now)
 {
@@ -31,7 +32,7 @@ static int filter(void *context,const struct ap_frame_result *frame,uint32_t now
     if(s->accepted>=ASV_TRANSACTION_LIMIT){(void)asv_stop(s,ASV_LIMIT,now);return AP_EBUSY;}
     s->used[byte]|=(uint8_t)bit;++s->used_count;++s->accepted;
     s->command=command;s->baseline_applied=c->applied_commands;
-    s->baseline_failures=c->failed_transactions;s->reply_sent=0;
+    s->baseline_failures=c->failed_transactions;s->reply_sent=0;s->reply_failed=0;
     /* Critical ordering: no further capture/decode can overwrite d before ACK. */
     s->controller->automatic=0;s->state=ASV_WAIT_ACK;
     return AP_OK;
@@ -95,9 +96,11 @@ void asv_poll(struct asv_service *s,uint32_t now)
         if(!s->controller->automatic){(void)asv_stop(s,ASV_DECODE,now);return;}
     } else if(s->state==ASV_WAIT_ACK){
         if(c->transaction.pending)return;
-        if(c->applied_commands!=s->baseline_applied+1u || c->failed_transactions!=s->baseline_failures ||
+        s->reply_failed=(s->command.version!=1u && c->last_ack.reply.rc<0 &&
+            c->failed_transactions==s->baseline_failures+1u && c->applied_commands==s->baseline_applied);
+        if((!s->reply_failed && (c->applied_commands!=s->baseline_applied+1u || c->failed_transactions!=s->baseline_failures)) ||
            !same(&c->last_decoded,&s->command) || !same(&c->last_send.record,&s->command) ||
-           !same(&c->last_ack.record,&s->command) || c->last_send.rc || c->last_ack.reply.rc ||
+           !same(&c->last_ack.record,&s->command) || c->last_send.rc || (!s->reply_failed && c->last_ack.reply.rc) ||
            c->last_send.transaction_seq!=c->last_ack.reply.seq ||
            !(c->last_decoded.event<c->last_send.record.event &&
              c->last_send.record.event<c->last_ack.record.event)){
@@ -107,7 +110,8 @@ void asv_poll(struct asv_service *s,uint32_t now)
         c->armed=0;s->ack_ms=now;s->reply_seq=s->tx->sequence;
         s->udp_seq=c->last_ack.reply.seq;
         rc=atm_burst(c,s->reply_seq,now,s->burst,sizeof(s->burst));
-        if(rc!=(int)ATM_BURST_BYTES){(void)asv_stop(s,ASV_TM,now);return;}
+        if(rc!=(int)ATM_BURST_BYTES && rc!=(int)ATM2_BURST_BYTES){(void)asv_stop(s,ASV_TM,now);return;}
+        s->burst_length=(size_t)rc;
         s->state=ASV_DELAY;
     } else if(s->state==ASV_DELAY || s->state==ASV_REPLY){
         age=(uint32_t)(now-s->ack_ms);
@@ -118,13 +122,14 @@ void asv_poll(struct asv_service *s,uint32_t now)
         if(age>=ASV_REPLY_WINDOW_MS || (s->reply_sent>=ASV_REPLY_LIMIT && !s->tx->pending)){
             if(s->tx->pending){(void)asv_stop(s,ASV_TM,now);return;}
             if(!s->reply_sent){++s->failed;s->reason=ASV_TM;}
+            else if(s->reply_failed)++s->failed;
             else ++s->completed;
             listen(s,now);return;
         }
-        if(age>ASV_REPLY_WINDOW_MS-34u || s->reply_sent>=ASV_REPLY_LIMIT || s->tx->pending)return;
+        if(age>ASV_REPLY_WINDOW_MS-(uint32_t)((s->burst_length*8u+99u)/100u) || s->reply_sent>=ASV_REPLY_LIMIT || s->tx->pending)return;
         if(s->reply_sent && (uint32_t)(now-s->last_reply_ms)<ASV_REPLY_PERIOD_MS)return;
         if(tx_ready(s)!=AP_OK){(void)asv_stop(s,ASV_TM,now);return;}
-        rc=atm_tx_send_burst(s->tx,s->burst,sizeof(s->burst),now);
+        rc=atm_tx_send_burst(s->tx,s->burst,s->burst_length,now);
         if(rc!=AP_OK){(void)asv_stop(s,ASV_TM,now);return;}
         if(!s->reply_sent)++s->tx->sequence;
         ++s->reply_sent;s->last_reply_ms=now;s->state=ASV_REPLY;

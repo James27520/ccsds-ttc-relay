@@ -22,8 +22,8 @@ from .app import COLORS
 def validated_snapshots(report: dict[str, Any]) -> list[dict[str, Any]]:
     """Recheck payload+received CRC; never trust a telemetry/expected summary."""
     from sw.tools.telemetry_downlink import parse_frame
-    if report.get("format") != "EXPERIMENTAL_ATM1_RF":
-        raise ValueError("仅支持 EXPERIMENTAL_ATM1_RF 解码报告，不能导入 USB 状态或发送清单")
+    if report.get("format") not in {"EXPERIMENTAL_ATM1_RF", "EXPERIMENTAL_ATM2_RF", "EXPERIMENTAL_ATM1_ATM2_RF"}:
+        raise ValueError("仅支持 ATM1/ATM2 射频解码报告，不能导入 USB 状态或发送清单")
     snapshots = []
     for frame in report.get("frames", []):
         if frame.get("crc_valid") is not True:
@@ -33,7 +33,7 @@ def validated_snapshots(report: dict[str, Any]) -> list[dict[str, Any]]:
             crc = frame["crc16"]
             if type(crc) is not int or not 0 <= crc <= 65535:
                 continue
-            snapshot = parse_frame(b"\xaa\xaa\x60" + payload + crc.to_bytes(2, "big"))
+            snapshot = parse_frame(b"\xaa\xaa" + bytes([len(payload)]) + payload + crc.to_bytes(2, "big"))
             for key in ("first_symbol_sample", "carrier_offset_hz"):
                 value = frame.get(key)
                 snapshot[key] = value if isinstance(value, (int, float)) and math.isfinite(value) else None
@@ -47,7 +47,7 @@ class RFTelemetryWindow:
     """Finite online captures and offline files share the same CRC evidence view.
 
     decode_iq(raw_bytes, **sample_rate_hz/symbol_rate/expected_offset_hz/search_hz)
-    returns an EXPERIMENTAL_ATM1_RF report containing original frame payload/CRC.
+    returns an experimental ATM1/ATM2 RF report containing original frame payload/CRC.
     Controller: factory(emit, log_dir=None), submit(action, **kwargs). Discover,
     read-only probe, binding/connect and each finite capture are explicit steps.
     """
@@ -135,7 +135,7 @@ class RFTelemetryWindow:
         self.source_var = tk.StringVar(value="接收途径：尚未加载文件；文件来源需结合采集日志核实。")
         self.digest_var = tk.StringVar(value="IQ 路径 / SHA256：—")
         self.time_var = tk.StringVar(value="文件时间：—（文件修改时间不是射频接收时间）")
-        self.status_var = tk.StringVar(value="尚无 CRC 有效 ATM1 帧；不使用发送端预期值补齐结果。")
+        self.status_var = tk.StringVar(value="尚无 CRC 有效遥测帧；不使用发送端预期值补齐结果。")
         for variable in (self.source_var, self.digest_var, self.time_var, self.status_var):
             label = ttk.Label(main, textvariable=variable, style="Muted.TLabel", wraplength=1050)
             label.pack(anchor="w", pady=(5, 0))
@@ -165,7 +165,7 @@ class RFTelemetryWindow:
             label = ttk.Label(card, textvariable=variable, style="CardMuted.TLabel", wraplength=260)
             label.pack(anchor="w", pady=(8, 0))
             card.bind("<Configure>", lambda event, target=label: target.configure(wraplength=max(event.width - 24, 120)))
-        footer = ttk.Label(main, text="实验 ATM1 / AAAA-LEN-CRC16；不表示完整 CCSDS 符合性。重复快照不等于独立事件。\n"
+        footer = ttk.Label(main, text="实验 ATM1/ATM2 / AAAA-LEN-CRC16；不表示完整 CCSDS 符合性。重复快照不等于独立事件。\n"
                   "ACK 为远端应答，不能代替独立 SPI 回读。序号/uptime 可在重启后重复，未提供唯一启动身份或认证。",
                   style="Muted.TLabel", wraplength=1050)
         footer.pack(anchor="w", pady=(10, 0))
@@ -434,7 +434,7 @@ class RFTelemetryWindow:
         unique = len({json.dumps({k: v for k, v in snapshot.items()
                                   if k not in ('first_symbol_sample', 'carrier_offset_hz')}, sort_keys=True)
                       for snapshot in self.snapshots})
-        self.status_var.set(f"CRC 复核有效 ATM1：{len(self.snapshots)} 帧 / {unique} 份状态快照 · " +
+        self.status_var.set(f"CRC 复核有效遥测：{len(self.snapshots)} 帧 / {unique} 份状态快照 · " +
                             ("本次在线 IQ 解码结果。" if event["mode"] == "live" else "文件来源以采集记录为准。"))
         for index, snapshot in enumerate(self.snapshots):
             self.frames.insert("", "end", iid=str(index), values=(snapshot["sequence"], snapshot["uptime_ms"],

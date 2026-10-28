@@ -18,6 +18,7 @@ BETA = 0.35
 SPAN = 8
 OFFSET_HZ = 500_000
 FRAME_SAMPLES = 160 * SPS
+OPERATIONS = {'frequency': 0x01, 'enable': 0x21, 'stop': 0x22, 'status': 0x23}
 
 
 def _integer(value, low, high, name):
@@ -37,12 +38,14 @@ def _amplitude(value):
     return value
 
 
-def build_body(rx, tx, seq):
+def build_body(rx, tx, seq, operation='frequency'):
     """Return the eight-byte V2 body, including big-endian CRC16."""
     rx = _integer(rx, 70, 6000, "rx")
     tx = _integer(tx, 70, 6000, "tx")
     seq = _integer(seq, 0, 255, "seq")
-    body = struct.pack("<BHHB", 1, rx, tx, seq)
+    if operation not in OPERATIONS:
+        raise ValueError('Unknown telecontrol operation')
+    body = struct.pack("<BHHB", OPERATIONS[operation], rx, tx, seq)
     return body + struct.pack(">H", crc16(body))
 
 
@@ -52,9 +55,9 @@ def _quantize(signal, amplitude):
     return np.rint(np.column_stack((signal.real, signal.imag)) * 32767).astype("<i2")
 
 
-def command_iq(rx, tx, seq, amplitude=0.1):
+def command_iq(rx, tx, seq, amplitude=0.1, operation='frequency'):
     """Return one periodically shaped command frame as (4000, 2) int16 I/Q."""
-    bits, _ = build_cadu(build_body(rx, tx, seq), randomize_data=True)
+    bits, _ = build_cadu(build_body(rx, tx, seq, operation), randomize_data=True)
     symbols = np.where(bits == 0, 1.0, -1.0)
     up = np.zeros(3 * FRAME_SAMPLES)
     up[::SPS] = np.tile(symbols, 3)
@@ -70,12 +73,12 @@ def tone_iq(amplitude=0.1):
     return _quantize(phase, amplitude)
 
 
-def make_manifest(mode, iq, amplitude, rx=None, tx=None, seq=None):
+def make_manifest(mode, iq, amplitude, rx=None, tx=None, seq=None, operation='frequency'):
     raw = iq.astype("<i2", copy=False).tobytes(order="C")
-    body = build_body(rx, tx, seq) if mode == "cmd" else None
+    body = build_body(rx, tx, seq, operation) if mode == "cmd" else None
     bits = build_cadu(body)[0] if body is not None else None
     return {
-        "source": "OFFLINE_REFERENCE", "mode": mode,
+        "source": "OFFLINE_REFERENCE", "mode": mode, "operation": operation,
         "sample_rate_hz": FS, "symbol_rate_sym_s": SYMBOL_RATE,
         "srrc_beta": BETA, "srrc_span_symbols": SPAN,
         "complex_offset_hz": OFFSET_HZ,

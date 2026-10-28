@@ -5,20 +5,26 @@ write, and no automatic takeover of an already active board. Console.run stays
 an internal trusted API, not an untrusted-command security boundary.
 """
 import re
+import math
 import time
 import uuid
 
 from .transport import Console
 from .rf_session import SessionRxConsole, SessionAdda
-from sw.tools.telecontrol_waveform import command_iq, make_manifest
+from sw.tools.telecontrol_waveform import command_iq, make_manifest, OPERATIONS
 
 
-def request_values(rx_mhz, tx_mhz, air_seq):
+def request_values(rx_mhz, tx_mhz, air_seq, operation='frequency'):
     if (type(rx_mhz) is not int or rx_mhz not in (900, 901) or
             type(tx_mhz) is not int or tx_mhz not in (1000, 1001) or
             type(air_seq) is not int or not 0 <= air_seq <= 255):
         raise ValueError('本阶段限定RX 900/901、TX 1000/1001 MHz，序号0..255')
-    return dict(rx_mhz=rx_mhz, tx_mhz=tx_mhz, air_seq=air_seq)
+    if operation not in OPERATIONS:
+        raise ValueError('未知遥控操作')
+    result = dict(rx_mhz=rx_mhz, tx_mhz=tx_mhz, air_seq=air_seq)
+    if operation != 'frequency':
+        result['operation'] = operation
+    return result
 
 
 class ControlAdda(SessionAdda):
@@ -113,12 +119,38 @@ class CommandSource(SessionRxConsole):
         request_values(**requested)
         if wiring_confirmed is not True:
             raise ValueError('需要先确认TX1A到ADC1/J5的接线')
-        iq = command_iq(requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], .1)
-        manifest = make_manifest('cmd', iq, .1, requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'])
+        operation = requested.get('operation', 'frequency')
+        iq = command_iq(requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], .1, operation)
+        manifest = make_manifest('cmd', iq, .1, requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], operation)
         self._prepare_waveform(iq.tobytes(), manifest, lo_hz=100000000,
                                attenuation_db=30, block_samples=len(iq))
         self.record(kind='tc_source_prepared', requested=requested, manifest=self.manifest)
         return self.manifest
+
+    def configure_if_changed(self, name, value, tolerance=0):
+        """Avoid a fresh RF calibration for an already matching muted setting.
+
+        Rewriting the sample rate was measured to increment downstream digital
+        clipping even with TX LO disabled. Changed values still use the adapter's
+        whitelist and verified write; this does not claim that retuning is silent.
+        """
+        if not self.owned or self._closed:
+            raise RuntimeError('发送会话未取得控制')
+        path = self.phy+'/'+name
+        current = self.read(path)
+        try:
+            matches = (current == value if isinstance(value, str) else
+                       math.isfinite(float(current)) and abs(float(current)-value) <= tolerance)
+        except (TypeError, ValueError, OverflowError):
+            matches = False
+        if matches:
+            self.record(kind='rf_configuration_unchanged', attribute=name, requested=value, readback=current)
+            return current
+        result = self.write(path, value, tolerance)
+        if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
+            self.mute()
+            raise RuntimeError('配置后发射本振不再关闭，已请求静音并中止')
+        return result
 
     def _prepare_waveform(self, raw, manifest, *, lo_hz, attenuation_db, block_samples,
                           check_cancel=lambda: None):
@@ -141,7 +173,7 @@ class CommandSource(SessionRxConsole):
                             ('out_voltage_rf_bandwidth', 3000000),
                             ('out_voltage0_rf_port_select', 'A')]:
             check_cancel()
-            self.write(self.phy+'/'+name, value, 10 if 'frequency' in name else 0)
+            self.configure_if_changed(name, value, 10 if 'frequency' in name else 0)
         self.manifest = manifest
         Console.upload(self, self.remote+'/waveform.bin', raw, lambda _fraction: check_cancel())
         # Only this board-side guard can enable LO. A delayed host request after

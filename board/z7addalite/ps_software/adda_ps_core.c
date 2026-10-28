@@ -23,9 +23,18 @@ static void remember(struct aps_state *s,struct aps_command_record *record,
 int aps_telemetry_format(const struct aps_state *s,uint32_t uptime_ms,char *output,size_t capacity)
 {
     const struct aps_command_record *d,*t,*a;
+    const struct aps_ack_record *ack;
+    struct aps_ack_record empty_ack;
     int n,tail;uint16_t crc;
     if(!s || !output || !capacity)return AP_EARG;
-    d=&s->last_decoded;t=&s->last_send.record;a=&s->last_ack.record;
+    ack=&s->last_ack;
+    /* TM1's frozen ACK-valid contract means success only. Binary failure
+     * snapshots remain in state/ATM2; expose a fully zeroed absent ACK view
+     * here so a legacy management query remains parseable after a failure. */
+    if(ack->record.command.version>=0x21u && ack->record.command.version<=0x23u && ack->reply.rc){
+        memset(&empty_ack,0,sizeof(empty_ack));ack=&empty_ack;
+    }
+    d=&s->last_decoded;t=&s->last_send.record;a=&ack->record;
     n=snprintf(output,capacity,
       "TM1 uptime_ms=%lu events=%lu network=%u armed=%u pending=%u decoded=%u applied=%u failures=%u"
       " d_valid=%u d_event=%lu d_origin=%u d_air_seq=%u d_rx_mhz=%u d_tx_mhz=%u"
@@ -40,8 +49,8 @@ int aps_telemetry_format(const struct aps_state *s,uint32_t uptime_ms,char *outp
       (unsigned)s->last_send.transaction_seq,s->last_send.count,s->last_send.rc,
       a->valid,(unsigned long)a->event,(unsigned)a->origin,(unsigned)a->command.seq,
       (unsigned)a->command.rx_mhz,(unsigned)a->command.tx_mhz,
-      (unsigned)s->last_ack.reply.seq,(long)s->last_ack.reply.rc,
-      (unsigned long long)s->last_ack.reply.rx_hz,(unsigned long long)s->last_ack.reply.tx_hz);
+      (unsigned)ack->reply.seq,(long)ack->reply.rc,
+      (unsigned long long)ack->reply.rx_hz,(unsigned long long)ack->reply.tx_hz);
     if(n<0 || (size_t)n>=capacity){output[0]=0;return AP_ELENGTH;}
     crc=ap_crc16((const uint8_t *)output,(size_t)n);
     tail=snprintf(output+n,capacity-(size_t)n," crc16=%04X\r\n",(unsigned)crc);
@@ -80,20 +89,28 @@ static void send_attempt(struct aps_state *s,uint32_t now)
     int rc;
     if(!s->network_ready || !s->transaction.pending || !s->io.udp_send)return;
     ++s->sends;s->last_send_ms=now;
-    rc=s->io.udp_send(s->io.context,APS_RELAY_IPV4,APS_RELAY_PORT,s->transaction.packet,AP_RF_BYTES);
+    rc=s->io.udp_send(s->io.context,APS_RELAY_IPV4,APS_RELAY_PORT,s->transaction.packet,s->transaction.packet_length);
     remember(s,&s->last_send.record,s->pending_origin,&s->transaction.pending_command);
     s->last_send.transaction_seq=s->transaction.pending_transaction_seq;
     s->last_send.count=s->sends;s->last_send.rc=rc;
     trace_command(s,"UDP_SEND_ATTEMPT",s->pending_origin,&s->transaction.pending_command,rc);
 }
 static int begin_command(struct aps_state *s,const struct ap_command *command,
-                         enum aps_origin origin,uint8_t gain,uint8_t attenuation,uint32_t now)
+                         enum aps_origin origin,uint8_t gain,uint8_t attenuation,uint32_t now,uint32_t diagnostic_lease)
 {
     int rc;
     if(!s->network_ready || !s->io.udp_send) {emit(s,"NETWORK_NOT_READY\r\n");return AP_EBUSY;}
     rc=ap_transaction_begin(&s->transaction,command,gain,attenuation);
     trace_command(s,"COMMAND",origin,command,rc);
-    if(rc==AP_OK) {s->pending_origin=origin;s->sends=0u;send_attempt(s,now);}
+    if(rc==AP_OK) {
+        if(origin==APS_UART_NETTEST && command->version==0x21u && diagnostic_lease){
+            uint8_t *p=s->transaction.packet;uint16_t crc;
+            p[12]=(uint8_t)(diagnostic_lease>>24);p[13]=(uint8_t)(diagnostic_lease>>16);
+            p[14]=(uint8_t)(diagnostic_lease>>8);p[15]=(uint8_t)diagnostic_lease;
+            crc=ap_crc16(p,32);p[32]=(uint8_t)(crc>>8);p[33]=(uint8_t)crc;
+        }
+        s->pending_origin=origin;s->sends=0u;send_attempt(s,now);
+    }
     return rc;
 }
 int aps_accept_decoded(struct aps_state *s,const struct ap_frame_result *frame,
@@ -109,7 +126,7 @@ int aps_accept_decoded(struct aps_state *s,const struct ap_frame_result *frame,
     trace_command(s,"DECODED",origin,&command,AP_OK);
     if(origin!=APS_ADC_NORMAL) {emit(s,"LOCAL_ONLY provenance excludes RF_SET\r\n");return AP_OK;}
     if(!s->armed) {emit(s,"LOCAL_ONLY forwarding is disarmed\r\n");return AP_OK;}
-    return begin_command(s,&command,origin,s->rx_gain_db,s->tx_attenuation_db,now);
+    return begin_command(s,&command,origin,s->rx_gain_db,s->tx_attenuation_db,now,0u);
 }
 int aps_decode_samples(struct aps_state *s,const int16_t *samples,size_t count,
                         enum aps_origin origin,unsigned metadata_validated,
@@ -139,22 +156,44 @@ void aps_poll(struct aps_state *s,uint32_t now)
 int aps_udp_received(struct aps_state *s,uint32_t peer,uint16_t port,const uint8_t *bytes,size_t length)
 {
     struct ap_ack ack;
+    struct ap_relay_status status;
     struct ap_command command;
     int rc;
     if(!s || !bytes)return AP_EARG;
     if(peer!=APS_RELAY_IPV4 || port!=APS_RELAY_PORT)return AP_EACK;
-    rc=ap_ack_parse(bytes,length,&ack);
+    memset(&status,0,sizeof(status));
+    rc=s->transaction.pending_command.version==1u?ap_ack_parse(bytes,length,&ack):
+       ap_control_ack_parse(bytes,length,&ack,&status);
     if(rc!=AP_OK)return rc;
     command=s->transaction.pending_command;
-    rc=ap_transaction_ack(&s->transaction,&ack,10000u);
+    rc=command.version==1u?ap_transaction_ack(&s->transaction,&ack,10000u):
+       ap_transaction_control_ack(&s->transaction,&ack,&status,10000u);
     trace_command(s,"ACK",s->pending_origin,&command,rc);
     if(rc==AP_OK) {
         ++s->applied_commands;
         remember(s,&s->last_ack.record,s->pending_origin,&command);
         s->last_ack.reply=ack;
+        s->last_ack.status=status;
     }
-    /* Negative rc ACK is observable and remains pending for the bounded retry
-     * policy. A later valid matched ACK is still allowed before exhaustion. */
+    else if(command.version!=1u && rc==AP_EREMOTE){
+        /* A matched negative ACK is a completed failure snapshot. It cannot
+         * become an execution success or be relabelled by a later decode. */
+        remember(s,&s->last_ack.record,s->pending_origin,&command);
+        s->last_ack.reply=ack;s->last_ack.status=status;
+        ap_transaction_abort(&s->transaction);++s->failed_transactions;
+    }
+    if(command.version!=1u && (rc==AP_OK || rc==AP_EREMOTE)){
+        char text[384];
+        (void)snprintf(text,sizeof(text),
+          "REMOTE_ACK source=%s operation=%u air_seq=%u udp_seq=%u rc=%ld flags=%u mode=%u rx1_gain=%u rx2_gain=%u tx1_mdB=%lu tx2_mdB=%lu remaining_ms=%lu uptime_ms=%lu rx_hz=%llu tx_hz=%llu\r\n",
+          origin_name(s->pending_origin),(unsigned)status.operation,(unsigned)command.seq,(unsigned)ack.seq,(long)ack.rc,
+          (unsigned)status.flags,(unsigned)status.mode,(unsigned)status.rx1_gain,(unsigned)status.rx2_gain,
+          (unsigned long)status.tx1_mdB,(unsigned long)status.tx2_mdB,(unsigned long)status.remaining_ms,
+          (unsigned long)status.uptime_ms,(unsigned long long)ack.rx_hz,(unsigned long long)ack.tx_hz);
+        emit(s,text);
+    }
+    /* Legacy negative ACK stays pending for the bounded retry policy. New
+     * binary negative ACK completes a retained failure for ATM2/REMOTE_ACK. */
     return rc;
 }
 int aps_selftest(struct aps_state *s)
@@ -193,7 +232,7 @@ static int parse_uint(const char *text,unsigned limit,unsigned *value)
 int aps_command_line(struct aps_state *s,const char *line,uint32_t now)
 {
     char copy[128],status[180],*args[7],*p;
-    unsigned argc=0u,rx,tx,seq,gain,atten;
+    unsigned argc=0u,rx,tx,seq,gain,atten,lease;
     size_t n=0u;
     struct ap_command command;
     if(!s||!line)return AP_EARG;
@@ -209,7 +248,7 @@ int aps_command_line(struct aps_state *s,const char *line,uint32_t now)
         if(*p)*p++=0;
     }
     if(argc==1u && !strcmp(args[0],"help")) {
-        emit(s,"status | telemetry | selftest | arm on/off | levels GAIN ATT | nettest RX_MHz TX_MHz SEQ GAIN ATT\r\n");
+        emit(s,"status | telemetry | selftest | arm on/off | levels GAIN ATT | nettest RX_MHz TX_MHz SEQ GAIN ATT | remotenettest enable/stop/status RX_MHz TX_MHz SEQ LEASE_MS (UART diagnostic only)\r\n");
         return AP_OK;
     }
     if(argc==1u && !strcmp(args[0],"telemetry")) {
@@ -241,7 +280,18 @@ int aps_command_line(struct aps_state *s,const char *line,uint32_t now)
        parse_uint(args[2],6000u,&tx) && parse_uint(args[3],255u,&seq) &&
        parse_uint(args[4],76u,&gain) && parse_uint(args[5],89u,&atten)) {
         command.version=1u;command.rx_mhz=(uint16_t)rx;command.tx_mhz=(uint16_t)tx;command.seq=(uint8_t)seq;
-        return begin_command(s,&command,APS_UART_NETTEST,(uint8_t)gain,(uint8_t)atten,now);
+        return begin_command(s,&command,APS_UART_NETTEST,(uint8_t)gain,(uint8_t)atten,now,0u);
+    }
+    if(argc==6u && !strcmp(args[0],"remotenettest") && parse_uint(args[2],6000u,&rx) &&
+       parse_uint(args[3],6000u,&tx) && parse_uint(args[4],255u,&seq) && parse_uint(args[5],300000u,&lease)){
+        if(!strcmp(args[1],"enable")){command.version=0x21u;if(lease<2000u)return AP_ERANGE;}
+        else if(!strcmp(args[1],"stop")){command.version=0x22u;if(lease)return AP_ERANGE;}
+        else if(!strcmp(args[1],"status")){command.version=0x23u;if(lease)return AP_ERANGE;}
+        else return AP_EARG;
+        if(s->armed || s->transaction.pending)return AP_EBUSY;
+        command.rx_mhz=(uint16_t)rx;command.tx_mhz=(uint16_t)tx;command.seq=(uint8_t)seq;
+        emit(s,"REMOTE_DIAGNOSTIC source=UART_NETTEST no_air_frame=1\r\n");
+        return begin_command(s,&command,APS_UART_NETTEST,30u,50u,now,lease);
     }
     emit(s,"COMMAND_REJECT invalid syntax/range\r\n");return AP_EARG;
 }

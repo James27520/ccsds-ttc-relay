@@ -1,0 +1,279 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "4df08b5448372ef753e97a1c35a442546d4acb03",
+  "stage": "remote relay UDP and preparation validation",
+  "stage_passed": true,
+  "full_rf_acceptance_passed": false,
+  "flash_sd_written": false,
+  "new_operations_rf_tested": false,
+  "new_firmware_business_reception_tested": false,
+  "six_link_concurrent_tested": false,
+  "cpu_halt_watchdog_tested": false,
+  "physical_network_disconnect_tested": false,
+  "source": "UART_NETTEST",
+  "operations": [
+    {
+      "operation": "status",
+      "ack": {
+        "operation": 35,
+        "air_seq": 41,
+        "udp_seq": 5,
+        "rc": 0,
+        "flags": 1,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 411473,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 42,
+        "udp_seq": 6,
+        "rc": 0,
+        "flags": 3,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 9999,
+        "uptime_ms": 411703,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "operation": "status",
+      "ack": {
+        "operation": 35,
+        "air_seq": 43,
+        "udp_seq": 7,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 425280,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 44,
+        "udp_seq": 8,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 29999,
+        "uptime_ms": 425505,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 45,
+        "udp_seq": 9,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 425727,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 46,
+        "udp_seq": 10,
+        "rc": -5,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 425951,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "operation": "status",
+      "ack": {
+        "operation": 35,
+        "air_seq": 47,
+        "udp_seq": 11,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 426226,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    }
+  ],
+  "timeout_test": {
+    "requested_ms": 10000,
+    "no_control_wait_seconds": 12,
+    "final_spi": {
+      "relay_rx_hz_readback": 900999998,
+      "relay_tx_hz_readback": 1000000000,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "exact_rf_deadline_latency_measured": false
+  },
+  "clipping": {
+    "isolation_passed": true,
+    "readback_skip_steps": 8,
+    "readback_skip_deltas_all_zero": true,
+    "same_sample_rate_write_gain30_delta": 432591,
+    "retune_run_passed": false,
+    "retune_cleanup_errors": [
+      "source:RuntimeError('停发未完全确认: RX session is not bound for configuration; RX session is not bound for configuration; RX session is not bound for configuration')"
+    ],
+    "subsequent_independent_quiet_audit": true,
+    "all_transients_eliminated": false,
+    "preparation_seconds": 6.450151299999561,
+    "preparation_clip_delta": 0,
+    "preparation_source_tx_started": false,
+    "preparation_relay_mode": 1,
+    "preparation_rx_gain_db": 30,
+    "preparation_tx_atten_db": 50
+  },
+  "tests": {
+    "ground_station": 286,
+    "telemetry_decode": 7,
+    "native_wire_cases": 5,
+    "relay_protocol_groups": 12,
+    "relay_board_groups": 5,
+    "relay_offline_checks": 22,
+    "synthetic_iq_is_hardware_evidence": false
+  },
+  "final_quiet": {
+    "sender_tx_off": true,
+    "receiver_tx_off": true,
+    "adda_service": false,
+    "adda_network": 0,
+    "adda_armed": 0,
+    "adda_dac_idle": true,
+    "relay_mode": 2,
+    "relay_rx_gain_db": [
+      0,
+      0
+    ],
+    "relay_tx_atten_db": [
+      89,
+      89
+    ],
+    "relay_lo_hz": [
+      900999998,
+      1000000000
+    ],
+    "relay_clip": 55363007
+  },
+  "firmware": {
+    "adda": {
+      "file": "adda_bench03/adda_m2_candidate_tm.elf",
+      "sha256": "896bc0ec378a96b344098141ef55829d489abc9a2d8d9db8a08c97352439aab1"
+    },
+    "relay": {
+      "file": "ldsdr_relocated02/relay_remote.elf",
+      "sha256": "fab74c01703e37b99d46e4e4251a28b1835742f07285b67f49c2c64530ba90af"
+    },
+    "adda_bit_unchanged_sha256": "1cfd233356baf7cd06715cf9ca638ac96d487b78d849e3ce660ca24386095fba"
+  },
+  "evidence_root": "D:\\RelayTools\\work\\remote_relay_20261029",
+  "evidence_archive": {
+    "path": "D:\\RelayTools\\releases\\remote_relay_udp_20261029.zip",
+    "sha256": "2183301b8dcd18b3b276a229c90e0d212d5a9852a2c29b68ef149e1cf4716374",
+    "bytes": 12491674
+  },
+  "evidence_manifest_sha256": "79c36560e2ededd3058ee310e3a3027ad6f94fca367355de8919e32c6ca78954",
+  "files": {
+    "udp_bench02/result.json": {
+      "sha256": "69b77917d802998c8568f5faa9f49d187c73fd276321ac61848566272dbaa9cc",
+      "bytes": 11115
+    },
+    "clipping_isolation/result.json": {
+      "sha256": "53de1712a9ae780b8bbd66fff3d2a7263ee6dc9a77e4f7ad0829f89676c05349",
+      "bytes": 10077
+    },
+    "clipping_retune/result.json": {
+      "sha256": "fd3e89bceb2fda064606d1a1bd6fd6f2b0c3fa439f75bf778bf3c826e3426e32",
+      "bytes": 3821
+    },
+    "post_clipping_audit.json": {
+      "sha256": "1206b7f9eadb6215d330994db14915b2388c38811e82d324aa73eb2555a58f3f",
+      "bytes": 3479
+    },
+    "preparation_probe/result.json": {
+      "sha256": "14687c6f41b2d83df24412a7d35b9e34835fe903eadde59f41532804b262bdc7",
+      "bytes": 2968
+    },
+    "final_audit.json": {
+      "sha256": "f79a107a9be5372968cab2106b5bf768976724e65fb034cba77ea1c4e60f4f1e",
+      "bytes": 3473
+    },
+    "wire_integration03/result.json": {
+      "sha256": "3a9f1c5f820fecb0ec2fb4919a4bdee525705ca59153e55c46f92556e0328bb5",
+      "bytes": 9272
+    },
+    "ldsdr_relocated02/offline_verification.json": {
+      "sha256": "a905e03dd3a719ba24b14c41273631a8d967b5fb94f6afcaf1700de638a782b2",
+      "bytes": 4056
+    },
+    "host_tests_final.log": {
+      "sha256": "f957e8bc402494933eed5c22ec4ea4e7a988d7ff9e2896401a55607c584d6736",
+      "bytes": 51601
+    },
+    "telemetry_decode_tests_final.log": {
+      "sha256": "d8db44e923c54f9347b41e7ec0a944cc3c86395f9d84daa2bc622612f417d38a",
+      "bytes": 1169
+    },
+    "source_stage1.zip": {
+      "sha256": "65e4f46a33c784112c5730b8acf38c6ac760e4b3c38e9734405321026400f219",
+      "bytes": 537021
+    }
+  },
+  "pending": [
+    "ADC_NORMAL uplink for new operations and ATM2 RF return",
+    "GUI real RF state/lease display",
+    "business regression with leased relay firmware",
+    "mute/configure/enable sequence for actual sample-rate or bandwidth changes"
+  ]
+}

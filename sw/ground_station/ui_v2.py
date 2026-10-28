@@ -12,12 +12,14 @@ import math
 from pathlib import Path
 import queue
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog, ttk
 
 from .ui_v2_model import (command_request, device_choices, format_mhz, frequency_plan,
                          load_device_aliases, load_historical_transaction, simulated_reply, text_bytes,
-                         business_frequency_plan, BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS)
+                         business_frequency_plan, BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS,
+                         CONTROL_OPERATIONS, relay_snapshot_view)
 
 
 BG = '#F4F6F8'
@@ -171,6 +173,7 @@ class ReviewSession:
         if page._poll_id:
             page.window.after_cancel(page._poll_id)
             page._poll_id = None
+        page._clear_relay_snapshot()
         page.window.destroy()
         for name, value in tuple(vars(page).items()):
             if isinstance(value, (tk.Variable, tk.Misc)) or (isinstance(value, list) and
@@ -245,6 +248,9 @@ class StationReview:
         self.active_request = None
         self.active_plan = None
         self.last_evidence = None
+        self.relay_snapshot = None
+        self._snapshot_after = None
+        self._snapshot_prefix = ''
         self._poll_id = None
         self.window = tk.Toplevel(session.root)
         self.window.title(ROLES[role][0])
@@ -822,6 +828,7 @@ class StationReview:
         self.generate_button.configure(state='normal' if idle else 'disabled')
         for entry in self.frequency_entries:
             entry.configure(state='normal' if idle else 'disabled')
+        self.operation_combo.configure(state='readonly' if idle else 'disabled')
         self.stop_button.configure(state='normal' if not self.closing and not self.cancel_pending and
                                    (self.accept_connected or self.active_request is not None) else 'disabled')
 
@@ -901,8 +908,86 @@ class StationReview:
         if self.active_plan is None:
             return
         plan = self.active_plan
+        operation = self.active_request.get('operation', 'frequency') if self.active_request else 'frequency'
         self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'),
-            f'{format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}', status))
+            f'{self._operation_name(operation)} · {format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}', status))
+
+    @staticmethod
+    def _operation_name(operation):
+        return next(name for name, value in CONTROL_OPERATIONS.items() if value == operation)
+
+    def _clear_relay_snapshot(self):
+        if self._snapshot_after:
+            self.window.after_cancel(self._snapshot_after)
+            self._snapshot_after = None
+        self.relay_snapshot = None
+
+    def _refresh_relay_snapshot(self):
+        self._snapshot_after = None
+        if self.closed or self.closing or self.relay_snapshot is None:
+            return
+        # Anchor age to the monotonic clock so a desktop clock correction cannot
+        # extend the conservative estimate or make an expired snapshot green.
+        view = relay_snapshot_view(self.relay_snapshot,
+            self._snapshot_wall_anchor+max(0, time.monotonic()-self._snapshot_mono_anchor))
+        self.reply_body.set(self._snapshot_prefix+'\n\n'+view['body'])
+        if view['expired']:
+            self.reply_heading.configure(fg=AMBER if not self._snapshot_rejected else '#B64242')
+            if self.relay_snapshot.get('lease_active') and not self._snapshot_rejected:
+                self.reply_title.set('状态快照已过期 · 待查询')
+        else:
+            self._snapshot_after = self.window.after(1000, self._refresh_relay_snapshot)
+
+    def _complete_relay_result(self, event, count):
+        request = self.active_request
+        operation = request['operation']
+        relay, rc = event.get('relay'), event.get('remote_rc')
+        if (event.get('matched') is not True or type(rc) is not int or not -7 <= rc <= 0 or
+                not isinstance(relay, dict) or event.get('passed') is not (rc == 0)):
+            self._online_error('未收到与本次操作关联的 ATM2 状态回报。', 'validation')
+            return
+        if rc == 0:
+            ack = event.get('ack', {})
+            valid = relay.get('valid') is True
+            if operation == 'enable':
+                valid = valid and (isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int and
+                    abs(ack[axis+'_hz']-request[axis+'_mhz']*1_000_000) <= 10_000 for axis in ('rx', 'tx')) and
+                    relay.get('mode') == 1 and relay.get('rx_gain_db') == [30, 30] and
+                    relay.get('tx_attenuation_mdb') == [50000, 50000] and relay.get('lease_active') is True and
+                    type(relay.get('remaining_ms')) is int and relay['remaining_ms'] > 0 and not relay.get('mute_fault'))
+            elif operation == 'stop':
+                valid = valid and relay.get('mode') == 2 and relay.get('rx_gain_db') == [0, 0] and \
+                    relay.get('tx_attenuation_mdb') == [89000, 89000] and relay.get('lease_active') is False and relay.get('remaining_ms') == 0
+            if not valid:
+                self._online_error('实际模式、电平或租期未通过本次操作核对。', 'validation')
+                return
+        self._reset_reply()
+        self.last_evidence = dict(iq_path=str(event.get('iq_path', '未提供')),
+                                  report_path=str(event.get('report_path', '未提供')))
+        self.reply_title.set('远端拒绝 · '+self._operation_name(operation) if rc else
+                             {'enable': '开启转发回报 · 状态快照', 'stop': '停止转发已确认 · 状态快照',
+                              'status': '查询回报 · 状态快照'}[operation])
+        self._snapshot_rejected = rc != 0
+        self.reply_heading.configure(fg='#B64242' if rc else TEAL)
+        self.connection_status.set('●  远端拒绝' if rc else '●  收到状态快照')
+        self._snapshot_prefix = (f'{count} 个 CRC 正确帧 · 本次操作关联通过 · 远端 rc {rc}\n'
+            + ('请求被拒绝，未确认执行成功。\n' if rc else '')
+            + f'接收 IQ：{Path(self.last_evidence["iq_path"]).name}\n报告：{Path(self.last_evidence["report_path"]).name}')
+        ack = event.get('ack', {})
+        if relay.get('valid') is True and isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int for axis in ('rx', 'tx')):
+            self._snapshot_prefix += f'\n实际本振 RX {ack["rx_hz"]/1e6:g} / TX {ack["tx_hz"]/1e6:g} MHz'
+        self.relay_snapshot = dict(relay)
+        self._snapshot_wall_anchor = time.time()
+        self._snapshot_mono_anchor = time.monotonic()
+        self._refresh_relay_snapshot()
+        for index, item in enumerate(self.step_labels, 1):
+            item.configure(text=f'0{index}   '+('远端拒绝' if index == 4 and rc else
+                ('已提交指令', '上行已发送', '收到射频回报', '核对状态快照')[index-1]),
+                fg='#B64242' if rc and index == 4 else TEAL)
+        self._record_online('在线 · 远端拒绝' if rc else '在线 · 收到状态快照')
+        self.active_request = self.active_plan = None
+        self.request_note.set('本次事务完成；快照不是持续监控，需要时重新查询。')
+        self.update_details()
 
     def cancel_online(self, action='stop'):
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
@@ -1059,6 +1144,13 @@ class StationReview:
                 return
             ack = event.get('ack', {})
             count = event.get('frame_count')
+            if request.get('operation', 'frequency') != 'frequency':
+                if type(count) is not int or count <= 0:
+                    self._online_error('本次回报缺少 CRC 正确帧。', 'validation')
+                else:
+                    self._complete_relay_result(event, count)
+                self.session.update_online_controls()
+                return
             matched = (isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int and
                        abs(ack[axis+'_hz']-request[axis+'_mhz']*1_000_000) <= 10_000 for axis in ('rx', 'tx')))
             if event.get('passed') is not True or type(count) is not int or count <= 0 or not matched:
@@ -1267,34 +1359,39 @@ class StationReview:
         self.body.columnconfigure(0, weight=1, uniform='control')
         self.body.columnconfigure(1, weight=1, uniform='control')
         self.body.rowconfigure(0, weight=1)
-        request = card(self.body, '转发频率设置')
+        request = card(self.body, '遥控操作')
         request.edge.grid(row=0, column=0, sticky='nsew', padx=(0, 8), pady=(0, 12))
+        self.operation = tk.StringVar(self.window, '设置频率')
+        self.operation_combo = ttk.Combobox(request, textvariable=self.operation,
+            values=tuple(CONTROL_OPERATIONS), state='readonly', style='V2.TCombobox')
+        self.operation_combo.pack(fill='x', pady=(6, 8))
+        self.operation_note = tk.StringVar(self.window, '设置本振后保持静音；业务中心 = 本振 + 0.5 MHz。')
+        label(request, variable=self.operation_note, size=9, color=MUTED, wrap=430).pack(anchor='w')
         fields = tk.Frame(request, bg=PAPER)
-        fields.pack(fill='x', pady=(12, 8))
+        fields.pack(fill='x', pady=(8, 0))
         self.input_frequency = tk.StringVar(self.window, '900.5')
         self.output_frequency = tk.StringVar(self.window, '1001.5')
         self.frequency_entries = []
         for title, variable in (('业务输入', self.input_frequency), ('业务输出', self.output_frequency)):
             row = tk.Frame(fields, bg=PAPER)
-            row.pack(fill='x', pady=(0, 12))
+            row.pack(fill='x', pady=(0, 8))
             label(row, title, size=11).pack(side='left', padx=(0, 14))
             label(row, 'MHz', color=TEAL, bold=True, size=16).pack(side='right', padx=(12, 0))
             entry = ttk.Entry(row, textvariable=variable, style='V2.Frequency.TEntry',
-                              width=12, font=('Segoe UI', 21))
+                              width=12, font=('Segoe UI', 18))
             entry.pack(side='left', fill='x', expand=True)
             self.frequency_entries.append(entry)
-        label(request, '中心频率  70.5–6000.5 MHz  ·  最多 6 位小数', size=9, color=MUTED).pack(anchor='w', pady=(0, 12))
         self.request_note = tk.StringVar(self.window, '')
         note = label(request, variable=self.request_note, size=9, color=MUTED, wrap=430)
         note.pack(anchor='w', pady=(0, 12))
         note.bind('<Configure>', lambda event: note.configure(wraplength=max(150, event.width)))
         actions = tk.Frame(request, bg=PAPER)
-        actions.pack(fill='x')
+        actions.pack(fill='x', side='bottom', before=self.operation_combo)
         self.generate_button = button(actions, '生成指令', self.generate_command, primary=True)
         self.generate_button.pack(side='left')
         self.command_send_button = button(actions, '发送指令', self.send_online, disabled=True)
         self.command_send_button.pack(side='left', padx=8)
-        self.stop_button = button(actions, '停止', lambda: self.cancel_online('stop'), disabled=True)
+        self.stop_button = button(actions, '取消本次', lambda: self.cancel_online('stop'), disabled=True)
         if self.online:
             self.stop_button.pack(side='left')
 
@@ -1327,16 +1424,17 @@ class StationReview:
             item.grid(row=0, column=index, sticky='w', padx=8)
             self.step_labels.append(item)
         history, self.history = self._history(self.body, '本窗口指令记录', [
-            ('time', '时间', 90), ('target', '业务输入 → 输出 / MHz', 400), ('status', '状态', 220)])
+            ('time', '时间', 90), ('target', '操作 · 关联业务输入 → 输出 / MHz', 400), ('status', '状态', 220)])
         history.edge.grid(row=2, column=0, columnspan=2, sticky='nsew')
         self.history_card = history
         self.history.bind('<<TreeviewSelect>>', self._select_draft)
         if self.online:
             self.history.configure(height=2)
-        for variable in (self.input_frequency, self.output_frequency):
+        for variable in (self.input_frequency, self.output_frequency, self.operation):
             variable.trace_add('write', self._invalidate_draft)
 
     def _reset_reply(self):
+        self._clear_relay_snapshot()
         self.historical = self.simulation = None
         self.last_evidence = None
         self.reply_title.set('等待执行回报')
@@ -1349,6 +1447,11 @@ class StationReview:
 
     def _invalidate_draft(self, *_):
         self.draft = None
+        self.operation_note.set({'frequency': '设置本振后保持静音；业务中心 = 本振 + 0.5 MHz。',
+            'enable': '开启 5 分钟 · 固定双路 RX 增益 30 dB / TX 衰减 50 dB；需现有本振相符。',
+            'stop': '远端停止转发并静音；下方频率仅供请求关联，不会调谐。',
+            'status': '只读状态快照，不续租；下方频率仅供请求关联，不会调谐。'}[
+                CONTROL_OPERATIONS[self.operation.get()]])
         if self.online and self.active_request is not None:
             self.request_note.set('当前指令执行中；新的参数需在结束后重新生成。')
             self.update_online_controls()
@@ -1378,20 +1481,22 @@ class StationReview:
             return
         request, body = None, None
         try:
-            request = command_request(self.input_frequency.get(), self.output_frequency.get(), sequence)
+            operation = CONTROL_OPERATIONS[self.operation.get()]
+            request = command_request(self.input_frequency.get(), self.output_frequency.get(), sequence, operation)
             if self.online and (request['rx_mhz'] not in (900, 901) or request['tx_mhz'] not in (1000, 1001)):
                 request = None
                 raise ValueError('在线仅开放业务中心 900.5/901.5 → 1000.5/1001.5 MHz，其他方案暂不发送。')
             from sw.tools.telecontrol_waveform import build_body
-            body = build_body(request['rx_mhz'], request['tx_mhz'], sequence)
+            body = build_body(request['rx_mhz'], request['tx_mhz'], sequence, operation=operation)
         except ValueError as error:
             self.request_note.set(str(error))
         else:
             if not self.online:
                 self.session.next_sequence = (sequence+1) % 256
             self.request_note.set('指令已生成 · 尚未发送')
-        self.draft = dict(plan=plan, request=request, body_hex=body.hex() if body else None)
-        self.mapping.set(f'计划本振：RX {format_mhz(plan["input_hz"]-500_000)} MHz / '
+        self.draft = dict(plan=plan, request=request, operation=CONTROL_OPERATIONS[self.operation.get()], body_hex=body.hex() if body else None)
+        self.mapping.set(('关联本振（不调谐）：' if self.draft['operation'] in ('stop', 'status') else '计划本振：')+
+                         f'RX {format_mhz(plan["input_hz"]-500_000)} MHz / '
                          f'TX {format_mhz(plan["output_hz"]-500_000)} MHz；'
                          + ('现有报文可编码。' if body else '当前在线方案未开放，未生成可发送正文。' if self.online else '待扩展报文精度，未生成可发送正文。'))
         self.step_labels[0].configure(text='01   已生成 · 未发送' if body else '01   方案待接入', fg=TEAL)
@@ -1402,7 +1507,7 @@ class StationReview:
     def _add_history(self, status):
         plan = self.draft['plan']
         self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'),
-            f'{format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}', status))
+            f'{self._operation_name(self.draft["operation"])} · {format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}', status))
 
     def preview_report(self):
         if self.online:
@@ -1416,7 +1521,8 @@ class StationReview:
         result = simulated_reply(self.draft['plan'], outcome)
         self.simulation = result
         self.reply_title.set(result['title'])
-        self.reply_body.set(result['body']+'\n\n仅用于界面预览，未连接硬件。')
+        self.reply_body.set(f'模拟操作：{self._operation_name(self.draft["operation"])}\n'+result['body']+
+                            '\n\n仅用于界面预览，未连接硬件；未确认远端模式、电平或租期。')
         color = {'success': TEAL, 'failure': '#B64242', 'timeout': AMBER}[outcome]
         self.reply_heading.configure(fg=color)
         for index, item in enumerate(self.step_labels):

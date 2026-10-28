@@ -1,6 +1,6 @@
 # 文档索引
 
-## 当前架构（2026-10-28）
+## 当前架构（2026-10-29）
 
 | 文档 | 内容 |
 |---|---|
@@ -18,6 +18,8 @@
 | [测控闭环摘要](validation/2026-10-28-telecontrol-roundtrip.json) | 两条新指令、八个下行帧、限时停发与证据包校验 |
 | [六线系统计划](six-link-system-plan.md) | 双向业务及双向测控的功能分配、共用本振限制与待办 |
 | [遥控链路 V2](telecontrol-v2.md) | 100.5 MHz 指令链、8 字节 body、金标准及 UDP 接口 |
+| [远端启停与状态协议](remote-relay-control.md) | 显式开启/停止/查询、板端租期、双路电平和ATM2 |
+| [远端控制验证](remote-relay-validation.md) | 新固件RAM加载、板间UDP超时静音、削顶隔离；新操作射频闭环待验 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |
 | [业务转发联调](rf-forward-bringup.md) | 第一条有线单音链、RX I/Q修正、改频和关闭信号对照 |
 | [业务RF单音摘要](validation/2026-10-28-rf-forward.json) | 单音实测数值、固件和原始证据包 SHA-256 |

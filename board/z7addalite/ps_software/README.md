@@ -1,5 +1,9 @@
 # Z7ADDALite PS 接收与转发
 
+新增遥控操作 `0x21/0x22/0x23`，对应开启租期、静音停止、只读查询；详见[wire约定](../../../docs/remote-relay-control.md)。ADC_NORMAL 开启固定为30 dB RX增益、50 dB TX衰减、300000 ms租期；原`0x01`仍只改频。新操作发送34字节UDP，严格匹配50字节binary ACK的peer/操作/序号；成功还必须通过实际回读检查。匹配负ACK保存为失败状态并可下行，不增加成功计数。ATM1/UART TM1保持旧格式，新操作使用ATM2（112字节payload、484字节有限burst）。服务发送窗口按实际burst长度预留结束时间。首次发送新协议后UDP序号单boot不再回卷，16383用尽必须重新初始化双方。
+
+显式台架诊断入口为`remotenettest <enable|stop|status> <rx_mhz> <tx_mhz> <air_seq> <lease_ms>`。必须network ready、arm off、auto off、service inactive且capture不在进行中；enable租期2000..300000 ms，stop/status必须为0。仅此UART诊断入口可覆盖开启租期，电平仍固定30/50；来源始终为`UART_NETTEST`，没有空口解码记录。匹配ACK另输出完整`REMOTE_ACK source=... operation=... air_seq=... udp_seq=... rc=... flags=... mode=... rx1_gain=... rx2_gain=... tx1_mdB=... tx2_mdB=... remaining_ms=... uptime_ms=... rx_hz=... tx_hz=...`行，数值仅在flags bit0置位时视为有效硬件回读。`build_remote_tests.ps1`与扩展的`build_service_tests.ps1`验证协议、短租期诊断隔离、负ACK和ATM2突发边界；这些native测试不访问硬件。
+
 2026-10-29新增 `adda_service.c` 有界自动测控服务，与 candidate04 ADC/DAC PL及 `--tm-tx-enabled` 构建配套。一次台架执行 `network on`、`service on` 后，板端自主完成ADC_NORMAL采样、C解调、UDP/ACK和有限DAC回报，不需要每笔下发capture/decode/tmsend。`service status`只读；`service off`取消并清理。启动默认关闭，服务限600秒/16笔事务，每个空口序号在本次服务中最多接受一次；ACK后延迟3秒，在20秒窗口内至多发送400次同一快照。停止、断网或异常不产生成功回报。实际GUI闭环与限制见[自主测控验证](../../../docs/telecontrol-autonomous-validation.md)，`build_service_tests.ps1`提供无硬件状态机测试。下方记录保留各历史阶段的适用边界。
 
 最新增加[DAC有限下行](../telemetry_downlink/README.md)配套驱动及ATM1二进制状态包。默认构建禁用新MMIO，仍兼容r4c；仅配套新PL时显式使用`build_platform.py --tm-tx-enabled`，输出名含`_tm`。命令为`tmstatus/tmsend/tmstop/tmclear`，启动停发，支持复位延后STOP与取消尾握手检查。本轮新PL/ELF已临时上板，结果及尚未完成的SMA接收见[DAC下行验证](../../../docs/telemetry-downlink-validation.md)。`build_telemetry_tests.ps1`覆盖启用/禁用驱动及ARM编译；`python -m unittest sw.tools.test_telemetry_downlink`从仓库根运行。

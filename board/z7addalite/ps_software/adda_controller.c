@@ -73,8 +73,12 @@ void act_poll(struct act_controller *c)
 int act_command_line(struct act_controller *c,const char *line)
 {
     char op[24],arg[24],extra;unsigned ch,k;int fields,rc;char text[180];
+    const char *guard;
     if(!c || !c->core || !c->clock.now_ms || !line)return AP_EARG;
     if(strlen(line)>127u)return AP_ELENGTH;
+    guard=line;while(*guard==' ' || *guard=='\t')++guard;
+    if(!strncmp(guard,"remotenettest",13u) &&
+       (c->automatic || c->filter || c->core->armed || (c->capture && ac_busy(c->capture))))return AP_EBUSY;
     if(!strcmp(line,"waveformtest"))return act_waveformtest(c);
     if(!strcmp(line,"decode"))return decode(c);
     if(!strcmp(line,"capture cancel")) {

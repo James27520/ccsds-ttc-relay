@@ -26,7 +26,7 @@ int ac_normal_ready(const struct ac_capture *c){return c->state==AC_READY && c->
 const char *ac_error_name(enum ac_error error){(void)error;return "mock";}
 static uint32_t clock_ms(void *c){(void)c;return e.now;}
 static int udp(void *c,uint32_t ip,uint16_t port,const uint8_t *p,size_t n)
-{(void)c;(void)ip;(void)port;(void)p;assert(n==AP_RF_BYTES);++e.udp;return 0;}
+{(void)c;(void)ip;(void)port;(void)p;assert(n==AP_RF_BYTES || n==AP_CONTROL_BYTES);++e.udp;return 0;}
 static int rd(void *c,uint32_t address,uint32_t *v)
 {
     (void)c;
@@ -41,8 +41,8 @@ static int wr(void *c,uint32_t address,uint32_t v)
     switch(address-ATM_TX_BASE){
     case 8:assert(!(e.status&197u) && !e.diag);++e.clears;e.words_n=0;e.status=2;break;
     case 12:assert(e.words_n<128);e.words[e.words_n++]=v;break;
-    case 16:assert(v==3360u);break;
-    case 20:assert(v==1 && e.words_n==105);++e.submits;e.status=19;e.done_at=e.now+34;
+    case 16:assert(v==3360u || v==3872u);break;
+    case 20:assert(v==1 && (e.words_n==105 || e.words_n==121));++e.submits;e.status=19;e.done_at=e.now+(e.words_n==121?39u:34u);
       if(e.submits==1)memcpy(e.first,e.words,sizeof(e.first));
       break;
     case 24:assert(v==1);++e.stops;
@@ -181,12 +181,46 @@ static void test_retired_reply_is_never_used_for_failed_next_transaction(void)
     assert(act_command_line(&e.ctrl,"arm off")==0);
     tick(e.now+4000);assert(!e.core.transaction.pending && !e.core.armed && e.submits==submits);
 }
+static void test_binary_failure_reply_and_long_burst_guard(void)
+{
+    uint8_t p[50]={2,0x20,0xc0,1,0,43,1,0x23,0,0};uint16_t c;unsigned submits;
+    setup(0);assert(asv_start(&e.service,0)==0);frame(60);e.frame.command.version=0x23;
+    assert(ap_body_build(&e.frame.command,e.frame.body)==0);act_poll(&e.ctrl);act_poll(&e.ctrl);
+    assert(e.service.state==ASV_WAIT_ACK && e.udp==1);
+    p[44]=p[45]=p[46]=0xff;p[47]=0xfc;c=ap_crc16(p,48);p[48]=(uint8_t)(c>>8);p[49]=(uint8_t)c;
+    assert(aps_udp_received(&e.core,APS_RELAY_IPV4,5005,p,50)==AP_EREMOTE);tick(0);
+    assert(e.service.state==ASV_DELAY && e.service.burst_length==484 && !e.core.applied_commands);
+    assert(!memcmp(e.service.burst+11,"ATM2",4) && e.service.reply_failed);
+    tick(3000);assert(e.submits==1 && e.words_n==121);tick(3040);submits=e.submits;
+    tick(22962);assert(e.submits==submits); /* 38 ms left cannot fit 38.72 ms. */
+    tick(23000);assert(e.service.failed==1 && !e.service.completed && e.service.state==ASV_LISTEN);
+    /* A legacy ACK record sharing seq/LO but from another operation cannot
+     * authorize the pending operation's reply or success. */
+    setup(0);assert(asv_start(&e.service,0)==0);accept(61);ack();
+    e.core.last_ack.record.command.version=0x23;e.service.state=ASV_WAIT_ACK;
+    tick(0);assert(e.service.state==ASV_LISTEN && e.service.failed==1 && !e.submits);
+}
+static void test_diagnostic_quiet_gate(void)
+{
+    setup(0);e.ctrl.automatic=1;
+    assert(act_command_line(&e.ctrl," remotenettest status 900 1001 9 0")==AP_EBUSY && !e.udp);
+    e.ctrl.automatic=0;e.cap.state=AC_COPYING;
+    assert(act_command_line(&e.ctrl,"remotenettest status 900 1001 9 0")==AP_EBUSY && !e.udp);
+    e.cap.state=AC_IDLE;assert(asv_start(&e.service,0)==0);
+    assert(!asv_command_allowed(&e.service,"remotenettest status 900 1001 9 0"));
+    assert(act_command_line(&e.ctrl,"remotenettest status 900 1001 9 0")==AP_EBUSY && !e.udp);
+    assert(asv_stop(&e.service,ASV_USER,0)==0);tick(0);
+    assert(act_command_line(&e.ctrl,"remotenettest status 900 1001 9 0")==0 && e.udp==1);
+    assert(e.core.pending_origin==APS_UART_NETTEST && !e.core.decoded_frames);
+}
 int main(void)
 {
     test_start_and_gate();test_immutable_400_replies();test_udp_timeout_no_success_reply();
     test_cancel_fault_disconnect_lease();test_absolute_window_and_limit();
     test_explicit_cancel_restart_and_real_fault_rejection();
     test_retired_reply_is_never_used_for_failed_next_transaction();
+    test_binary_failure_reply_and_long_burst_guard();
+    test_diagnostic_quiet_gate();
     setup(0);assert(!e.ctrl.filter);frame(99);e.cap.state=AC_READY;e.cap.valid=1;e.cap.desired_mode=TC_MODE_NORMAL;
     assert(act_command_line(&e.ctrl,"decode")==0 && e.core.decoded_frames==1 && !e.udp);
     puts("PASS autonomous service: mock ADC/controller/UDP ACK, immutable bounded replies, replay/stop/fault/lease; no hardware");

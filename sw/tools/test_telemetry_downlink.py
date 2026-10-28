@@ -102,6 +102,29 @@ class TelemetryTests(unittest.TestCase):
         bad[-2:] = (32767).to_bytes(2, 'little')
         with self.assertRaises(ValueError): tm.decode_capture_windows(bytes(bad))
 
+    def test_atm2_extended_finite_burst_blind_decode(self):
+        # Synthetic longer frame: guards against silently retaining ATM1 lengths.
+        p = bytearray(payload()) + bytearray(16)
+        p[:5] = b'ATM2\x02'
+        p[6] = p[7] = p[55] = 0x23
+        struct.pack_into('>4B4I', p, 92, 2, 0, 0, 1, 89000, 89000, 0, 5000)
+        f = b'\xaa\xaa' + bytes([len(p)]) + p + struct.pack('>H', tm.phy.crc16(p))
+        burst = b'\xaa'*8 + f*4 + b'\xaa'*8
+        self.assertEqual(len(burst), 484)
+        symbols = 1-2*np.unpackbits(np.frombuffer(burst, dtype=np.uint8)).astype(float)
+        active = np.repeat(symbols, 25)
+        for polarity in (-1, 1):
+            z = np.zeros(262144, dtype=complex)
+            z[73111:73111+len(active)] = polarity*active*np.exp(
+                1j*(.62+2*np.pi*503123*np.arange(len(active))/2500000))
+            raw = np.rint(np.column_stack((z.real, z.imag))*400).astype('<i2').tobytes()
+            report = tm.decode_capture_windows(raw)
+            self.assertEqual(report['format'], 'EXPERIMENTAL_ATM2_RF')
+            self.assertEqual(report['valid_telemetry_count'], 4)
+            self.assertEqual(report['unique_snapshot_count'], 1)
+            self.assertTrue(all(s['relay']['tx_attenuation_mdb'] == [89000, 89000]
+                                for s in report['telemetry']))
+
 
 if __name__ == '__main__':
     unittest.main()

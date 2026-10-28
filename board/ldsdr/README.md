@@ -1,9 +1,11 @@
 # LDSDR业务转发：RX IQ默认修正与诊断补丁
 
-本目录只维护针对已知原UDP构建的源码补丁、新增头文件、链接脚本及离线测试。
+本目录维护针对已知原UDP构建的源码补丁、新增头文件、链接脚本及离线测试。
 不包含ELF、obj、完整厂商工程或BSP，**不是独立clean build**。
 硬件对象为转发板LDSDR（7010_rev3.1），不是发送板7010_AD9363_SDR。
-不修改GUI、Z7ADDALite代码或遥控报文协议。
+根目录重建入口保留原固定镜像；新增[remote_control](remote_control/README.md)单独构建有限租期镜像，
+配合Z7ADDALite与GUI的扩展启停/查询协议使用。新镜像的CLI限制、改频后静音行为与原固定镜像不同，
+不可混用操作步骤，实板范围见[本轮验证](../../docs/remote-relay-validation.md)。
 
 ## 基线与改动
 

@@ -4,7 +4,9 @@ No controller, serial connection or transmitter is constructed here. Drafts
 are not sent commands; historical evidence never becomes current device state.
 """
 from decimal import Decimal, InvalidOperation, localcontext
+from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 
 
@@ -12,6 +14,8 @@ MIN_CENTER_MHZ = Decimal('70.5')
 MAX_CENTER_MHZ = Decimal('6000.5')
 BUSINESS_TX_CENTERS = ('900.5', '901.5')
 BUSINESS_RX_CENTERS = ('1000.5', '1001.5')
+CONTROL_OPERATIONS = {'设置频率': 'frequency', '开启转发': 'enable',
+                      '停止转发': 'stop', '查询状态': 'status'}
 
 
 def business_frequency_plan(role, center_mhz):
@@ -62,16 +66,54 @@ def format_mhz(hz):
     return format(Decimal(hz) / 1_000_000, 'f').rstrip('0').rstrip('.')
 
 
-def command_request(input_mhz, output_mhz, sequence):
+def command_request(input_mhz, output_mhz, sequence, operation='frequency'):
     """Encode only exactly representable legacy LO values; never round."""
+    if operation not in CONTROL_OPERATIONS.values():
+        raise ValueError('未知遥控操作')
     plan = frequency_plan(input_mhz, output_mhz)
     incoming, outgoing = plan['input_hz']-500_000, plan['output_hz']-500_000
     if incoming % 1_000_000 or outgoing % 1_000_000:
         raise ValueError('方案已保存；此精度需要扩展遥控报文，当前不能编码发送。')
     if type(sequence) is not int or not 0 <= sequence <= 255:
         raise ValueError('指令序号须为 0–255 的整数')
-    return dict(rx_mhz=incoming//1_000_000,
-                tx_mhz=outgoing//1_000_000, air_seq=sequence)
+    request = dict(rx_mhz=incoming//1_000_000,
+                   tx_mhz=outgoing//1_000_000, air_seq=sequence)
+    if operation != 'frequency':
+        request['operation'] = operation
+    return request
+
+
+def relay_snapshot_view(relay, now):
+    """Format actual ACK fields; elapsed wall time can only reduce the estimate."""
+    def number(value):
+        return type(value) in (int, float) and math.isfinite(value)
+    received = relay.get('snapshot_received_at')
+    timestamp = (datetime.fromtimestamp(received, timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')
+                 if number(received) and 0 <= received <= 253402214400 else '未提供')
+    lines = [f'状态快照 · 接收 {timestamp}（非持续监控）']
+    valid = relay.get('valid') is True
+    gains, atten = relay.get('rx_gain_db'), relay.get('tx_attenuation_mdb')
+    if valid and type(relay.get('mode')) is int and all(
+            isinstance(values, (list, tuple)) and len(values) == 2 and
+            all(type(v) is int for v in values) for values in (gains, atten)):
+        lines += [f'实际 mode {relay["mode"]} · RX 增益 {gains[0]} / {gains[1]} dB',
+                  f'TX 衰减 {atten[0]/1000:g} / {atten[1]/1000:g} dB']
+    else:
+        lines.append('模式 / 电平回读无效，实际值未知')
+    lower = relay.get('remaining_lower_bound_ms')
+    remaining = (max(0, lower-max(0, now-received)*1000)
+                 if number(lower) and lower >= 0 and number(received) else 0)
+    expired = not valid or relay.get('lease_active') is not True or remaining <= 0
+    if relay.get('mute_fault'):
+        lines.append('静音故障锁存 · 需处理后重新查询')
+        expired = True
+    if relay.get('lease_active') is True:
+        lines.append(f'保守剩余 {math.floor(remaining/1000)} 秒' if not expired else '快照租期已过期或无法估计 · 待查询')
+    else:
+        lines.append('快照未报告有效租期 · 当前状态待查询')
+    if relay.get('lease_expired'):
+        lines.append('板端报告曾到期')
+    return dict(body='\n'.join(lines), expired=expired)
 
 
 def device_choices(ports, aliases):

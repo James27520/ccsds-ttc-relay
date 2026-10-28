@@ -16,16 +16,24 @@ static void put_record(uint8_t *p,const struct aps_command_record *r)
     put32(p,r->event);p[4]=(uint8_t)r->origin;p[5]=r->command.seq;
     put16(p+6,r->command.rx_mhz);put16(p+8,r->command.tx_mhz);
 }
+static int extended(const struct aps_state *s)
+{return (s->last_decoded.valid && s->last_decoded.command.version>=0x21u) ||
+ (s->last_send.record.valid && s->last_send.record.command.version>=0x21u) ||
+ (s->last_ack.record.valid && s->last_ack.record.command.version>=0x21u);}
 int atm_pack(const struct aps_state *s,uint32_t sequence,uint32_t uptime,
              uint8_t *out,size_t capacity)
 {
-    uint8_t p[ATM_PAYLOAD_BYTES];
+    uint8_t p[ATM2_PAYLOAD_BYTES];size_t length;int v2;
     if(!s || !out)return AP_EARG;
-    if(capacity<sizeof(p))return AP_ELENGTH;
+    v2=extended(s);length=v2?ATM2_PAYLOAD_BYTES:ATM_PAYLOAD_BYTES;
+    if(capacity<length)return AP_ELENGTH;
     if(!record_valid(&s->last_decoded) || !record_valid(&s->last_send.record) ||
        !record_valid(&s->last_ack.record) || s->last_send.count>255u ||
-       (s->last_ack.record.valid && s->last_ack.reply.rc!=0))return AP_EARG;
-    memset(p,0,sizeof(p));memcpy(p,"ATM1",4);p[4]=1;
+       (!v2 && s->last_ack.record.valid && s->last_ack.reply.rc!=0))return AP_EARG;
+    memset(p,0,sizeof(p));memcpy(p,v2?"ATM2":"ATM1",4);p[4]=(uint8_t)(v2?2:1);
+    if(v2){p[6]=s->last_decoded.valid?s->last_decoded.command.version:0;
+      p[7]=s->last_send.record.valid?s->last_send.record.command.version:0;
+      p[55]=s->last_ack.record.valid?s->last_ack.record.command.version:0;}
     p[5]=(uint8_t)((!!s->network_ready) | ((!!s->armed)<<1) |
       ((!!s->transaction.pending)<<2) | ((!!s->last_decoded.valid)<<3) |
       ((!!s->last_send.record.valid)<<4) | ((!!s->last_ack.record.valid)<<5));
@@ -35,25 +43,31 @@ int atm_pack(const struct aps_state *s,uint32_t sequence,uint32_t uptime,
     if(s->last_send.record.valid){put16(p+52,s->last_send.transaction_seq);p[54]=(uint8_t)s->last_send.count;put32(p+56,(uint32_t)s->last_send.rc);}
     put_record(p+60,&s->last_ack.record);
     if(s->last_ack.record.valid){put16(p+70,s->last_ack.reply.seq);put32(p+72,(uint32_t)s->last_ack.reply.rc);put64(p+76,s->last_ack.reply.rx_hz);put64(p+84,s->last_ack.reply.tx_hz);}
-    memcpy(out,p,sizeof(p));return (int)sizeof(p);
+    if(v2 && s->last_ack.record.valid && s->last_ack.record.command.version>=0x21u){
+      const struct ap_relay_status *r=&s->last_ack.status;
+      p[92]=r->mode;p[93]=r->rx1_gain;p[94]=r->rx2_gain;p[95]=r->flags;
+      put32(p+96,r->tx1_mdB);put32(p+100,r->tx2_mdB);put32(p+104,r->remaining_ms);put32(p+108,r->uptime_ms);
+    }
+    memcpy(out,p,length);return (int)length;
 }
 int atm_frame(const uint8_t *payload,size_t length,uint8_t *out,size_t capacity)
 {
     uint16_t crc;
     if(!payload || !out)return AP_EARG;
-    if(length!=ATM_PAYLOAD_BYTES || capacity<ATM_FRAME_BYTES)return AP_ELENGTH;
+    if((length!=ATM_PAYLOAD_BYTES && length!=ATM2_PAYLOAD_BYTES) || capacity<length+5u)return AP_ELENGTH;
     crc=ap_crc16(payload,length);out[0]=out[1]=0xaa;out[2]=(uint8_t)length;
-    memcpy(out+3,payload,length);put16(out+3+length,crc);return ATM_FRAME_BYTES;
+    memcpy(out+3,payload,length);put16(out+3+length,crc);return (int)(length+5u);
 }
 int atm_burst(const struct aps_state *s,uint32_t sequence,uint32_t uptime,uint8_t *out,size_t capacity)
 {
-    uint8_t p[ATM_PAYLOAD_BYTES],frame[ATM_FRAME_BYTES];unsigned i;int rc;
+    uint8_t p[ATM2_PAYLOAD_BYTES],frame[ATM2_FRAME_BYTES];unsigned i;int rc;size_t frame_length,total;
     if(!out)return AP_EARG;
-    if(capacity<ATM_BURST_BYTES)return AP_ELENGTH;
     rc=atm_pack(s,sequence,uptime,p,sizeof(p));if(rc<0)return rc;
-    rc=atm_frame(p,sizeof(p),frame,sizeof(frame));if(rc<0)return rc;
-    memset(out,0xaa,8);for(i=0;i<ATM_REPEAT_COUNT;++i)memcpy(out+8+i*ATM_FRAME_BYTES,frame,sizeof(frame));
-    memset(out+8+ATM_REPEAT_COUNT*ATM_FRAME_BYTES,0xaa,8);return ATM_BURST_BYTES;
+    rc=atm_frame(p,(size_t)rc,frame,sizeof(frame));if(rc<0)return rc;
+    frame_length=(size_t)rc;total=16u+ATM_REPEAT_COUNT*frame_length;
+    if(capacity<total)return AP_ELENGTH;
+    memset(out,0xaa,8);for(i=0;i<ATM_REPEAT_COUNT;++i)memcpy(out+8+i*frame_length,frame,frame_length);
+    memset(out+8+ATM_REPEAT_COUNT*frame_length,0xaa,8);return (int)total;
 }
 uint32_t atm_word(const uint8_t *bytes,size_t length,size_t index)
 {
@@ -133,7 +147,7 @@ int atm_tx_send(struct atm_tx *t,const struct aps_state *s,uint32_t now)
     uint8_t burst[ATM_BUFFER_BYTES];int rc;
     if(!t || !s)return AP_EARG;
     rc=atm_burst(s,t->sequence,now,burst,sizeof(burst));if(rc<0)return rc;
-    rc=atm_tx_send_burst(t,burst,ATM_BURST_BYTES,now);
+    rc=atm_tx_send_burst(t,burst,(size_t)rc,now);
     if(rc==AP_OK)++t->sequence;
     return rc;
 #else
@@ -144,13 +158,13 @@ int atm_tx_send_burst(struct atm_tx *t,const uint8_t *burst,size_t length,uint32
 {
 #if ADDA_TM_TX_ENABLED
     uint32_t status,diag;unsigned i;int rc;
-    if(!t || !burst || length!=ATM_BURST_BYTES)return AP_EARG;
+    if(!t || !burst || (length!=ATM_BURST_BYTES && length!=ATM2_BURST_BYTES))return AP_EARG;
     if(t->pending || t->stopping)return AP_EBUSY;
     rc=atm_tx_status(t,&status,&diag);if(rc<0)return rc;
     if((status&197u) || diag)return AP_EBUSY;
     rc=atm_tx_clear(t);if(rc<0)return rc;
-    for(i=0;i<ATM_BURST_BYTES/4u;++i)if(wr(t,12,atm_word(burst,ATM_BURST_BYTES,i))<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
-    if(wr(t,16,ATM_BURST_BYTES*8u)<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
+    for(i=0;i<(length+3u)/4u;++i)if(wr(t,12,atm_word(burst,length,i))<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
+    if(wr(t,16,(uint32_t)length*8u)<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
     t->io.barrier(t->io.context);
     if(wr(t,20,1u)<0){(void)atm_tx_stop(t);return AP_EREMOTE;}
     t->io.barrier(t->io.context);t->pending=1u;t->started_ms=now;return AP_OK;

@@ -6,6 +6,7 @@ Only the existing wired 100.5 MHz uplink / 90.5 MHz downlink is enabled.
 """
 import hashlib
 import json
+import math
 from pathlib import Path
 import queue
 import re
@@ -19,6 +20,7 @@ from .transport import Console
 from .rf_live import Cancelled, FS, SAMPLES
 from .tc_evidence import _integer, _json_finite
 from sw.tools.telemetry_downlink import decode_capture_windows, parse_frame
+from sw.tools.telecontrol_waveform import OPERATIONS
 
 
 def assess_rf_reply(requested, report, previous=None):
@@ -34,27 +36,47 @@ def assess_rf_reply(requested, report, previous=None):
         raise TimeoutError('没有收到有效射频回报，执行结果未知')
     unique = {}
     for frame in report['frames']:
-        if type(frame) is not dict or type(frame.get('payload_hex')) is not str or not re.fullmatch(r'[0-9a-fA-F]{192}', frame['payload_hex']):
+        if type(frame) is not dict or type(frame.get('payload_hex')) is not str or not re.fullmatch(r'(?:[0-9a-fA-F]{192}|[0-9a-fA-F]{224})', frame['payload_hex']):
             raise ValueError('回报帧字节缺失或长度错误')
         crc = _integer(frame.get('crc16'), 0, 65535, 'CRC16')
         payload = bytes.fromhex(frame['payload_hex'])
-        snapshot = parse_frame(b'\xaa\xaa\x60'+payload+crc.to_bytes(2, 'big'))
+        snapshot = parse_frame(b'\xaa\xaa'+bytes([len(payload)])+payload+crc.to_bytes(2, 'big'))
+        operation = requested.get('operation', 'frequency')
+        if (operation != 'frequency') != (snapshot['protocol'] == 'EXPERIMENTAL_ATM2'):
+            raise ValueError('回报版本与操作不符')
         records = [snapshot[name] for name in ('decoded_record', 'send_record', 'ack_record')]
         for record in records:
             if record['valid'] != 1 or record['origin'] != 1:
                 raise ValueError('回报并非完整的 ADC_NORMAL 遥控事务')
-            if any(record[key] != value for key, value in requested.items()):
+            if (any(record[key] != requested[key] for key in ('rx_mhz', 'tx_mhz', 'air_seq')) or
+                    record['command_version'] != OPERATIONS[operation]):
                 raise ValueError('射频回报与本次指令不符，不能标为成功')
         decoded, sent, ack = records
         if not (0 < decoded['event'] < sent['event'] < ack['event'] == snapshot['events']):
             raise ValueError('回报事务顺序无效')
         if (snapshot['pending'] or snapshot['armed'] or not snapshot['network'] or
-                sent['udp_seq'] != ack['udp_seq'] or sent['rc'] or ack['rc'] or
+                sent['udp_seq'] != ack['udp_seq'] or sent['rc'] or
                 not 1 <= sent['count'] <= 3 or not 0 <= ack['udp_seq'] <= 0x3fff):
             raise ValueError('回报中的执行状态或 UDP ACK 无效')
-        for axis in ('rx', 'tx'):
-            if abs(ack[axis+'_hz']-requested[axis+'_mhz']*1_000_000) > 10_000:
-                raise ValueError('返回频率与请求不符')
+        if operation == 'frequency' and ack['rc']:
+            raise ValueError('改频 ACK 无效')
+        if ack['rc'] not in range(-7, 1):
+            raise ValueError('未知远端返回码')
+        if not ack['rc']:
+            if operation in ('frequency', 'enable'):
+                for axis in ('rx', 'tx'):
+                    if abs(ack[axis+'_hz']-requested[axis+'_mhz']*1_000_000) > 10_000:
+                        raise ValueError('返回频率与请求不符')
+            if operation != 'frequency':
+                radio = snapshot['relay']
+                if not radio['valid']:
+                    raise ValueError('回报缺少有效模式与电平回读')
+                if operation == 'enable' and (radio['mode'] != 1 or radio['rx_gain_db'] != [30, 30] or
+                        radio['tx_attenuation_mdb'] != [50000, 50000] or not radio['lease_active'] or radio['mute_fault']):
+                    raise ValueError('开启回报的实际模式、电平或租期不符')
+                if operation == 'stop' and (radio['mode'] != 2 or radio['rx_gain_db'] != [0, 0] or
+                        radio['tx_attenuation_mdb'] != [89000, 89000] or radio['lease_active'] or radio['remaining_ms']):
+                    raise ValueError('停止回报未确认静音电平')
         if previous and (snapshot['events'] <= previous['events'] or
                          snapshot['uptime_ms'] < previous['uptime_ms'] or
                          snapshot['sequence'] <= previous['sequence']):
@@ -64,11 +86,14 @@ def assess_rf_reply(requested, report, previous=None):
         raise ValueError('采样含有多个不同事务快照，不能合并为一次成功')
     snapshot = next(iter(unique.values()))
     ack = snapshot['ack_record']
-    return dict(passed=True, requested=dict(requested),
+    result = dict(passed=ack['rc'] == 0, matched=True, requested=dict(requested),
                 ack=dict(rx_hz=ack['rx_hz'], tx_hz=ack['tx_hz'], udp_seq=ack['udp_seq']),
                 frame_count=len(report['frames']), snapshot=snapshot,
                 evidence_source='actual_iq_crc_checked',
                 frequency_source='relay_ack_in_rf_return', independent_spi=False)
+    if operation != 'frequency':
+        result.update(remote_rc=ack['rc'], relay=dict(snapshot['relay']))
+    return result
 
 
 class AutonomousRadio(CommandSource):
@@ -279,6 +304,13 @@ class TelecontrolController:
             assessed = assess_rf_reply(requested, decoded, self.previous)
             report.update(assessed, iq_path=str(iq_path), report_path=str(report_path),
                           elapsed_seconds=time.monotonic()-started)
+            if 'relay' in assessed:
+                # The ACK's lease clock predates receipt. Subtract the entire
+                # operation duration, a conservative lower bound without clock sync.
+                report['relay'] = dict(assessed['relay'],
+                    remaining_lower_bound_ms=max(0, assessed['relay']['remaining_ms']-
+                                                 math.ceil(report['elapsed_seconds']*1000)),
+                    snapshot_received_at=time.time())
             self.previous = assessed['snapshot']
         except Exception as exc:
             report['error'] = str(exc)

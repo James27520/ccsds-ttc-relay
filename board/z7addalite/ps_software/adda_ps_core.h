@@ -29,7 +29,8 @@ struct aps_send_record {
 };
 struct aps_ack_record {
     struct aps_command_record record;
-    struct ap_ack reply; /* successful matched remote ACK, NOT SPI telemetry */
+    struct ap_ack reply; /* matched remote ACK; binary failures also retained */
+    struct ap_relay_status status; /* binary ACK snapshot only */
 };
 struct aps_io {
     void *context;
@@ -52,7 +53,7 @@ struct aps_state {
     unsigned decoded_frames;
     unsigned applied_commands;
     unsigned failed_transactions;
-    uint32_t telemetry_events; /* decoded, attempted send, successful ACK only */
+    uint32_t telemetry_events; /* decoded, send attempt, matched retained ACK */
     struct aps_command_record last_decoded;
     struct aps_send_record last_send;
     struct aps_ack_record last_ack;
@@ -65,6 +66,9 @@ struct aps_state {
  * uptime_ms is the caller's platform clock modulo 2^32 (49.7-day wrap); event
  * IDs also wrap modulo 2^32. valid, never event!=0, determines presence.
  * spi_valid is always 0: this core has no independent LDSDR SPI readback.
+ * A new-operation negative ACK appears as an entirely zeroed invalid ACK in
+ * TM1 to preserve its successful-ACK meaning; the original failure remains
+ * in state, REMOTE_ACK and ATM2. Formatting never changes the stored record.
  * Read-only, serialized core caller required (same as all existing core APIs).
  * Returns line length excluding NUL, or AP_EARG/AP_ELENGTH; an undersized
  * nonempty buffer is cleared rather than returning a partial valid-looking TM1.
@@ -75,6 +79,10 @@ void aps_init(struct aps_state *state, const struct aps_io *io);
 void aps_set_network_ready(struct aps_state *state, unsigned ready);
 /* Line excludes newline, <=127 characters. status/telemetry/help/selftest are read-only.
  * nettest RX_MHz TX_MHz SEQ GAIN ATT is an explicit known-command test.
+ * remotenettest enable/stop/status RX_MHz TX_MHz SEQ LEASE_MS is explicitly
+ * UART_NETTEST, requires disarmed/network ready. Platform/controller must also
+ * enforce inactive service, automatic off, and no capture in progress. Only
+ * this diagnostic entrance overrides enable's fixed 300000 ms ADC lease.
  * arm on/off controls automatic ADC-only forwarding, off at startup. */
 int aps_command_line(struct aps_state *state, const char *line, uint32_t now_ms);
 int aps_selftest(struct aps_state *state);

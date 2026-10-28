@@ -16,7 +16,9 @@ struct asv_service {
     struct atm_tx *tx;
     unsigned active,state,reason,accepted,completed,failed,reply_sent,used_count;
     uint32_t started_ms,ack_ms,last_reply_ms,reply_seq,baseline_applied,baseline_failures;
-    uint8_t used[32],burst[ATM_BURST_BYTES];
+    uint8_t used[32],burst[ATM2_BURST_BYTES];
+    size_t burst_length;
+    unsigned reply_failed;
     struct ap_command command;
     uint16_t udp_seq;
 };
