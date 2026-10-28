@@ -1,0 +1,366 @@
+{
+  "date": "2026-10-28",
+  "scope": "One wired DAC-to-SDR telemetry downlink; file GUI; no continuous or six-link concurrency claim",
+  "rf_sma_tested": true,
+  "passed": true,
+  "origin": "UART_NETTEST",
+  "adc_normal_input_this_stage": false,
+  "nominal_carrier_hz": 90500000,
+  "symbol_rate": 100000,
+  "dac_peak_codes": 128,
+  "dac_full_scale_codes": 32768,
+  "burst_duration_ms": 33.6,
+  "receiver": {
+    "port_at_test": "COM19",
+    "identity_scope": "current USB and Linux boot session only; persistent physical role binding pending",
+    "sample_rate_hz": 2500000,
+    "lo_hz": 90000000,
+    "bandwidth_hz": 3000000
+  },
+  "counts": {
+    "successful_bursts": 3,
+    "valid_physical_frames": 12,
+    "distinct_snapshots": 3,
+    "quiet_captures": 5,
+    "quiet_valid_frames": 0
+  },
+  "cases": [
+    {
+      "directory": "rf_probe_20261028_171201",
+      "tx_sequence": 13,
+      "air_seq": 202,
+      "tx_mhz": 1000,
+      "captures": [
+        {
+          "sha256": "8fd1497fef6809993d0787502c6fe5af31fc931f48510f2e034cd10e3b736af1",
+          "samples": 65536,
+          "rms_codes": 1.268713679052158,
+          "clip_components": 0,
+          "valid_telemetry_count": 0,
+          "unique_snapshot_count": 0,
+          "label": "baseline"
+        },
+        {
+          "sha256": "46f8632e4d8292a1ce3961ce0f64eb86b8adb638aa7313f33e50e5c583e8a7c0",
+          "samples": 262144,
+          "rms_codes": 2.390430317849108,
+          "clip_components": 0,
+          "valid_telemetry_count": 4,
+          "unique_snapshot_count": 1,
+          "label": "burst"
+        }
+      ],
+      "snapshot": {
+        "protocol": "EXPERIMENTAL_ATM1",
+        "ccsds": false,
+        "sequence": 13,
+        "uptime_ms": 3310253,
+        "events": 4,
+        "decoded": 0,
+        "applied": 2,
+        "failures": 0,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "spi_valid": 0,
+        "boot_identity": null,
+        "sequence_scope": "since PS initialization; may repeat after reboot",
+        "decoded_record": {
+          "valid": false,
+          "event": 0,
+          "origin": 0,
+          "origin_name": "NONE",
+          "air_seq": 0,
+          "rx_mhz": 0,
+          "tx_mhz": 0
+        },
+        "send_record": {
+          "valid": true,
+          "event": 3,
+          "origin": 4,
+          "origin_name": "UART_NETTEST",
+          "air_seq": 202,
+          "rx_mhz": 900,
+          "tx_mhz": 1000,
+          "udp_seq": 2,
+          "count": 1,
+          "rc": 0,
+          "evidence": "local UDP transport acceptance only"
+        },
+        "ack_record": {
+          "valid": true,
+          "event": 4,
+          "origin": 4,
+          "origin_name": "UART_NETTEST",
+          "air_seq": 202,
+          "rx_mhz": 900,
+          "tx_mhz": 1000,
+          "udp_seq": 2,
+          "rc": 0,
+          "rx_hz": 900000000,
+          "tx_hz": 1000000000,
+          "evidence": "matched remote ACK; not independent SPI readback"
+        },
+        "first_symbol_sample": 117295,
+        "carrier_offset_hz": 500031.28298346855,
+        "crc_valid": true
+      }
+    },
+    {
+      "directory": "rf_probe_20261028_171428",
+      "tx_sequence": 14,
+      "air_seq": 231,
+      "tx_mhz": 1001,
+      "captures": [
+        {
+          "sha256": "e9d929b4fbf0de203d4734dc53f5ef12bbc6adc89283f2d818e26d414d7fe23b",
+          "samples": 65536,
+          "rms_codes": 1.643691330939678,
+          "clip_components": 0,
+          "valid_telemetry_count": 0,
+          "unique_snapshot_count": 0,
+          "label": "baseline"
+        },
+        {
+          "sha256": "2f85006dff116c7023f74d2337a581418885606ceca694881cd819c37a6a1464",
+          "samples": 262144,
+          "rms_codes": 19.24187912502214,
+          "clip_components": 0,
+          "valid_telemetry_count": 4,
+          "unique_snapshot_count": 1,
+          "label": "burst"
+        },
+        {
+          "sha256": "802cff431ffdd143793ed800744d8910c6dccf679e25a34bc6d9b204d469580b",
+          "samples": 65536,
+          "rms_codes": 1.6461124746799276,
+          "clip_components": 0,
+          "valid_telemetry_count": 0,
+          "unique_snapshot_count": 0,
+          "label": "post_quiet"
+        }
+      ],
+      "snapshot": {
+        "protocol": "EXPERIMENTAL_ATM1",
+        "ccsds": false,
+        "sequence": 14,
+        "uptime_ms": 3470596,
+        "events": 6,
+        "decoded": 0,
+        "applied": 3,
+        "failures": 0,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "spi_valid": 0,
+        "boot_identity": null,
+        "sequence_scope": "since PS initialization; may repeat after reboot",
+        "decoded_record": {
+          "valid": false,
+          "event": 0,
+          "origin": 0,
+          "origin_name": "NONE",
+          "air_seq": 0,
+          "rx_mhz": 0,
+          "tx_mhz": 0
+        },
+        "send_record": {
+          "valid": true,
+          "event": 5,
+          "origin": 4,
+          "origin_name": "UART_NETTEST",
+          "air_seq": 231,
+          "rx_mhz": 900,
+          "tx_mhz": 1001,
+          "udp_seq": 3,
+          "count": 1,
+          "rc": 0,
+          "evidence": "local UDP transport acceptance only"
+        },
+        "ack_record": {
+          "valid": true,
+          "event": 6,
+          "origin": 4,
+          "origin_name": "UART_NETTEST",
+          "air_seq": 231,
+          "rx_mhz": 900,
+          "tx_mhz": 1001,
+          "udp_seq": 3,
+          "rc": 0,
+          "rx_hz": 900000000,
+          "tx_hz": 1000999998,
+          "evidence": "matched remote ACK; not independent SPI readback"
+        },
+        "first_symbol_sample": 127641,
+        "carrier_offset_hz": 500030.47418026056,
+        "crc_valid": true
+      }
+    },
+    {
+      "directory": "rf_probe_20261028_171627",
+      "tx_sequence": 15,
+      "air_seq": 232,
+      "tx_mhz": 1000,
+      "captures": [
+        {
+          "sha256": "73fd224476fc6b5a77b0aa3b5477d9e1806b39280895d5e28b343421fd50e56d",
+          "samples": 65536,
+          "rms_codes": 1.6808135760231562,
+          "clip_components": 0,
+          "valid_telemetry_count": 0,
+          "unique_snapshot_count": 0,
+          "label": "baseline"
+        },
+        {
+          "sha256": "ae50d0343fc0c1aeb4a65fce4cc7cf8aaea356d2ed3189e95cd8111b19712d66",
+          "samples": 262144,
+          "rms_codes": 19.468143753728047,
+          "clip_components": 0,
+          "valid_telemetry_count": 4,
+          "unique_snapshot_count": 1,
+          "label": "burst"
+        },
+        {
+          "sha256": "6996075b94017938c3571e7d772cd21f58ca5e2bf8a49f24e9a7f6096c70c8d9",
+          "samples": 65536,
+          "rms_codes": 1.6730701773563998,
+          "clip_components": 0,
+          "valid_telemetry_count": 0,
+          "unique_snapshot_count": 0,
+          "label": "post_quiet"
+        }
+      ],
+      "snapshot": {
+        "protocol": "EXPERIMENTAL_ATM1",
+        "ccsds": false,
+        "sequence": 15,
+        "uptime_ms": 3590528,
+        "events": 8,
+        "decoded": 0,
+        "applied": 4,
+        "failures": 0,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "spi_valid": 0,
+        "boot_identity": null,
+        "sequence_scope": "since PS initialization; may repeat after reboot",
+        "decoded_record": {
+          "valid": false,
+          "event": 0,
+          "origin": 0,
+          "origin_name": "NONE",
+          "air_seq": 0,
+          "rx_mhz": 0,
+          "tx_mhz": 0
+        },
+        "send_record": {
+          "valid": true,
+          "event": 7,
+          "origin": 4,
+          "origin_name": "UART_NETTEST",
+          "air_seq": 232,
+          "rx_mhz": 900,
+          "tx_mhz": 1000,
+          "udp_seq": 4,
+          "count": 1,
+          "rc": 0,
+          "evidence": "local UDP transport acceptance only"
+        },
+        "ack_record": {
+          "valid": true,
+          "event": 8,
+          "origin": 4,
+          "origin_name": "UART_NETTEST",
+          "air_seq": 232,
+          "rx_mhz": 900,
+          "tx_mhz": 1000,
+          "udp_seq": 4,
+          "rc": 0,
+          "rx_hz": 900000000,
+          "tx_hz": 1000000000,
+          "evidence": "matched remote ACK; not independent SPI readback"
+        },
+        "first_symbol_sample": 146640,
+        "carrier_offset_hz": 500029.97000019,
+        "crc_valid": true
+      }
+    }
+  ],
+  "final_state": {
+    "adda_tx": "TM_TX enabled=1 seq=16 pending=0 stopping=0 status=00000028 diag=00000000\r\nTM_DAC verified=1 finished=1 diagnostic=102a0110 rc=0\r\nCLI_RESULT rc=0\r\n",
+    "adda_tm": "TM1 uptime_ms=3837552 events=8 network=0 armed=0 pending=0 decoded=0 applied=4 failures=0 d_valid=0 d_event=0 d_origin=0 d_air_seq=0 d_rx_mhz=0 d_tx_mhz=0 s_valid=1 s_event=7 s_origin=4 s_air_seq=232 s_rx_mhz=900 s_tx_mhz=1000 s_udp_seq=4 s_count=1 s_rc=0 a_valid=1 a_event=8 a_origin=4 a_air_seq=232 a_rx_mhz=900 a_tx_mhz=1000 a_udp_seq=4 a_rc=0 a_rx_hz=900000000 a_tx_hz=1000000000 spi_valid=0 crc16=7F25\r\nCLI_RESULT rc=0\r\n",
+    "relay": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n",
+    "com17": {
+      "identity": {
+        "port": "COM17",
+        "usb_serial": "000000000069B",
+        "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+        "serial": "104473023196000bf5ff1a00aae12c3ca8",
+        "identity_source": "iio",
+        "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)"
+      },
+      "rx_lo": "1000749998",
+      "tx_off": "1"
+    },
+    "com19": {
+      "identity": {
+        "port": "COM19",
+        "usb_serial": "6",
+        "linux_boot_id": "9068ea50-9aba-4b71-95d6-d491ace21f35",
+        "identity_scope": "current boot and USB session only",
+        "physical_role": "unconfirmed candidate",
+        "model": "FISH Ball PlutoSDR Rev.A"
+      },
+      "rx_lo": "90000000",
+      "gain": "20.000000 dB",
+      "tx_off": "1",
+      "led": "none rfkill-any rfkill-none kbd-scrolllock kbd-numlock kbd-capslock kbd-kanalock kbd-shiftlock kbd-altgrlock kbd-ctrllock kbd-altlock kbd-shiftllock kbd-shiftrlock kbd-ctrlllock kbd-ctrlrlock timer oneshot [heartbeat] gpio cpu cpu0 cpu1 mmc0 default-on"
+    }
+  },
+  "software_tests": {
+    "ground_station_full": {
+      "tests": 98,
+      "passed": true,
+      "log": "rf_gui_tests.txt"
+    },
+    "targeted_after_display_update": {
+      "tests": 16,
+      "passed": true,
+      "command": "python -B -m unittest sw.ground_station.test_rf_telemetry_window sw.tools.test_telemetry_downlink"
+    },
+    "telemetry_decoder_tests": 6,
+    "hardware_test": false
+  },
+  "gui": {
+    "mode": "IQ file decoding or historical JSON; not live hardware acquisition",
+    "actual_iq_displayed": "rf_probe_20261028_171627/burst.bin",
+    "displayed_valid_frames": 4,
+    "automatic_transmission": false
+  },
+  "artifact": {
+    "path": "D:\\RelayTools\\releases\\telemetry_rf_20261028.zip",
+    "bytes": 4558376,
+    "sha256": "4c35573c01994d4f5179b0c09b134a303d94b56ff123b271ec039e7eb6eafa26",
+    "manifest": "evidence_manifest.json",
+    "members": 135
+  },
+  "unchanged_firmware": {
+    "bit_sha256": "1cfd233356baf7cd06715cf9ca638ac96d487b78d849e3ce660ca24386095fba",
+    "elf_sha256": "19aa52fc22f173473fdcd7d6937d59855cb14713a74d7d7c8ab7e2fc96aa5c9b"
+  },
+  "limitations": [
+    "No new ADC_NORMAL command in this stage",
+    "ACK fields are not independent SPI; SPI compared separately",
+    "No calibrated absolute RF power or frequency measurement",
+    "No BER, continuous reception, or concurrent business/TC/TM claim",
+    "Current device session mapping differs from historical roles; normal application identity guard unchanged",
+    "No Flash or SD changes"
+  ],
+  "next_steps": [
+    "Explicit device role binding",
+    "GUI coordinated capture and finite telemetry request",
+    "Same-transaction ADC command and RF telemetry validation",
+    "Reverse business and six-link frequency/resource integration"
+  ]
+}

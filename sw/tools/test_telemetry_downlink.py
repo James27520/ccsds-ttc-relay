@@ -78,6 +78,30 @@ class TelemetryTests(unittest.TestCase):
             self.assertGreaterEqual(report['valid_telemetry_count'], 2)
             self.assertTrue(all(s['ack_record']['origin'] == 4 for s in report['telemetry']))
 
+    def test_window_search_merges_overlap_but_preserves_repeated_frames(self):
+        burst = b'\xaa'*8+frame()*4+b'\xaa'*8
+        symbols = 1-2*np.unpackbits(np.frombuffer(burst, dtype=np.uint8)).astype(float)
+        active = np.repeat(symbols, 25)
+        z = np.zeros(262144, dtype=complex)
+        first = 73111
+        z[first:first+len(active)] = active*np.exp(1j*(.62+2*np.pi*503123*np.arange(len(active))/2500000))
+        raw = np.rint(np.column_stack((z.real, z.imag))*400).astype('<i2').tobytes()
+        report = tm.decode_capture_windows(raw)
+        self.assertEqual(report['valid_telemetry_count'], 4)
+        self.assertEqual(report['unique_snapshot_count'], 1)
+        self.assertTrue(all(s['first_symbol_sample'] >= first for s in report['telemetry']))
+        self.assertTrue(all(s['sequence'] == 7 for s in report['telemetry']))
+        self.assertIsNone(report['ber'])
+        self.assertEqual(report['samples'], 262144)
+        self.assertEqual(tm.decode_capture_windows(bytes(262144*4))['valid_telemetry_count'], 0)
+
+    def test_window_search_validates_full_record(self):
+        with self.assertRaises(ValueError): tm.decode_capture_windows(b'\0'*3)
+        with self.assertRaises(ValueError): tm.decode_capture_windows(bytes(4*47*25))
+        bad = bytearray(262144*4)
+        bad[-2:] = (32767).to_bytes(2, 'little')
+        with self.assertRaises(ValueError): tm.decode_capture_windows(bytes(bad))
+
 
 if __name__ == '__main__':
     unittest.main()

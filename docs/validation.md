@@ -6,9 +6,13 @@
 
 ## 已完成
 
+### 2026-10-28：测控下行SMA实收与文件GUI
+
+J6/DAC1经第三根SMA进入SDR RX1A，在90.5MHz、100ksym/s、固定低幅度下，三次有限发送恢复12个CRC正确帧，对应3份不同ATM1状态快照。五个停发采样窗口均无有效帧。两组UART_NETTEST状态变化与UDP/匹配ACK、独立SPI及RF解码对应；本轮没有ADC_NORMAL指令输入。新增GUI直接读取实际IQ解码或查看历史JSON，不自动连接设备。常规设备身份检查保持严格；本次缺少稳定序号的接收设备仅按当前USB和Linux启动会话绑定。详见[下行实收报告](telemetry-rf-validation.md)与[结构化摘要](validation/2026-10-28-telemetry-rf.json)。
+
 ### 2026-10-28：DAC下行数字实现与板端控制
 
-新下行候选在保留ADC125的基础上增加有限状态发送链。完整实现WNS +0.066ns、WHS +0.048ns，ADC与DAC双边沿覆盖齐全；临时JTAG上板后DAC关键配置读回、默认停发、单次发送、取消/恢复、内部PN9和两组UART_NETTEST/ACK/独立SPI通过。当前没有移动SMA，因此DAC到SDR的实际内容恢复与CRC仍未验收。详见[验证报告](telemetry-downlink-validation.md)及[结构化摘要](validation/2026-10-28-telemetry-downlink.json)。
+新下行候选在保留ADC125的基础上增加有限状态发送链。完整实现WNS +0.066ns、WHS +0.048ns，ADC与DAC双边沿覆盖齐全；临时JTAG上板后DAC关键配置读回、默认停发、单次发送、取消/恢复、内部PN9和两组UART_NETTEST/ACK/独立SPI通过。该阶段尚未移动SMA，实际内容恢复随后另行验收，见上一节。数字阶段详见[验证报告](telemetry-downlink-validation.md)及[结构化摘要](validation/2026-10-28-telemetry-downlink.json)。
 
 ### 2026-10-28：演示提速与测控状态回传
 
@@ -74,7 +78,7 @@ JTAG直读MDIO地址0和1均得到`001C:C915`。RTL8211E原厂datasheet 7.7 Tabl
 | network off后请求900/1000 MHz | 保持900999998 / 1000999998 | NETWORK_NOT_READY，rc=-12，无发送 |
 | network on后恢复900/1000 MHz | 900000000 / 1000000000 | 匹配ACK成功 |
 
-最终applied=4、pending=0、failures=0；`retries=1`表示该事务总发送次数为1。ADDA的network/armed/auto均关闭，LDSDR保持mode=2静音、txatt=89。此次未打开GUI，未接SMA或真实ADC指令输入；该次结果仅验证UART_NETTEST控制路径；2026-10-28真实有线指令控制结果另见下节，业务RF仍待验收。
+最终applied=4、pending=0、failures=0；`retries=1`表示该事务总发送次数为1。ADDA的network/armed/auto均关闭，LDSDR保持mode=2静音、txatt=89。此次未打开GUI，未接SMA或真实ADC指令输入；该次结果仅验证UART_NETTEST控制路径；2026-10-28真实有线指令控制结果另见下节，后续业务RF结果见本文相应记录。
 
 串口GUI已在最终r4c固件上实际完成status、selftest、waveformtest、normal采集、空输入decode及training采集。normal输入未解出有效帧，切回training后PN9检查通过；GUI显示快照就绪、来源ADC_TEST、网络/ARM/自动模式关闭，未发送RF_SET。该阶段10项fake串口测试覆盖输入校验、连接不自动写命令及来源/状态分离；本轮扩展至15项，见下节。
 

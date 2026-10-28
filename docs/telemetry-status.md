@@ -36,4 +36,4 @@ TM1 是 Z7ADDALite PS 的只读管理状态帧，通过现有 DEBUG USB 串口�
 
 主机单元测试覆盖坏 CRC、截断、未知版本、乱序/重复字段、越界、只读命令限制、串口重连与关闭异常。C 测试覆盖记录来源、重试、错误/过期 ACK、边界格式化及独立 CRC 向量。初始化且 `uptime_ms=123`、其余字段为零的完整前缀 CRC 为 `F8E2`。
 
-本轮实板证据见[提速与状态回传验收](station-speed-telemetry-validation.md)。现有两根 SMA 都在业务链，遥控板没有 SMA 输入或输出；本轮 UART_NETTEST 与 USB TM1 结果不能替代 ADC_NORMAL 遥控输入或 DAC 射频回传验收。
+USB状态阶段的实板证据见[提速与状态回传验收](station-speed-telemetry-validation.md)。该阶段的两根SMA都在业务链，遥控板没有SMA输入或输出；UART_NETTEST与USB TM1结果不能替代ADC_NORMAL遥控输入或DAC射频回传验收。后续新增第三根SMA的DAC实际接收结果单独记录于[测控下行实收](telemetry-rf-validation.md)，不改变本协议的USB管理路径含义。

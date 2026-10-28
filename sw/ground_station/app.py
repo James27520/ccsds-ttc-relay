@@ -95,7 +95,8 @@ class StationApp:
     def __init__(self, root: tk.Tk, role: str,
                  controller_factory: Callable[..., Any] | None = None,
                  log_dir: str | None = None,
-                 telemetry_controller_factory: Callable[..., Any] | None = None):
+                 telemetry_controller_factory: Callable[..., Any] | None = None,
+                 rf_telemetry_decoder: Callable[..., Any] | None = None):
         if role not in {"sender", "receiver"}:
             raise ValueError("role must be sender or receiver")
         self.root, self.role = root, role
@@ -108,6 +109,8 @@ class StationApp:
         self._station_closed = False
         self.telemetry_window = None
         self.telemetry_controller_factory = telemetry_controller_factory
+        self.rf_telemetry_window = None
+        self.rf_telemetry_decoder = rf_telemetry_decoder
         self.devices: dict[str, str] = {}
         self.readbacks: dict[str, tk.StringVar] = {}
         self.requested: dict[str, tk.StringVar] = {}
@@ -188,6 +191,8 @@ class StationApp:
         if self.role == "sender":
             self.telemetry_button = ttk.Button(header, text="测控状态", command=self.open_telemetry)
             self.telemetry_button.pack(side="right", padx=14)
+        self.rf_telemetry_button = ttk.Button(header, text="RF测控下行", command=self.open_rf_telemetry)
+        self.rf_telemetry_button.pack(side="right", padx=5)
 
         connection = self._card(main, "设备连接")
         connection.edge.pack(fill="x", pady=(0, 14))
@@ -687,6 +692,8 @@ class StationApp:
         self._update_controls()
         if self.telemetry_window is not None and not self.telemetry_window.closed:
             self.telemetry_window.close()
+        if self.rf_telemetry_window is not None and not self.rf_telemetry_window.closed:
+            self.rf_telemetry_window.close()
         self._submit("close")
         self._close_warning_id = self.root.after(12000, self._close_wait_notice)
 
@@ -715,6 +722,19 @@ class StationApp:
     def _telemetry_closed(self) -> None:
         self.telemetry_window = None
         self._finish_close_if_ready()
+
+    def open_rf_telemetry(self) -> None:
+        if self.closing:
+            return
+        if self.rf_telemetry_window is not None and not self.rf_telemetry_window.closed:
+            self.rf_telemetry_window.show()
+            return
+        from .rf_telemetry_window import RFTelemetryWindow
+        self.rf_telemetry_window = RFTelemetryWindow(
+            self.root, on_closed=self._rf_telemetry_closed, decode_iq=self.rf_telemetry_decoder)
+
+    def _rf_telemetry_closed(self) -> None:
+        self.rf_telemetry_window = None
 
     def _finish_close_if_ready(self) -> None:
         if not self._station_closed:
