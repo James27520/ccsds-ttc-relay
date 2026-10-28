@@ -8,6 +8,8 @@
 
 最新真实ADC与业务分时验证见 [分时验证摘要](validation/2026-10-28-adc-business-staged.json)；独立接收板验证见 [独立接收摘要](validation/2026-10-28-independent-receiver.json)；业务序列与稳定性见 [稳定性验证摘要](validation/2026-10-28-rf-stability.json)；GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
+后续换线已完成[新版GUI真实遥控联动](validation/2026-10-29-frequency-tc.json)：901.5→1000.5 MHz方案经ADC_NORMAL、UDP/ACK及DAC射频回报恢复7个正确帧，事后独立SPI一致；发送窗口更新计划并在显式交接本地设备后静音应用。267项软件测试通过，跨会话序号到期复用问题已修正。本次未接回业务输入，未重新发送业务文本，也未启用转发模式；详见[本轮记录](business-v2-validation.md#真实遥控回报与发送计划联动)。
+
 ## 已完成
 
 ### 2026-10-28：测控下行SMA实收与文件GUI

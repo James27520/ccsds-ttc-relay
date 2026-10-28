@@ -3,6 +3,8 @@
 next_available() is a hint, never a reservation. reserve() must succeed before
 RF starts. A process crash keeps its lease for 600 seconds. Invalid state is an
 error rather than an empty registry. Times are persisted as Unix wall-clock time.
+The persistent cursor rotates hints beyond the last reserved value even after
+leases expire. Version 1 registries migrate on the next successful reservation.
 """
 from contextlib import contextmanager
 import errno
@@ -104,15 +106,16 @@ class SequencePool:
         try:
             raw = self.path.read_text(encoding='utf-8')
         except FileNotFoundError:
-            return {}
+            return {}, 0
         except UnicodeError as error:
             raise SequenceStateError('测控序号注册表编码损坏，不能自动重置或发送') from error
         try:
             data = json.loads(raw, object_pairs_hook=self._unique_object)
         except (ValueError, UnicodeError) as error:
             raise SequenceStateError('测控序号注册表损坏，不能自动重置或发送') from error
-        if (type(data) is not dict or set(data) != {'version', 'leases'} or
-                type(data['version']) is not int or data['version'] != 1 or type(data['leases']) is not dict):
+        if (type(data) is not dict or type(data.get('version')) is not int or
+                data['version'] not in (1, 2) or type(data.get('leases')) is not dict or
+                set(data) != ({'version', 'leases'} if data['version'] == 1 else {'version', 'cursor', 'leases'})):
             raise SequenceStateError('测控序号注册表格式无效，不能自动重置或发送')
         leases = data['leases']
         for key, lease in leases.items():
@@ -121,15 +124,25 @@ class SequencePool:
                     not self._number(lease['reserved_at']) or not self._number(lease['expires_at']) or
                     lease['expires_at']-lease['reserved_at'] < LEASE_SECONDS):
                 raise SequenceStateError('测控序号注册表租约无效，不能自动重置或发送')
-        return leases
+        if data['version'] == 1:
+            # Include expired leases: their timestamps are the only v1 history.
+            # Equal timestamps have no persisted order; break ties numerically.
+            latest = max(leases, key=lambda key: (leases[key]['reserved_at'], int(key))) if leases else None
+            cursor = (int(latest)+1) % 256 if latest is not None else 0
+        else:
+            cursor = data['cursor']
+            if type(cursor) is not int or not 0 <= cursor <= 255:
+                raise SequenceStateError('测控序号注册表游标无效，不能自动重置或发送')
+        return leases, cursor
 
-    def _write(self, leases):
+    def _write(self, leases, cursor):
         temporary = None
         try:
             with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=self.path.parent,
                                              prefix='.'+self.path.name+'.', suffix='.tmp', delete=False) as handle:
                 temporary = Path(handle.name)
-                json.dump(dict(version=1, leases=leases), handle, ensure_ascii=False, sort_keys=True, allow_nan=False)
+                json.dump(dict(version=2, cursor=cursor, leases=leases), handle,
+                          ensure_ascii=False, sort_keys=True, allow_nan=False)
                 handle.write('\n')
                 handle.flush()
                 os.fsync(handle.fileno())
@@ -139,10 +152,12 @@ class SequencePool:
                 temporary.unlink()
 
     def next_available(self):
-        """Return the earliest unleased 0..255, or raise ValueError if exhausted."""
+        """Hint from the persisted rotation cursor; raise ValueError if all leased."""
         with self._locked():
-            now, leases = self._now(), self._read()
-            for sequence in range(256):
+            now = self._now()
+            leases, cursor = self._read()
+            for offset in range(256):
+                sequence = (cursor+offset) % 256
                 lease = leases.get(str(sequence))
                 if lease is None or lease['expires_at'] <= now:
                     return sequence
@@ -155,8 +170,9 @@ class SequencePool:
             raise ValueError('测控序号必须为 0–255 整数')
         with self._locked():
             now = self._now()
-            leases = {key: lease for key, lease in self._read().items() if lease['expires_at'] > now}
+            previous, _cursor = self._read()
+            leases = {key: lease for key, lease in previous.items() if lease['expires_at'] > now}
             if str(sequence) in leases:
                 raise ValueError(f'测控序号 {sequence} 已被预留，请重新连接后生成新指令')
             leases[str(sequence)] = dict(reserved_at=now, expires_at=now+LEASE_SECONDS)
-            self._write(leases)
+            self._write(leases, (sequence+1) % 256)

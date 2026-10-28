@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "884d0f0a056a0ee511d6d6cdf8e53bc8826349dc",
+  "passed": true,
+  "scope": "Real RF telecontrol reply to V2 sender frequency plan, followed by explicit local device handoff",
+  "firmware_changed": false,
+  "flash_sd_written": false,
+  "business_rf_tested_this_round": false,
+  "second_computer_tested": false,
+  "six_link_concurrent_tested": false,
+  "requested_business_center_mhz": {
+    "input": 901.5,
+    "output": 1000.5
+  },
+  "uplink_hz": 100500000,
+  "downlink_hz": 90500000,
+  "frequency_write_source": "ADC_NORMAL command, PS UDP, LDSDR RF_SET; no bench frequency write",
+  "independent_redecode": {
+    "passed": true,
+    "frame_count": 7,
+    "unique_snapshots": 1,
+    "samples": 262144,
+    "sha256": "f3a3d78a4eee983aeac10b55cd8f41c4aa53b7f027d062087b395580299ed58e",
+    "clip_components": 0,
+    "requested": {
+      "rx_mhz": 901,
+      "tx_mhz": 1000,
+      "air_seq": 1
+    },
+    "ack": {
+      "rx_hz": 900999998,
+      "tx_hz": 1000000000,
+      "udp_seq": 4
+    },
+    "independent_spi": {
+      "relay_rx_hz_readback": 900999998,
+      "relay_tx_hz_readback": 1000000000,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "elapsed_seconds": 74.40616640000371,
+    "adc_origin": "ADC_NORMAL",
+    "events": 12,
+    "applied": 4
+  },
+  "gui": {
+    "real_button_operation": true,
+    "matched_reply_title": "改频成功",
+    "sender_pending_mhz": 901.5,
+    "sender_plan_origin": "真实 RF 回报",
+    "automatic_business_transmission": false,
+    "explicit_handoff_and_local_config": {
+      "tx_lo_mhz_requested": 901.0,
+      "tx_lo_hz_readback": 900999998,
+      "tx_atten_db_requested": 50,
+      "tx_atten_db_readback": 89.0,
+      "sample_rate_hz": 2500000,
+      "expected_rf_hz": 901500000,
+      "configured": true
+    },
+    "receiver_connected": false,
+    "receiver_plan_mhz": 1000.5,
+    "receiver_text_received": false,
+    "windows_left_open_disconnected": true
+  },
+  "sequence_fix": {
+    "schema_version": 2,
+    "lease_seconds": 600,
+    "expired_v1_migrated_on_reserve": true,
+    "actual_reserved": 1,
+    "permanent_remote_replay_protection": false
+  },
+  "tests": {
+    "sequence": 16,
+    "sequence_and_controller_subset": 27,
+    "ground_station": 267,
+    "failures": 0
+  },
+  "final_state": {
+    "endpoints": [
+      {
+        "role": "sender",
+        "port": "COM19",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "900999998",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "receiver",
+        "port": "COM17",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "2400000000",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ],
+    "relay": {
+      "relay_rx_hz_readback": 900999998,
+      "relay_tx_hz_readback": 1000000000,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "relay_mode": "2",
+    "adda_service": [
+      "SERVICE active=0 state=0 reason=1 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=1 udp_seq=4 reply_seq=3 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+      "CLI_RESULT rc=0"
+    ],
+    "adda_dac": {
+      "enabled": 1,
+      "seq": 4,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    },
+    "adda_network": 0
+  },
+  "remaining": [
+    "Business RF text at retained 901/1000 MHz after cable return",
+    "Explicit remote relay enable, mode/level feedback and bounded lifetime",
+    "Previously observed business source-start clipping transient"
+  ],
+  "evidence": {
+    "local_work": "D:\\RelayTools\\work\\frequency_tc_20261029",
+    "archive": "D:\\RelayTools\\releases\\frequency_tc_20261029.zip",
+    "bytes": 525914,
+    "sha256": "017479707f8d0c4fec612fa92fd0ae422f4be14d892c808a806dca0c083cee10",
+    "manifest_sha256": "549a53b678b1ad9a8f98c70c9fa1d6ab2dcf26e830489a238d3c0c045d60a751"
+  }
+}
