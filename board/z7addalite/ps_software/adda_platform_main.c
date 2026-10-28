@@ -4,6 +4,7 @@
  * capture registers until rebuilt with ADDA_CAPTURE_ENABLED=1 for matched PL. */
 #include "adda_controller.h"
 #include "adda_pattern_check.h"
+#include "adda_telemetry_tx.h"
 #include "xparameters.h"
 #include "xuartps.h"
 #include "xuartps_hw.h"
@@ -30,6 +31,7 @@
 static struct aps_state core;
 static struct ac_capture capture;
 static struct act_controller controller;
+static struct atm_tx telemetry_tx;
 static int16_t adc_samples[TC_SAMPLE_COUNT] __attribute__((aligned(64)));
 static XUartPs uart;
 static XScuGic gic;
@@ -118,6 +120,7 @@ static int network_on(void)
 }
 static void network_off(void)
 {
+    (void)atm_tx_stop(&telemetry_tx);
     network_enabled=0u;controller.automatic=0u;core.armed=0u;aps_set_network_ready(&core,0u);
     if(network_initialized)netif_set_down(&network);
     uart_log(0,"NETWORK_OFF auto=OFF armed=OFF\r\n");
@@ -135,11 +138,30 @@ static void network_poll(void)
 }
 static void line_command(char *line)
 {
-    int rc;char text[80];
+    int rc;char text[160];
     if(!strcmp(line,"network on"))rc=network_on();
     else if(!strcmp(line,"network off")){network_off();rc=0;}
+    else if(!strcmp(line,"tmstatus")) {
+        uint32_t status=0u,diag=0u;
+        rc=atm_tx_status(&telemetry_tx,&status,&diag);
+        (void)snprintf(text,sizeof(text),"TM_TX enabled=%u seq=%lu pending=%u stopping=%u status=%08lx diag=%08lx\r\n",
+          (unsigned)ADDA_TM_TX_ENABLED,(unsigned long)telemetry_tx.sequence,telemetry_tx.pending,
+          telemetry_tx.stopping,(unsigned long)status,(unsigned long)diag);uart_log(0,text);
+        if(rc==0) {
+            uint32_t cfg=0,cfg_diag=0;
+            rc=atm_tx_configuration(&telemetry_tx,&cfg,&cfg_diag);
+            (void)snprintf(text,sizeof(text),"TM_DAC verified=%u finished=%u diagnostic=%08lx rc=%d\r\n",
+              (unsigned)(cfg&1u),(unsigned)((cfg>>1)&1u),(unsigned long)cfg_diag,rc);uart_log(0,text);
+        }
+    }
+    else if(!strcmp(line,"tmsend")) {
+        rc=atm_tx_send(&telemetry_tx,&core,clock_ms(0));
+        if(rc<0)uart_log(0,"TM_TX rejected; inspect tmstatus; stopped/sticky fault requires explicit tmclear before tmsend\r\n");
+    }
+    else if(!strcmp(line,"tmstop"))rc=atm_tx_stop(&telemetry_tx);
+    else if(!strcmp(line,"tmclear"))rc=atm_tx_clear(&telemetry_tx);
     else {
-        if(!strcmp(line,"help"))uart_log(0,"network on/off (explicit, startup OFF)\r\n");
+        if(!strcmp(line,"help"))uart_log(0,"network on/off (explicit, startup OFF) | tmstatus (read only) | tmsend (one finite burst) | tmstop | tmclear (explicit stopped/fault recovery, idle only)\r\n");
         rc=act_command_line(&controller,line);
     }
     (void)snprintf(text,sizeof(text),"CLI_RESULT rc=%d\r\n",rc);uart_log(0,text);
@@ -147,6 +169,7 @@ static void line_command(char *line)
 int main(void)
 {
     struct aps_io io={0,uart_log,send_udp};struct ac_io mmio={0,read32,write32,memory_barrier};
+    struct atm_io tm_io={0,read32,write32,memory_barrier};
     struct ac_policy policy={TC_FRAMEWORK_BUILD_ID,TC_TRAIN_ALGO_PN9,6u,4u};
     struct act_clock clock={0,clock_ms};char line[128];unsigned used=0u,discard=0u;uint8_t ch;
     uint32_t published_epoch=0u;char info[240];
@@ -157,14 +180,19 @@ int main(void)
         Xil_SetTlbAttributes(TC_CTRL_BASE,DEVICE_MEMORY);
         Xil_SetTlbAttributes(TC_BRAM_BASE,DEVICE_MEMORY);memory_barrier(0);
     }
+    if(ADDA_TM_TX_ENABLED) {Xil_SetTlbAttributes(ATM_TX_BASE,DEVICE_MEMORY);memory_barrier(0);}
     aps_init(&core,&io);ac_init(&capture,&mmio,&policy,adc_samples,TC_SAMPLE_COUNT);
     act_init(&controller,&core,ADDA_CAPTURE_ENABLED?&capture:0,&clock);
+    (void)atm_tx_init(&telemetry_tx,&tm_io);
+    uart_log(0,ADDA_TM_TX_ENABLED?"TM_TX opt-in build; matching telemetry PL required; startup STOP, explicit tmsend only\r\n":
+      "TM_TX disabled; DAC registers never accessed by this image\r\n");
     uart_log(0,ADDA_CAPTURE_ENABLED?
       "BOOT ADDA M2 candidate UART115200/8N1 capture=ENABLED no auto/network; matching final PL required\r\n":
       "BOOT ADDA PS candidate UART115200/8N1 capture=DISABLED; selftest/waveformtest local SYNTHETIC\r\n");
     for(;;) {
         /* ACK processing precedes retries, captures and synchronous decoding. */
         network_poll();
+        (void)atm_tx_poll(&telemetry_tx,core.network_ready,clock_ms(0));
         while(XUartPs_IsReceiveData(XPAR_XUARTPS_0_BASEADDR)) {
             ch=XUartPs_ReadReg(XPAR_XUARTPS_0_BASEADDR,XUARTPS_FIFO_OFFSET)&255u;
             if(ch=='\r' || ch=='\n') {

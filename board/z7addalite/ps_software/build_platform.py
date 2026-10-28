@@ -11,6 +11,7 @@ parser.add_argument('--arm-bin',type=Path)
 parser.add_argument('--xsa',type=Path,default=ROOT/'../telecontrol_system/reports/telecontrol_platform.xsa')
 parser.add_argument('--ps-init',type=Path,default=ROOT/'../telecontrol_system/reports/platform_init/ps7_init.tcl')
 parser.add_argument('--hardware-note',default='Pre-final PS/AXI platform; no final routed capture acceptance')
+parser.add_argument('--tm-tx-enabled',action='store_true',help='Explicit opt-in ONLY for new matching telemetry PL; never use with frozen r4c')
 args=parser.parse_args();BIN=tool_directory(args.arm_bin,'ADDA_ARM_GCC_BIN','arm-none-eabi-gcc.exe');OUT=args.out.resolve();BSP=args.bsp.resolve()
 try:bsp_verification=verify_bsp(BSP)
 except (ValueError,KeyError,OSError) as exc:raise SystemExit('BSP pre-link verification failed: '+str(exc))
@@ -23,9 +24,9 @@ linker=linker.replace('_IRQ_STACK_SIZE : 1024','_IRQ_STACK_SIZE : 16384')
 (OUT/'adda.ld').write_text(linker)
 incs=[BSP/'include',ROOT,ROOT/'../telecontrol_system/abi',ROOT/'../software/protocol',ROOT/'../software/demod',ROOT/'../software/fixtures/generated']
 flags=['-std=c99','-mcpu=cortex-a9','-mfpu=vfpv3','-mfloat-abi=hard','-O2','-g','-ffunction-sections','-fdata-sections','-Wall','-Wextra']+['-I'+str(p) for p in incs]
-sources=[ROOT/n for n in ['adda_platform_main.c','adda_ps_core.c','adda_capture.c','adda_controller.c','adda_pattern_check.c',
+sources=[ROOT/n for n in ['adda_platform_main.c','adda_ps_core.c','adda_capture.c','adda_controller.c','adda_pattern_check.c','adda_telemetry_tx.c',
  '../software/protocol/adda_protocol.c','../software/demod/adda_demod.c','../software/demod/adda_receiver.c','../software/fixtures/generated/waveform_fixture.c']]
-manifest={'hardware':args.hardware_note,'files':{},'inputs':{},'sources':{},'bsp_verification':bsp_verification}
+manifest={'hardware':args.hardware_note,'tm_tx_enabled':args.tm_tx_enabled,'files':{},'inputs':{},'sources':{},'bsp_verification':bsp_verification}
 for label,path in [('xsa',args.xsa),('ps7_init',args.ps_init),('bsp_manifest',BSP/'manifest.json'),('libxil',BSP/'libxil.a'),('liblwip4',BSP/'liblwip4.a'),('xparameters',BSP/'include/xparameters.h')]:
     manifest['inputs'][label]={'path':str(path.resolve()),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
 shutil.copy2(args.ps_init,OUT/'ps7_init.tcl')
@@ -41,10 +42,11 @@ manifest['files']['ps7_init.tcl']=hashlib.sha256((OUT/'ps7_init.tcl').read_bytes
 with (OUT/'build.log').open('w') as log:
     for enabled in [0,1]:
         variant='adda_ps_selftest' if not enabled else 'adda_m2_candidate'
+        if args.tm_tx_enabled:variant+='_tm'
         objects=[]
         for src in sources:
             obj=OUT/(variant+'_'+src.stem+'.o');objects.append(obj)
-            cmd=[str(BIN/'arm-none-eabi-gcc.exe'),*flags,f'-DADDA_CAPTURE_ENABLED={enabled}','-c',str(src),'-o',str(obj)]
+            cmd=[str(BIN/'arm-none-eabi-gcc.exe'),*flags,f'-DADDA_CAPTURE_ENABLED={enabled}',f'-DADDA_TM_TX_ENABLED={int(args.tm_tx_enabled)}','-c',str(src),'-o',str(obj)]
             log.write(' '.join(cmd)+'\n');log.flush()
             if subprocess.run(cmd,stdout=log,stderr=log).returncode:raise SystemExit('compile failed: '+str(src))
         elf=OUT/(variant+'.elf');mapfile=OUT/(variant+'.map')

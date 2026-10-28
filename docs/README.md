@@ -9,6 +9,7 @@
 | [桌面站验证](ground-station-validation.md) | 动态文本、真实硬件链路、异常与重连测试 |
 | [提速与状态回传](station-speed-telemetry-validation.md) | 2.9秒快照、TM1/UDP/SPI实板回归、BSP构建检查与剩余DAC下行 |
 | [TM1状态协议](telemetry-status.md) | 只读USB状态帧、CRC、来源与历史保持规则 |
+| [DAC下行数字实现与板端验证](telemetry-downlink-validation.md) | 新PL时序、DAC配置读回、有限发送与取消；SMA实际解码待验 |
 | [六线系统计划](six-link-system-plan.md) | 双向业务及双向测控的功能分配、共用本振限制与待办 |
 | [遥控链路 V2](telecontrol-v2.md) | 100.5 MHz 指令链、8 字节 body、金标准及 UDP 接口 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |

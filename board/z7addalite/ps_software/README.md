@@ -1,5 +1,7 @@
 # Z7ADDALite PS 接收与转发
 
+最新增加[DAC有限下行](../telemetry_downlink/README.md)配套驱动及ATM1二进制状态包。默认构建禁用新MMIO，仍兼容r4c；仅配套新PL时显式使用`build_platform.py --tm-tx-enabled`，输出名含`_tm`。命令为`tmstatus/tmsend/tmstop/tmclear`，启动停发，支持复位延后STOP与取消尾握手检查。本轮新PL/ELF已临时上板，结果及尚未完成的SMA接收见[DAC下行验证](../../../docs/telemetry-downlink-validation.md)。`build_telemetry_tests.ps1`覆盖启用/禁用驱动及ARM编译；`python -m unittest sw.tools.test_telemetry_downlink`从仓库根运行。
+
 2026-10-28更新：增加只读 `telemetry` 命令及[TM1状态帧](../../../docs/telemetry-status.md)，分别保留解码、发送、匹配ACK来源。新PS实板selftest、合成解调、内部PN9、三次UDP/ACK/SPI及网络关闭负例通过，见[本轮验收](../../../docs/station-speed-telemetry-validation.md)。该回传经DEBUG USB，未实现DAC射频下行；r4c PL不变。以下原有网络发布记录为历史证据，新的ELF与来源以本轮摘要为准。
 
 当前 `build_platform.py` 在链接前要求 `ADDA_BSP_BUILD_V2` 清单。旧库即使曾通过实板也要用当前 `build_bsp.py` 从已打补丁的BSP重新编译；不要只复制或补写清单。构建冻结实际源码和本地/共享头文件，并绑定对象、archive成员、库hash及当前PHY策略，防止错用旧地址扫描驱动。离线负例可运行 `python -B board/z7addalite/ps_software/test_build_bsp_guard.py -v`。本轮10项检查、101个xil及34个lwip对象重建通过。平台与最终XSA的一致性仍须另行运行下述绑定检查。

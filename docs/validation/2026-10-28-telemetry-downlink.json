@@ -1,0 +1,282 @@
+{
+  "date": "2026-10-28",
+  "scope": "Z7ADDALite finite DAC telemetry implementation, digital signoff and volatile JTAG board control verification",
+  "rf_sma_tested": false,
+  "wiring_changed": false,
+  "flash_or_sd_written": false,
+  "protocol": "experimental ATM1 binary over existing AAAA/LEN/CRC16 BPSK; not complete CCSDS",
+  "nominal": {
+    "rf_hz": 90500000,
+    "symbol_rate": 100000,
+    "dac_input_sps": 250000000,
+    "burst_bytes": 420,
+    "burst_ms": 33.6,
+    "peak_code": 128
+  },
+  "timing": {
+    "wns_ns": 0.066,
+    "whs_ns": 0.048,
+    "wpws_ns": 0.264,
+    "tns_ns": 0,
+    "ths_ns": 0,
+    "tpws_ns": 0,
+    "drc_errors": 0,
+    "adc_paths": 56,
+    "dac_paths": 64,
+    "assumed_pcb_skew_ns": 0.1,
+    "cdc_critical_not_zero": true
+  },
+  "tests": {
+    "packet_sim_checks": 850685,
+    "packet_sim_sample_cycles": 170000,
+    "dac_io_checks": 119,
+    "capture_sim_checks": 786634,
+    "python_tests": 4,
+    "C_enabled_disabled_mocks": "passed",
+    "ARM_compile": "passed",
+    "golden_C_Python_96_bytes": "passed"
+  },
+  "hardware": {
+    "passed": true,
+    "rf_sma_tested": false,
+    "cases": [
+      {
+        "name": "selftest_and_synthetic_decode",
+        "passed": true
+      },
+      {
+        "name": "ADC_internal_PN9_with_DAC_clocks",
+        "passed": true,
+        "reply": "CAPTURE_REQUEST mode=training channel=0 k=0 rc=0\r\nCLI_RESULT rc=0\r\nCAPTURE state=1 valid=0 error=OK epoch=1 copied_words=0\r\nCAPTURE state=3 valid=0 error=OK epoch=1 copied_words=0\r\nCAPTURE state=4 valid=0 error=OK epoch=1 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=1 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=1 copied_words=65536\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=1 config_epoch=2 source=ADC_TEST channel=0 k=0 first=5002 last=3442\r\nPATTERN_PASS source=ADC_TEST count=131072 transitions=131071 errors=0 zero_states=0 invalid=0 toggle=0x3fff first=0x138a last=0x0d72\r\n"
+      },
+      {
+        "name": "finite_burst_network_off",
+        "passed": true,
+        "state": {
+          "sequence": 1,
+          "pending": 0,
+          "stopping": 0,
+          "status": 40,
+          "diag": 0
+        }
+      },
+      {
+        "name": "finite_burst_network_off",
+        "passed": true,
+        "state": {
+          "sequence": 2,
+          "pending": 0,
+          "stopping": 0,
+          "status": 40,
+          "diag": 0
+        }
+      },
+      {
+        "name": "cancel_sticky_reject_and_explicit_clear",
+        "passed": true,
+        "state": {
+          "sequence": 3,
+          "pending": 0,
+          "stopping": 0,
+          "status": 44,
+          "diag": 64
+        }
+      },
+      {
+        "name": "late_CPU_poll_does_not_mislabel_finished_burst",
+        "passed": true,
+        "state": {
+          "sequence": 4,
+          "pending": 0,
+          "stopping": 0,
+          "status": 40,
+          "diag": 0
+        }
+      },
+      {
+        "name": "network_ACK_independent_SPI_and_burst",
+        "passed": true,
+        "tm": {
+          "uptime_ms": 211189,
+          "events": 2,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 0,
+          "applied": 1,
+          "failures": 0,
+          "d_valid": 0,
+          "d_event": 0,
+          "d_origin": 0,
+          "d_air_seq": 0,
+          "d_rx_mhz": 0,
+          "d_tx_mhz": 0,
+          "s_valid": 1,
+          "s_event": 1,
+          "s_origin": 4,
+          "s_air_seq": 201,
+          "s_rx_mhz": 900,
+          "s_tx_mhz": 1001,
+          "s_udp_seq": 1,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 2,
+          "a_origin": 4,
+          "a_air_seq": 201,
+          "a_rx_mhz": 900,
+          "a_tx_mhz": 1001,
+          "a_udp_seq": 1,
+          "a_rc": 0,
+          "a_rx_hz": 900000000,
+          "a_tx_hz": 1000999998,
+          "spi_valid": 0
+        },
+        "spi": "RFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000999998\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\n",
+        "tx": {
+          "sequence": 5,
+          "pending": 0,
+          "stopping": 0,
+          "status": 40,
+          "diag": 0
+        }
+      },
+      {
+        "name": "network_ACK_independent_SPI_and_burst",
+        "passed": true,
+        "tm": {
+          "uptime_ms": 215550,
+          "events": 4,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 0,
+          "applied": 2,
+          "failures": 0,
+          "d_valid": 0,
+          "d_event": 0,
+          "d_origin": 0,
+          "d_air_seq": 0,
+          "d_rx_mhz": 0,
+          "d_tx_mhz": 0,
+          "s_valid": 1,
+          "s_event": 3,
+          "s_origin": 4,
+          "s_air_seq": 202,
+          "s_rx_mhz": 900,
+          "s_tx_mhz": 1000,
+          "s_udp_seq": 2,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 4,
+          "a_origin": 4,
+          "a_air_seq": 202,
+          "a_rx_mhz": 900,
+          "a_tx_mhz": 1000,
+          "a_udp_seq": 2,
+          "a_rc": 0,
+          "a_rx_hz": 900000000,
+          "a_tx_hz": 1000000000,
+          "spi_valid": 0
+        },
+        "spi": "RFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\n",
+        "tx": {
+          "sequence": 6,
+          "pending": 0,
+          "stopping": 0,
+          "status": 40,
+          "diag": 0
+        }
+      },
+      {
+        "name": "explicit_status_burst_after_network_off",
+        "passed": true
+      }
+    ],
+    "cleanup_errors": [],
+    "initial": {
+      "sequence": 0,
+      "pending": 0,
+      "stopping": 0,
+      "status": 2,
+      "diag": 0
+    },
+    "final_tx": {
+      "sequence": 7,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0
+    },
+    "final_tm": {
+      "uptime_ms": 222795,
+      "events": 4,
+      "network": 0,
+      "armed": 0,
+      "pending": 0,
+      "decoded": 0,
+      "applied": 2,
+      "failures": 0,
+      "d_valid": 0,
+      "d_event": 0,
+      "d_origin": 0,
+      "d_air_seq": 0,
+      "d_rx_mhz": 0,
+      "d_tx_mhz": 0,
+      "s_valid": 1,
+      "s_event": 3,
+      "s_origin": 4,
+      "s_air_seq": 202,
+      "s_rx_mhz": 900,
+      "s_tx_mhz": 1000,
+      "s_udp_seq": 2,
+      "s_count": 1,
+      "s_rc": 0,
+      "a_valid": 1,
+      "a_event": 4,
+      "a_origin": 4,
+      "a_air_seq": 202,
+      "a_rx_mhz": 900,
+      "a_tx_mhz": 1000,
+      "a_udp_seq": 2,
+      "a_rc": 0,
+      "a_rx_hz": 900000000,
+      "a_tx_hz": 1000000000,
+      "spi_valid": 0
+    },
+    "final_relay": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n"
+  },
+  "artifacts": {
+    "adda_m2_candidate_tm.elf": {
+      "sha256": "19aa52fc22f173473fdcd7d6937d59855cb14713a74d7d7c8ab7e2fc96aa5c9b",
+      "bytes": 1053900
+    },
+    "telecontrol_system.bit": {
+      "sha256": "1cfd233356baf7cd06715cf9ca638ac96d487b78d849e3ce660ca24386095fba",
+      "bytes": 4045770
+    },
+    "telecontrol_system_final.xsa": {
+      "sha256": "2b9783602b6211dc8f23dce1513c2157fa9cc0d871753818101018ad98306a07",
+      "bytes": 528881
+    },
+    "ps7_init.tcl": {
+      "sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205",
+      "bytes": 31130
+    }
+  },
+  "receiver_preflight": {
+    "usb_serial": "6",
+    "port": "COM19",
+    "hw_model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+    "iio_serial": "",
+    "configuration_refused": true,
+    "previous_identity": "COM18 / Pluto Rev.C / 104473023196000bf5ff1a00aae12c3ca8",
+    "remaining": "re-identify before RF receive test"
+  },
+  "evidence_package": {
+    "path": "D:\\RelayTools\\releases\\telemetry_downlink_20261028.zip",
+    "sha256": "6e8f5223f07ab7ce67e4d1599aa56f13a3533bb223fe2073b92d43caf582871d",
+    "bytes": 2348040
+  }
+}

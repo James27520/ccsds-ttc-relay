@@ -11,7 +11,8 @@
 - [独立接收板业务验证](docs/independent-receiver-validation.md)通过8个窗口（5正、3负），恢复8个完整CRC有效帧、1599个条件比较bit无差异；UDP改频后的实测位移999997.235 Hz，全部采样来自新增COM18接收板。
 - [真实ADC与业务分时验证](docs/adc-business-staged-validation.md)完成修正版LDSDR的四组真实遥控设置；保留900/1001 MHz设置换线，未再次改频，独立接收端恢复6个完整CRC有效帧、960个条件比较bit无差异，3个负例无有效帧。
 - [双端桌面站](sw/ground_station/README.md)提供浅色发送、接收窗口，可现场输入短中文或英文，经外部三板链路恢复文本、消息编号和 CRC。控制器回归完成15个快照、26个有效帧，另完成两个独立桌面进程的实际收发；接收控制器断开重连与发送进程失联保护通过实板检查，见[详细验收](docs/ground-station-validation.md)。
-- [演示提速与测控状态回传](docs/station-speed-telemetry-validation.md)：DEBUG临时高速传输将快照周期降至2.87–2.91秒，另完成29快照/26有效帧回归。发送GUI新增带CRC的TM1监控，独立展示UDP/ACK与SPI读回；管理状态经USB返回，DAC/SMA射频下行仍待实现。
+- [演示提速与测控状态回传](docs/station-speed-telemetry-validation.md)：DEBUG临时高速传输将快照周期降至2.87–2.91秒，另完成29快照/26有效帧回归。发送GUI新增带CRC的TM1监控，独立展示UDP/ACK与SPI读回；该管理状态经USB返回。
+- [DAC下行数字实现与板端验证](docs/telemetry-downlink-validation.md)：新增90.5MHz有限状态发送链，完整ADC/DAC时序及板端配置读回、单次发送/取消、PN9和网口回归通过；DAC经SMA到SDR的实际接收与CRC仍待验收。
 
 结论限当前实物、第一路有线链和离散快照。文本使用实验帧，条件比特比较不是整体BER测量；不能据此宣称完整CCSDS协议符合性、24小时稳定性或无跨窗口漏帧。业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收；新接收板的TX与100.5 MHz能力尚未验证。
 
@@ -23,7 +24,7 @@ Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已�
 |---|---|---|
 | 电脑 1 / 电脑 A | 操作界面、参数设置、状态与日志 | 串口 GUI 的自检、normal/training 采集、空输入解调及状态显示已实测；[GUI启停及ADC_NORMAL自动控制](docs/validation/2026-10-28-gui-loop.json)已通过；双板UART_NETTEST另经串口命令验证，GUI nettest按钮未实测 |
 | 发送端 | 7010_AD9363_SDR，目前分时提供业务信号或遥控指令信号 | DEBUG已识别XC7Z010与Pluto Linux；厂商资料标注AD9363，TX1A/JP1与TX2A/JP3映射已查明；TX1A→ADDA ADC1/J5的100.5 MHz单音与指令实测通过，绝对输出功率未校准 |
-| **遥控板** | **Z7ADDALite，XC7Z020-2CLG484-I，AD9643 ADC** | 接收 100.5 MHz 中频指令，PS 解调后通过网口控制转发板；DAC 不参与当前接收链 |
+| **遥控板** | **Z7ADDALite，XC7Z020-2CLG484-I，AD9643 ADC / AD9122 DAC** | ADC接收指令，PS解调并经网口控制转发板；新增DAC有限状态发送，SMA实际接收待验 |
 | **转发板** | **LDSDR（7010_rev3.1）** | 厂商资料标注XC7Z010CLG400-1与AD9363-BBCZ；接收频率设置，执行业务信号变频转发；实际射频频段以实测为准 |
 | 独立接收端 | 新增同外观SDR，Pluto Linux，精确芯片型号待核实 | RX1A接收LDSDR业务输出；COM18控制采样和回传，电脑1离线解码已通过；新板发射能力未实测 |
 | 模拟板 / 电脑 2 | 终端侧业务接收与显示，后续扩展反向发送 | 接收程序已可独立启动；当前在电脑1上以两个进程验证，迁移到第二台电脑的现场验证待完成 |

@@ -6,6 +6,10 @@
 
 ## 已完成
 
+### 2026-10-28：DAC下行数字实现与板端控制
+
+新下行候选在保留ADC125的基础上增加有限状态发送链。完整实现WNS +0.066ns、WHS +0.048ns，ADC与DAC双边沿覆盖齐全；临时JTAG上板后DAC关键配置读回、默认停发、单次发送、取消/恢复、内部PN9和两组UART_NETTEST/ACK/独立SPI通过。当前没有移动SMA，因此DAC到SDR的实际内容恢复与CRC仍未验收。详见[验证报告](telemetry-downlink-validation.md)及[结构化摘要](validation/2026-10-28-telemetry-downlink.json)。
+
 ### 2026-10-28：演示提速与测控状态回传
 
 高速DEBUG回传将完整快照周期降至2.872–2.912秒，新文本提交到首次正确解码约15.8秒。29个离散快照恢复26个CRC有效帧，原始IQ独立重解一致；高速上传取消及默认波特率恢复通过。TM1只读状态、三次UART_NETTEST→UDP/匹配ACK→独立SPI、关闭网络拒绝和桌面历史提示通过。新PS固件重新构建并临时上板，原r4c PL保持不变；DAC/SMA射频下行未实现。详见[本轮验收](station-speed-telemetry-validation.md)及[结构化结果](validation/2026-10-28-station-speed-telemetry.json)。

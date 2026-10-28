@@ -1,10 +1,13 @@
 # Z7ADDALite 遥控板源码
 
+当前另有 [DAC 测控下行工程](telemetry_downlink/README.md)：在 r4c 上保留 ADC125 接收并增加有限长度状态发送。新候选已完成时序、临时 JTAG 加载、DAC 配置读回及板端控制验证；DAC 经 SMA 到 SDR 的实际接收/CRC 尚未验收。新候选 WNS/WHS 为 +0.066/+0.048 ns，详见 [下行验证记录](../../docs/telemetry-downlink-validation.md)。下文的 +0.483/+0.022 ns 属于原 r4c，不用于新下行候选。
+
 目标链路：ADC 125 MSPS → PL 采集/每 4 点抽取 → PS C 解调（31.25 MSPS）→ UDP → LDSDR 转发板。这里归档可重建源码。r4c完整M2已通过临时JTAG上板的A/B全通道、k=0..3内部PN9/checker快照检查，板端检查与独立JTAG DDR导出检查一致；早期normal A/B格式与normal→training切换测试未接外部信号；2026-10-28另完成真实100.5 MHz SMA输入及自动控制闭环。
 
 最终时序WNS/WHS/WPWS为+0.483/+0.022/+0.264 ns，TNS/THS/TPWS=0，DRC=0；198个动态mailbox端点均受20 ns物理延迟约束。网络修复正式固件的三组金标准与131072点合成波形（277 ms、no_UDP=1）通过；正式固件的一份A通道k=0内部PN9快照回归通过，板端与独立DDR检查错误均为0。`network on`成功，自动协商1000 Mbps，PC→遥控板连续ping 10/10通过（<1～2 ms）；UART_NETTEST双板UDP的四个成功事务、匹配ACK、独立SPI频率读回及network off拒绝通过；真实100.5 MHz SMA指令经ADC_NORMAL自动解调、UDP、匹配ACK及LDSDR独立SPI读回的四例控制与恢复已通过；GUI启停及ADC_NORMAL自动控制另已通过，GUI nettest按钮未实测；业务RF、误码率、长期连续运行与启动仍待验收。详细证据见 [最新验证记录](../../docs/validation.md)、[GUI实板控制摘要](../../docs/validation/2026-10-28-gui-loop.json)、[真实输入闭环摘要](../../docs/validation/2026-10-28-analog-loop.json)、[双板UDP验证摘要](../../docs/validation/2026-10-27-dual-udp.json)、[网络验证摘要](../../docs/validation/2026-10-27-network.json) 与 [r4c历史摘要](../../docs/validation/2026-10-27-m2.json)。
 
 - `telecontrol_system/`：冻结 r4c 的 RTL、XDC、ABI、BD、脚本及仿真源码，构建用法见其 README。
+- `telemetry_downlink/`：基于 r4c 派生的 DAC 下行源码、约束、仿真及重建入口。
 - `ps_software/`：采集/网络/控制集成源码与离线重建入口，见其 README。
 - `software/protocol/`：可独立编译的 C99 数字帧、RF_SET/ACK 及状态函数。
 - `software/demod/`：浮点实采样解调及合成波形测试。
