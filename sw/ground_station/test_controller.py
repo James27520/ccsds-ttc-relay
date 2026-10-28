@@ -1,11 +1,14 @@
 """Controller fault tests with in-memory consoles; no hardware or serial use."""
 from pathlib import Path
+import queue
 import tempfile
+import time
 import unittest
 from unittest.mock import Mock, patch
 
 from . import controller
 from .protocol import MessageTracker, encode_message, parse_message
+from .test_relay import GOOD_DIAGNOSTICS, GOOD_STATUS, relay_without_serial
 
 
 class ControllerFaultTests(unittest.TestCase):
@@ -224,6 +227,95 @@ class ControllerFaultTests(unittest.TestCase):
             self.assertEqual([item['duplicate'] for item in rx.kwargs['messages']], [False, True])
             self.assertEqual(rx.kwargs['carrier_hz'], 1000500010)
             self.assertTrue((Path(directory) / 'rx_000001.json').is_file())
+
+
+class ReadRelayWorkerTests(unittest.TestCase):
+    """Exercise action dispatch, real diagnostic parsing, and the existing fault stop."""
+
+    def wait_for(self, messages, kind, state=None):
+        deadline = time.monotonic() + 3
+        seen = []
+        while time.monotonic() < deadline:
+            try:
+                event = messages.get(timeout=max(.01, deadline - time.monotonic()))
+            except queue.Empty:
+                break
+            seen.append(event)
+            if event['type'] == kind and (state is None or event.get('state') == state):
+                return event, seen
+        self.fail(f'No {kind}/{state} event; received {seen}')
+
+    def fake_source(self):
+        source = Mock()
+        source.phy, source.tx, source.rx = '/phy', '/tx', '/rx'
+        source.read.return_value = '0'
+        source.run.return_value = ''
+        return source
+
+    def test_read_relay_uses_only_status_and_rfdiag_and_preserves_running_settings(self):
+        messages = queue.Queue()
+        relay = relay_without_serial()
+        relay.close = Mock()
+        status = GOOD_STATUS.replace('rxgain=0', 'rxgain=30')
+        diagnostics = GOOD_DIAGNOSTICS.replace('tx_hz=1000000000', 'tx_hz=1001000000')
+        relay.run.side_effect = lambda command: {'status': status, 'rfdiag': diagnostics}[command]
+        source = self.fake_source()
+        with tempfile.TemporaryDirectory() as directory:
+            station = controller.StationController('sender', messages.put, Path(directory) / 'session')
+            try:
+                station.console, station.relay = source, relay
+                station.settings = {'unchanged_setting': 123}
+                station.configured = station.active = True
+                station.last_lease = time.monotonic()
+                station.submit('read_relay')
+                event, _ = self.wait_for(messages, 'relay_telemetry')
+                self.assertEqual([call.args[0] for call in relay.run.call_args_list], ['status', 'rfdiag'])
+                self.assertEqual(source.mock_calls, [])
+                self.assertEqual(station.settings, {'unchanged_setting': 123})
+                self.assertTrue(station.active)
+                self.assertTrue(station.configured)
+                self.assertEqual(event['values']['relay_tx_hz_readback'], 1001000000)
+                self.assertEqual(event['values']['relay_mode'], 2)
+                self.assertGreater(event['received_at'], 0)
+            finally:
+                station.submit('close')
+                station.worker.join(3)
+                self.assertFalse(station.worker.is_alive())
+
+    def test_missing_relay_and_read_failures_stop_source_and_attempt_relay_mute(self):
+        for fault in ('missing', 'status', 'diagnostics'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
+                messages = queue.Queue()
+                source = self.fake_source()
+                relay = Mock()
+                relay.status.return_value = dict(txatt='50', rxgain='30', mode='1')
+                relay.mute.return_value = {'relay_mode': 2}
+                if fault in ('status', 'diagnostics'):
+                    getattr(relay, fault).side_effect = OSError('USB lost during ' + fault)
+                station = controller.StationController('sender', messages.put, Path(directory) / 'session')
+                try:
+                    station.console, station.relay = source, None if fault == 'missing' else relay
+                    station.configured = station.active = True
+                    station.last_lease = time.monotonic()
+                    station.writer = (123, '456')
+                    station.submit('read_relay')
+                    event, seen = self.wait_for(messages, 'status', 'error')
+                    self.assertFalse(any(item['type'] == 'relay_telemetry' for item in seen))
+                    self.assertFalse(station.active)
+                    self.assertFalse(station.configured)
+                    self.assertIsNone(station.writer)
+                    source.mute.assert_called_once()
+                    self.assertTrue(any('kill -INT 123' in call.args[0] and '456' in call.args[0]
+                                        for call in source.run.call_args_list))
+                    if fault != 'missing':
+                        relay.mute.assert_called_once()
+                        relay.start.assert_not_called()
+                        relay.prepare.assert_not_called()
+                        self.assertIn('USB lost', event['message'])
+                finally:
+                    station.submit('close')
+                    station.worker.join(3)
+                    self.assertFalse(station.worker.is_alive())
 
 
 if __name__ == '__main__':

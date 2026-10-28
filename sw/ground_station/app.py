@@ -94,7 +94,8 @@ class StationApp:
 
     def __init__(self, root: tk.Tk, role: str,
                  controller_factory: Callable[..., Any] | None = None,
-                 log_dir: str | None = None):
+                 log_dir: str | None = None,
+                 telemetry_controller_factory: Callable[..., Any] | None = None):
         if role not in {"sender", "receiver"}:
             raise ValueError("role must be sender or receiver")
         self.root, self.role = root, role
@@ -104,6 +105,9 @@ class StationApp:
         self.receiving = False
         self.closing = False
         self.closed = False
+        self._station_closed = False
+        self.telemetry_window = None
+        self.telemetry_controller_factory = telemetry_controller_factory
         self.devices: dict[str, str] = {}
         self.readbacks: dict[str, tk.StringVar] = {}
         self.requested: dict[str, tk.StringVar] = {}
@@ -181,6 +185,9 @@ class StationApp:
         role_badge = tk.Label(header, text=role_text, bg=COLORS["pale"], fg=COLORS["teal"],
                               font=("Microsoft YaHei UI", 12, "bold"), padx=18, pady=10)
         role_badge.pack(side="right", pady=5)
+        if self.role == "sender":
+            self.telemetry_button = ttk.Button(header, text="测控状态", command=self.open_telemetry)
+            self.telemetry_button.pack(side="right", padx=14)
 
         connection = self._card(main, "设备连接")
         connection.edge.pack(fill="x", pady=(0, 14))
@@ -468,6 +475,8 @@ class StationApp:
     def _update_controls(self) -> None:
         idle = self.connected and self.state in {"ready", "stopped", "error"} and not self.receiving and not self.closing
         connecting = self.state == "connecting"
+        if self.role == "sender":
+            self.telemetry_button.configure(state="disabled" if self.closing else "normal")
         selected = self.devices.get(self.port_var.get())
         device_selection_valid = bool(selected)
         if self.role == "sender":
@@ -551,6 +560,9 @@ class StationApp:
             self.identity_var.set(f"设备 {identity.get('model', '—')}    序列号 {identity.get('serial', '—')}    {identity.get('port', '')}")
         elif kind == "settings":
             self._settings_event(event.get("values", {}))
+        elif kind == "relay_telemetry" and self.role == "sender":
+            if self.telemetry_window is not None and not self.telemetry_window.closed:
+                self.telemetry_window.show_relay(event)
         elif kind == "tx" and self.role == "sender":
             self._append_message(event, "已发送")
             self.operation_var.set(f"消息 {event.get('message_id', '—')} 已提交至发送设备")
@@ -559,12 +571,10 @@ class StationApp:
         elif kind == "log":
             self._log(str(event.get("message", "")), str(event.get("level", "info")).lower())
         elif kind == "closed":
-            self.closed = True
-            if self._poll_id:
-                self.root.after_cancel(self._poll_id)
-            if self._close_warning_id:
-                self.root.after_cancel(self._close_warning_id)
-            self.root.destroy()
+            self._station_closed = True
+            if not self.closing:
+                self.close()
+            self._finish_close_if_ready()
             return
         self._update_controls()
         if self.closing:
@@ -675,6 +685,8 @@ class StationApp:
         self.status_var.set("正在关闭 · 等待设备清理")
         self.footer_var.set("正在停止收发并清理设备连接；收到完成回执后关闭窗口。")
         self._update_controls()
+        if self.telemetry_window is not None and not self.telemetry_window.closed:
+            self.telemetry_window.close()
         self._submit("close")
         self._close_warning_id = self.root.after(12000, self._close_wait_notice)
 
@@ -684,6 +696,38 @@ class StationApp:
             self._log("关闭尚未完成：仍在等待控制器清理回执，未强制退出。", "warning")
             self.log_visible.set(True)
             self._toggle_log()
+
+    def open_telemetry(self) -> None:
+        if self.role != "sender" or self.closing:
+            return
+        if self.telemetry_window is not None and not self.telemetry_window.closed:
+            self.telemetry_window.show()
+            return
+        from .telemetry_window import TelemetryWindow
+        try:
+            self.telemetry_window = TelemetryWindow(
+                self.root, read_relay=lambda: self._submit("read_relay"),
+                on_closed=self._telemetry_closed, controller_factory=self.telemetry_controller_factory,
+                can_read_relay=lambda: self.connected and not self.closing)
+        except Exception as error:
+            self._log(f"测控监控启动失败：{error}", "error")
+
+    def _telemetry_closed(self) -> None:
+        self.telemetry_window = None
+        self._finish_close_if_ready()
+
+    def _finish_close_if_ready(self) -> None:
+        if not self._station_closed:
+            return
+        if self.telemetry_window is not None and not self.telemetry_window.closed:
+            self.footer_var.set("业务控制器已清理，继续等待测控监控串口关闭回执。")
+            return
+        self.closed = True
+        if self._poll_id:
+            self.root.after_cancel(self._poll_id)
+        if self._close_warning_id:
+            self.root.after_cancel(self._close_warning_id)
+        self.root.destroy()
 
 
 def main(argv: list[str] | None = None) -> None:

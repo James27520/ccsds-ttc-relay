@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse,hashlib,json,os,shutil,subprocess,zipfile
 from build_common import tool_directory
+from build_bsp_guard import verify_bsp
 ROOT=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--out',type=Path,default=ROOT/'platform_build_next')
@@ -11,6 +12,8 @@ parser.add_argument('--xsa',type=Path,default=ROOT/'../telecontrol_system/report
 parser.add_argument('--ps-init',type=Path,default=ROOT/'../telecontrol_system/reports/platform_init/ps7_init.tcl')
 parser.add_argument('--hardware-note',default='Pre-final PS/AXI platform; no final routed capture acceptance')
 args=parser.parse_args();BIN=tool_directory(args.arm_bin,'ADDA_ARM_GCC_BIN','arm-none-eabi-gcc.exe');OUT=args.out.resolve();BSP=args.bsp.resolve()
+try:bsp_verification=verify_bsp(BSP)
+except (ValueError,KeyError,OSError) as exc:raise SystemExit('BSP pre-link verification failed: '+str(exc))
 if OUT.exists() and list(OUT.glob('*.elf')):raise SystemExit('Refuse to overwrite frozen ELF directory; choose new --out')
 OUT.mkdir(parents=True,exist_ok=True)
 linker=(ROOT/'vendor_reference/lscript_reference_only.ld').read_text()
@@ -22,11 +25,11 @@ incs=[BSP/'include',ROOT,ROOT/'../telecontrol_system/abi',ROOT/'../software/prot
 flags=['-std=c99','-mcpu=cortex-a9','-mfpu=vfpv3','-mfloat-abi=hard','-O2','-g','-ffunction-sections','-fdata-sections','-Wall','-Wextra']+['-I'+str(p) for p in incs]
 sources=[ROOT/n for n in ['adda_platform_main.c','adda_ps_core.c','adda_capture.c','adda_controller.c','adda_pattern_check.c',
  '../software/protocol/adda_protocol.c','../software/demod/adda_demod.c','../software/demod/adda_receiver.c','../software/fixtures/generated/waveform_fixture.c']]
-manifest={'hardware':args.hardware_note,'files':{},'inputs':{},'sources':{}}
+manifest={'hardware':args.hardware_note,'files':{},'inputs':{},'sources':{},'bsp_verification':bsp_verification}
 for label,path in [('xsa',args.xsa),('ps7_init',args.ps_init),('bsp_manifest',BSP/'manifest.json'),('libxil',BSP/'libxil.a'),('liblwip4',BSP/'liblwip4.a'),('xparameters',BSP/'include/xparameters.h')]:
     manifest['inputs'][label]={'path':str(path.resolve()),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
 shutil.copy2(args.ps_init,OUT/'ps7_init.tcl')
-source_inputs=sources+[ROOT/'build_platform.py',ROOT/'build_bsp.py',ROOT/'build_common.py',ROOT/'patch_network_bsp.py',ROOT/'network_phy_policy.inc',ROOT/'../telecontrol_system/abi/capture_abi.h']+list(ROOT.glob('*.h'))
+source_inputs=sources+[ROOT/'build_platform.py',ROOT/'build_bsp.py',ROOT/'build_bsp_guard.py',ROOT/'build_common.py',ROOT/'patch_network_bsp.py',ROOT/'network_phy_policy.inc',ROOT/'../telecontrol_system/abi/capture_abi.h']+list(ROOT.glob('*.h'))
 source_inputs+=list((ROOT/'../software/protocol').glob('*.h'))+list((ROOT/'../software/demod').glob('*.h'))+list((ROOT/'../software/fixtures/generated').glob('*.h'))
 source_inputs+=[ROOT/'vendor_reference/lscript_reference_only.ld']
 source_inputs=sorted(set(src.resolve() for src in source_inputs))

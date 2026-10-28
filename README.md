@@ -11,6 +11,7 @@
 - [独立接收板业务验证](docs/independent-receiver-validation.md)通过8个窗口（5正、3负），恢复8个完整CRC有效帧、1599个条件比较bit无差异；UDP改频后的实测位移999997.235 Hz，全部采样来自新增COM18接收板。
 - [真实ADC与业务分时验证](docs/adc-business-staged-validation.md)完成修正版LDSDR的四组真实遥控设置；保留900/1001 MHz设置换线，未再次改频，独立接收端恢复6个完整CRC有效帧、960个条件比较bit无差异，3个负例无有效帧。
 - [双端桌面站](sw/ground_station/README.md)提供浅色发送、接收窗口，可现场输入短中文或英文，经外部三板链路恢复文本、消息编号和 CRC。控制器回归完成15个快照、26个有效帧，另完成两个独立桌面进程的实际收发；接收控制器断开重连与发送进程失联保护通过实板检查，见[详细验收](docs/ground-station-validation.md)。
+- [演示提速与测控状态回传](docs/station-speed-telemetry-validation.md)：DEBUG临时高速传输将快照周期降至2.87–2.91秒，另完成29快照/26有效帧回归。发送GUI新增带CRC的TM1监控，独立展示UDP/ACK与SPI读回；管理状态经USB返回，DAC/SMA射频下行仍待实现。
 
 结论限当前实物、第一路有线链和离散快照。文本使用实验帧，条件比特比较不是整体BER测量；不能据此宣称完整CCSDS协议符合性、24小时稳定性或无跨窗口漏帧。业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收；新接收板的TX与100.5 MHz能力尚未验证。
 
@@ -74,7 +75,7 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 
 ## 仓库内容与使用范围
 
-双端桌面演示：先按[安装和操作说明](sw/ground_station/README.md)安装 Python 依赖，再分别运行 [start_sender.bat](start_sender.bat) 与 [start_receiver.bat](start_receiver.bat)。接收端迁移到另一台电脑时只启动接收程序。当前 DEBUG 数据回传约24秒更新一次快照，后续高速传输接口另行开发。
+双端桌面演示：先按[安装和操作说明](sw/ground_station/README.md)安装 Python 依赖，再分别运行 [start_sender.bat](start_sender.bat) 与 [start_receiver.bat](start_receiver.bat)。接收端迁移到另一台电脑时只启动接收程序。当前DEBUG快照周期约2.9秒；一条新文本从提交到首次解码约15.8秒，包含启停和设备检查，仍为有空档的分段采样。
 
 | 路径 | 当前内容 | 适用范围 |
 |---|---|---|

@@ -1,5 +1,9 @@
 # Z7ADDALite PS 接收与转发
 
+2026-10-28更新：增加只读 `telemetry` 命令及[TM1状态帧](../../../docs/telemetry-status.md)，分别保留解码、发送、匹配ACK来源。新PS实板selftest、合成解调、内部PN9、三次UDP/ACK/SPI及网络关闭负例通过，见[本轮验收](../../../docs/station-speed-telemetry-validation.md)。该回传经DEBUG USB，未实现DAC射频下行；r4c PL不变。以下原有网络发布记录为历史证据，新的ELF与来源以本轮摘要为准。
+
+当前 `build_platform.py` 在链接前要求 `ADDA_BSP_BUILD_V2` 清单。旧库即使曾通过实板也要用当前 `build_bsp.py` 从已打补丁的BSP重新编译；不要只复制或补写清单。构建冻结实际源码和本地/共享头文件，并绑定对象、archive成员、库hash及当前PHY策略，防止错用旧地址扫描驱动。离线负例可运行 `python -B board/z7addalite/ps_software/test_build_bsp_guard.py -v`。本轮10项检查、101个xil及34个lwip对象重建通过。平台与最终XSA的一致性仍须另行运行下述绑定检查。
+
 包含采集 ABI 客户端、来源/ARM/事务门控、PN9/checker 检查、CLI/平台接入和网络 BSP 补丁。协议与解调算法位于相邻 `software/`。网络BSP补丁及测试已更新本板PHY地址策略；`SOURCE_MANIFEST.json`记录对应输入及测试hash，`REPRO_MANIFEST.json`记录历史PN9 mem回放入口差异。完整r4c已临时上板通过全通道/四个k内部PN9/checker及normal格式/切换检查，板端与独立DDR检查一致；PHY识别、1000 Mbps协商及PC ping已通过，UART_NETTEST双板UDP、匹配ACK及独立SPI频率读回已通过，真实模拟输入与业务RF仍待验收。
 
 以下主机测试从仓库根目录运行，需要 NumPy、宿主 GCC、支持 Cortex-A9 的 `arm-none-eabi-gcc.exe`。工具目录通过参数、`ADDA_HOST_GCC_BIN`/`ADDA_ARM_GCC_BIN` 或 PATH 提供，不绑定开发者磁盘路径：

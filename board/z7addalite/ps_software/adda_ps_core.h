@@ -12,6 +12,25 @@ enum aps_origin { APS_ADC_NORMAL=1, APS_ADC_TEST=2, APS_SYNTHETIC=3, APS_UART_NE
 #define APS_RELAY_PORT 5005u
 #define APS_RETRY_MS 250u
 #define APS_MAX_SENDS 3u
+#define APS_TM1_MAX_BYTES 1024u /* includes CRLF and terminating NUL */
+/* Records survive PC reconnects, not aps_init/reboot. Each stage owns its
+ * origin/command, so a newer local decode cannot relabel an older ACK. */
+struct aps_command_record {
+    unsigned valid;
+    uint32_t event;
+    enum aps_origin origin;
+    struct ap_command command;
+};
+struct aps_send_record {
+    struct aps_command_record record;
+    uint16_t transaction_seq;
+    unsigned count; /* total attempts for this transaction, not retransmits */
+    int rc; /* transport acceptance only; never remote execution evidence */
+};
+struct aps_ack_record {
+    struct aps_command_record record;
+    struct ap_ack reply; /* successful matched remote ACK, NOT SPI telemetry */
+};
 struct aps_io {
     void *context;
     void (*log)(void *context, const char *text);
@@ -33,10 +52,28 @@ struct aps_state {
     unsigned decoded_frames;
     unsigned applied_commands;
     unsigned failed_transactions;
+    uint32_t telemetry_events; /* decoded, attempted send, successful ACK only */
+    struct aps_command_record last_decoded;
+    struct aps_send_record last_send;
+    struct aps_ack_record last_ack;
 };
+/* Stable TM1 wire contract: fixed field order, decimal integer values (origin
+ * uses enum aps_origin; 0 means unknown), then " crc16=HHHH\r\n". CRC is
+ * CRC-16/CCITT-FALSE over ASCII from 'T' through the final spi_valid value;
+ * excludes the space before crc16, CRC field, CRLF and NUL. It detects line
+ * corruption/truncation, not authenticity or truth of remote hardware state.
+ * uptime_ms is the caller's platform clock modulo 2^32 (49.7-day wrap); event
+ * IDs also wrap modulo 2^32. valid, never event!=0, determines presence.
+ * spi_valid is always 0: this core has no independent LDSDR SPI readback.
+ * Read-only, serialized core caller required (same as all existing core APIs).
+ * Returns line length excluding NUL, or AP_EARG/AP_ELENGTH; an undersized
+ * nonempty buffer is cleared rather than returning a partial valid-looking TM1.
+ * Future field/order/meaning changes require a new TM version. */
+int aps_telemetry_format(const struct aps_state *state, uint32_t uptime_ms,
+                         char *output, size_t capacity);
 void aps_init(struct aps_state *state, const struct aps_io *io);
 void aps_set_network_ready(struct aps_state *state, unsigned ready);
-/* Line excludes newline, <=127 characters. status/help/selftest are read-only.
+/* Line excludes newline, <=127 characters. status/telemetry/help/selftest are read-only.
  * nettest RX_MHz TX_MHz SEQ GAIN ATT is an explicit known-command test.
  * arm on/off controls automatic ADC-only forwarding, off at startup. */
 int aps_command_line(struct aps_state *state, const char *line, uint32_t now_ms);

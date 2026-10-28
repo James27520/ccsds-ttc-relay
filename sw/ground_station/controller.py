@@ -107,6 +107,14 @@ class StationController:
                         self._connect(**kwargs)
                     elif action == 'configure':
                         self._configure(**kwargs)
+                    elif action == 'read_relay':
+                        if not self.relay:
+                            raise RuntimeError('请先连接发送端的LDSDR调试口')
+                        state = self.relay.status()
+                        values = self.relay.diagnostics(atten=int(state['txatt']), gain=int(state['rxgain']),
+                                                        exact_frequency=False)
+                        values['relay_mode'] = int(state['mode'])
+                        self.event('relay_telemetry', values=values, received_at=time.time())
                     elif action == 'send':
                         self._send(**kwargs)
                     elif action == 'receive':

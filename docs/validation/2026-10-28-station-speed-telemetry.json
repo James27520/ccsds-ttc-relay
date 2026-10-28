@@ -1,0 +1,424 @@
+{
+  "date": "2026-10-28",
+  "scope": "Unchanged two-SMA forward business; DEBUG speed and USB TM1 management state return",
+  "dac_rf_downlink_implemented": false,
+  "analog_command_input_retested": false,
+  "flash_sd_written": false,
+  "transport": {
+    "temporary_baudrate": 921600,
+    "default_baudrate": 115200,
+    "capture_bytes": 131072,
+    "capture_samples": 32768,
+    "sample_rate_hz": 2500000,
+    "rf_window_ms": 13.1072,
+    "full_capture_seconds": [
+      2.871887399989646,
+      2.911943000013707
+    ],
+    "waveform_upload_seconds": [
+      1.5540238999819849,
+      1.7357040999922901
+    ],
+    "first_valid_from_send_request": [
+      {
+        "text": "hello world",
+        "seconds": 15.778582334518433
+      },
+      {
+        "text": "你好，NTN！",
+        "seconds": 15.769124031066895
+      },
+      {
+        "text": "12345678901234567890123456789012",
+        "seconds": 15.786998748779297
+      }
+    ],
+    "upload_cancel_cases": [
+      {
+        "cancel_at": null,
+        "seconds": 3.6717097999935504,
+        "default_baud_restored": true,
+        "rf_still_idle": true
+      },
+      {
+        "cancel_at": 0.0,
+        "seconds": 4.514912699989509,
+        "default_baud_restored": true,
+        "rf_still_idle": true
+      },
+      {
+        "cancel_at": 0.3,
+        "seconds": 4.656406099995365,
+        "default_baud_restored": true,
+        "rf_still_idle": true
+      }
+    ],
+    "capture_audit": {
+      "windows": 29,
+      "valid_frames": 26,
+      "crc_rejected": 0,
+      "clips": 0
+    },
+    "continuous_stream": false
+  },
+  "telemetry": {
+    "transport": "ADDA DEBUG USB UART; TM1 CRC16/CCITT-FALSE",
+    "command_origin": "UART_NETTEST",
+    "cases": [
+      {
+        "name": "selftests_readonly_history",
+        "passed": true
+      },
+      {
+        "name": "internal_training_capture",
+        "reply": "CAPTURE_REQUEST mode=training channel=0 k=0 rc=0\r\nCLI_RESULT rc=0\r\nCAPTURE state=1 valid=0 error=OK epoch=1 copied_words=0\r\nCAPTURE state=3 valid=0 error=OK epoch=1 copied_words=0\r\nCAPTURE state=4 valid=0 error=OK epoch=1 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=1 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=1 copied_words=65536\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=1 config_epoch=2 source=ADC_TEST channel=0 k=0 first=-3562 last=-2243\r\nPATTERN_PASS source=ADC_TEST count=131072 transitions=131071 errors=0 zero_states=0 invalid=0 toggle=0x3fff first=0x3216 last=0x373d\r\n",
+        "passed": true
+      },
+      {
+        "name": "matched_ack_and_independent_spi",
+        "snapshot": {
+          "uptime_ms": 53273,
+          "events": 2,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 0,
+          "applied": 1,
+          "failures": 0,
+          "d_valid": 0,
+          "d_event": 0,
+          "d_origin": 0,
+          "d_air_seq": 0,
+          "d_rx_mhz": 0,
+          "d_tx_mhz": 0,
+          "s_valid": 1,
+          "s_event": 1,
+          "s_origin": 4,
+          "s_air_seq": 180,
+          "s_rx_mhz": 900,
+          "s_tx_mhz": 1000,
+          "s_udp_seq": 1,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 2,
+          "a_origin": 4,
+          "a_air_seq": 180,
+          "a_rx_mhz": 900,
+          "a_tx_mhz": 1000,
+          "a_udp_seq": 1,
+          "a_rc": 0,
+          "a_rx_hz": 900000000,
+          "a_tx_hz": 1000000000,
+          "spi_valid": 0
+        },
+        "spi_hz": [
+          900000000,
+          1000000000
+        ],
+        "passed": true
+      },
+      {
+        "name": "matched_ack_and_independent_spi",
+        "snapshot": {
+          "uptime_ms": 57342,
+          "events": 4,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 0,
+          "applied": 2,
+          "failures": 0,
+          "d_valid": 0,
+          "d_event": 0,
+          "d_origin": 0,
+          "d_air_seq": 0,
+          "d_rx_mhz": 0,
+          "d_tx_mhz": 0,
+          "s_valid": 1,
+          "s_event": 3,
+          "s_origin": 4,
+          "s_air_seq": 181,
+          "s_rx_mhz": 900,
+          "s_tx_mhz": 1001,
+          "s_udp_seq": 2,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 4,
+          "a_origin": 4,
+          "a_air_seq": 181,
+          "a_rx_mhz": 900,
+          "a_tx_mhz": 1001,
+          "a_udp_seq": 2,
+          "a_rc": 0,
+          "a_rx_hz": 900000000,
+          "a_tx_hz": 1000999998,
+          "spi_valid": 0
+        },
+        "spi_hz": [
+          900000000,
+          1000999998
+        ],
+        "passed": true
+      },
+      {
+        "name": "matched_ack_and_independent_spi",
+        "snapshot": {
+          "uptime_ms": 61430,
+          "events": 6,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 0,
+          "applied": 3,
+          "failures": 0,
+          "d_valid": 0,
+          "d_event": 0,
+          "d_origin": 0,
+          "d_air_seq": 0,
+          "d_rx_mhz": 0,
+          "d_tx_mhz": 0,
+          "s_valid": 1,
+          "s_event": 5,
+          "s_origin": 4,
+          "s_air_seq": 182,
+          "s_rx_mhz": 900,
+          "s_tx_mhz": 1000,
+          "s_udp_seq": 3,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 6,
+          "a_origin": 4,
+          "a_air_seq": 182,
+          "a_rx_mhz": 900,
+          "a_tx_mhz": 1000,
+          "a_udp_seq": 3,
+          "a_rc": 0,
+          "a_rx_hz": 900000000,
+          "a_tx_hz": 1000000000,
+          "spi_valid": 0
+        },
+        "spi_hz": [
+          900000000,
+          1000000000
+        ],
+        "passed": true
+      },
+      {
+        "name": "network_off_reject_retains_ack",
+        "snapshot": {
+          "uptime_ms": 65189,
+          "events": 6,
+          "network": 0,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 0,
+          "applied": 3,
+          "failures": 0,
+          "d_valid": 0,
+          "d_event": 0,
+          "d_origin": 0,
+          "d_air_seq": 0,
+          "d_rx_mhz": 0,
+          "d_tx_mhz": 0,
+          "s_valid": 1,
+          "s_event": 5,
+          "s_origin": 4,
+          "s_air_seq": 182,
+          "s_rx_mhz": 900,
+          "s_tx_mhz": 1000,
+          "s_udp_seq": 3,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 6,
+          "a_origin": 4,
+          "a_air_seq": 182,
+          "a_rx_mhz": 900,
+          "a_tx_mhz": 1000,
+          "a_udp_seq": 3,
+          "a_rc": 0,
+          "a_rx_hz": 900000000,
+          "a_tx_hz": 1000000000,
+          "spi_valid": 0
+        },
+        "passed": true
+      },
+      {
+        "name": "public_api_reconnect_retains_history",
+        "passed": true
+      }
+    ],
+    "final": {
+      "uptime_ms": 73533,
+      "events": 6,
+      "network": 0,
+      "armed": 0,
+      "pending": 0,
+      "decoded": 0,
+      "applied": 3,
+      "failures": 0,
+      "d_valid": 0,
+      "d_event": 0,
+      "d_origin": 0,
+      "d_air_seq": 0,
+      "d_rx_mhz": 0,
+      "d_tx_mhz": 0,
+      "s_valid": 1,
+      "s_event": 5,
+      "s_origin": 4,
+      "s_air_seq": 182,
+      "s_rx_mhz": 900,
+      "s_tx_mhz": 1000,
+      "s_udp_seq": 3,
+      "s_count": 1,
+      "s_rc": 0,
+      "a_valid": 1,
+      "a_event": 6,
+      "a_origin": 4,
+      "a_air_seq": 182,
+      "a_rx_mhz": 900,
+      "a_tx_mhz": 1000,
+      "a_udp_seq": 3,
+      "a_rc": 0,
+      "a_rx_hz": 900000000,
+      "a_tx_hz": 1000000000,
+      "spi_valid": 0
+    },
+    "spi_evidence_is_independent": true,
+    "gui_connect_query_spi_disconnect_close_passed": true,
+    "gui_firmware_candidate": "elf_addr1 (same PS application, previously validated BSP); final rebuilt BSP revalidated separately"
+  },
+  "tests": {
+    "desktop_python": 88,
+    "ui_after_copy_change": 10,
+    "bsp_guard": 10,
+    "ps_core_assertions": 281,
+    "capture_controller_assertions": 11193,
+    "cortex_a9_hard_float_compile": true,
+    "onboard_selftest_vectors": 3,
+    "onboard_synthetic_demod_samples": 131072,
+    "internal_pn9_samples": 131072
+  },
+  "firmware": {
+    "elf_sha256": "107f60e6371bfad02bcdc7c963719954251db74ae07d7e2905eee8d3f45e95f0",
+    "bit_sha256": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b",
+    "ps_init_sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205",
+    "bsp": {
+      "schema": "ADDA_BSP_BUILD_V2",
+      "network_policy": {
+        "patch_network_bsp.py": "057fe23a2d146aa483c1b4c0a5ecc82a2d397d4ed0beaddcc33a72e953504868",
+        "network_phy_policy.inc": "1690666e7d56ee2714283ba2d1ac1d953cd6c2ff42c3ae72f43474c6c082580f"
+      },
+      "manifest_sha256": "79765913f6fecfb598e96581e440217c31333213bb24052fc57c20410f63a8c2",
+      "libraries": {
+        "libxil.a": "95870738979f2940c2e576b80d113ff0a1452c32c66c4c047cd98dd3365ec803",
+        "liblwip4.a": "3c251cb89f25c81d48296652576be7f80878aac444c2f795bf9d65a565b83a00"
+      }
+    },
+    "xsa_binding": {
+      "scope": "offline hardware binding, no board acceptance",
+      "inputs": {
+        "platform_xsa": {
+          "path": "D:\\RelayTools\\work\\adda_rx\\telecontrol_system\\r4c\\reports\\telecontrol_platform.xsa",
+          "sha256": "0280bdf0450f296faa35ac0d456c840671ab1897b87a6e89351f3ec3ac2ea36c"
+        },
+        "final_xsa": {
+          "path": "D:\\RelayTools\\work\\adda_rx\\telecontrol_system\\r4c\\artifacts\\telecontrol_system_final.xsa",
+          "sha256": "7622d5ac50727cccf9f8319c35cc80d24f6e91ada07bc81f3d7d6ac3161f1ded"
+        },
+        "ps_init": {
+          "path": "D:\\RelayTools\\work\\station_upgrade_20261028\\elf\\ps7_init.tcl",
+          "sha256": "3998a8f3c4e16e76286e8fcb2e6b73628e13c7f89f6efc51fd2319b52fb8b205"
+        },
+        "bit": {
+          "path": "D:\\RelayTools\\work\\adda_rx\\telecontrol_system\\r4c\\artifacts\\telecontrol_system.bit",
+          "sha256": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b"
+        }
+      },
+      "platform_hwh_canonical_sha256": {
+        "zynq_petaLinux.hwh": "2876d0fd93d35d24f80366ae9cc65fc4aabcc2907933594f569e17d1e5daddfb",
+        "zynq_petaLinux_axi_router_0.hwh": "46a7904e0b0d99ad53e0748aa91c80938a37aa122ec2e30a6808a2bb523810ad"
+      },
+      "final_hwh_canonical_sha256": {
+        "zynq_petaLinux.hwh": "2876d0fd93d35d24f80366ae9cc65fc4aabcc2907933594f569e17d1e5daddfb",
+        "zynq_petaLinux_axi_router_0.hwh": "46a7904e0b0d99ad53e0748aa91c80938a37aa122ec2e30a6808a2bb523810ad"
+      },
+      "hwh_equal_except_export_timestamp": true,
+      "ps_init_equal": true,
+      "bit_members": {
+        "telecontrol_system_final.bit": "10ac68b0ccfcfb5dbe50c80d8ed185e840ff6be3e67a331bd3d50b712a97057b"
+      },
+      "bit_member_matches": true,
+      "pass": true
+    }
+  },
+  "final_readback": {
+    "source": {
+      "port": "COM17",
+      "lo_powerdown": "1",
+      "tx0": "-89.000000 dB",
+      "tx1": "-89.000000 dB",
+      "tx_buffer": "0",
+      "rx_buffer": "0",
+      "dds": [
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000"
+      ]
+    },
+    "receiver": {
+      "port": "COM18",
+      "lo_powerdown": "1",
+      "tx0": "-89.000000 dB",
+      "tx1": "-89.000000 dB",
+      "tx_buffer": "0",
+      "rx_buffer": "0",
+      "dds": [
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000",
+        "0.000000"
+      ]
+    },
+    "relay": {
+      "status": "STAT mode=2 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=89 rxlo=900 txlo=1000 fs=30720000 in=1033355260 out=1033355245 clip=19411836 rc=0\r\r\n",
+      "rfdiag": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n"
+    },
+    "adda": "CONTROLLER auto=0 capture_state=7 capture_valid=0 consumed=0\r\nSTATUS network=0 armed=0 decoded=0 applied=3 pending=0 retries=1 failures=0 gain=0 att=89\r\nCLI_RESULT rc=0\r\n",
+    "passed": true
+  },
+  "remaining": [
+    "DAC PL packet path/clock/DDR timing and RF acceptance",
+    "reverse business and second-channel validation",
+    "shared-LO frequency/time resource agreement",
+    "six cable integration",
+    "second computer migration and persistent boot"
+  ],
+  "known_failures": [
+    {
+      "candidate": "elf/adda_m2_candidate.elf",
+      "reason": "Obsolete BSP PHY scan rejected broadcast/address1 response; rejected release"
+    },
+    {
+      "test": "first PN9 harness",
+      "reason": "Expected wrong ready enum (4 vs actual6); assertion corrected, raw PATTERN_PASS retained"
+    }
+  ],
+  "evidence_package": {
+    "local_path": "D:\\RelayTools\\releases\\station_speed_telemetry_20261028.zip",
+    "sha256": "7cf24ee98208cf7e16ab1ccda55eace361f46b6e791f7753672aa1d1c471f4a3",
+    "bytes": 3076845
+  }
+}

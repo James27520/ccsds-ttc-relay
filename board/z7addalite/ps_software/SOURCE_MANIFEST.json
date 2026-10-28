@@ -1,5 +1,5 @@
 {
-  "scope": "Current PS source inputs, including verified RTL8211E address1 policy; repository pattern runner listed separately in REPRO_MANIFEST.json",
+  "scope": "Current PS TM1 and BSP binding inputs; historical release evidence remains in docs/validation",
   "files": [
     {
       "path": "adda_capture.c",
@@ -38,18 +38,18 @@
     },
     {
       "path": "adda_ps_core.c",
-      "sha256": "e9030b8e0a8706a73fa2d2119f3d2529df52b1d4c7201f430ccd5fafdb2fe255",
-      "bytes": 9054
+      "sha256": "28b6c49541cbc0a5e52a522745639f52b495877983756de285f5b0ea1e72653f",
+      "bytes": 11905
     },
     {
       "path": "adda_ps_core.h",
-      "sha256": "adcbc03f7a8807bc949dd2212236a721d3b999bdc78e40e6839614158f0357c7",
-      "bytes": 2745
+      "sha256": "cdf094fcd79820d98b5684b436ed405bdadbad9c227743491208972d11ca1e37",
+      "bytes": 4753
     },
     {
       "path": "build_bsp.py",
-      "sha256": "ee0bd4c54bc965511a79397f8fef383f9deff375365ecf0a2f39d1bb411d446a",
-      "bytes": 3803
+      "sha256": "3dfd413e13927288f4432a0396541ad9e49ebf64f245f4da4cc6f9d6d0e40210",
+      "bytes": 5084
     },
     {
       "path": "build_capture_tests.ps1",
@@ -68,8 +68,8 @@
     },
     {
       "path": "build_platform.py",
-      "sha256": "9a9127a80cc1e35cdcac95e50a642f36e4be2a0038a4bd72d96e8f4720853bc9",
-      "bytes": 5275
+      "sha256": "ea429f812b212fe5af6251dc1180a963b941da670eefa49e2a87e7df55ae06a8",
+      "bytes": 5521
     },
     {
       "path": "build_tools.ps1",
@@ -136,8 +136,8 @@
     },
     {
       "path": "test_ps_core.c",
-      "sha256": "9e925a3f861d76e5516202a81d7473518fbb191a2d1b3acbac326ba83a80474b",
-      "bytes": 4998
+      "sha256": "3961859c71c2726aa0ea2eaa8f729239bd33e53316778ff0a3f9728925d4edbb",
+      "bytes": 12614
     },
     {
       "path": "vendor_reference/lscript_reference_only.ld",
@@ -148,6 +148,16 @@
       "path": "verify_xsa_binding.py",
       "sha256": "82a0e229818096262a5a59da03bc32aed55c192517c79eb373c51626a5ab47d7",
       "bytes": 2320
+    },
+    {
+      "path": "build_bsp_guard.py",
+      "sha256": "ced9040c0153a05edf339cfe65e15056d5865e54b4e28a5a34ebe7a5593a31f1",
+      "bytes": 6490
+    },
+    {
+      "path": "test_build_bsp_guard.py",
+      "sha256": "dbfcc150d2e8f2f28ef709ce9145794b18ac4cdce9688cf7cdac9f51f39cf29c",
+      "bytes": 8579
     }
   ]
 }
