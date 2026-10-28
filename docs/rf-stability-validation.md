@@ -52,4 +52,4 @@ python -B -m unittest discover -s sw/tools -p test_rf_sequence_check.py -v
 
 结束时源端LO、DMA关闭、DDS全零、两路TX衰减89 dB；LDSDR mode=2、两路TX衰减89 dB、RX增益0、DDC/DUC=0，SPI读回RX900/TX1000 MHz；ADDA auto/ARM/network关闭、pending=0。清理无错误，启动介质未改写。
 
-本次结果限当前实物、第一路有线链及离散窗口。额外接收板外观/丝印与发送板相同、DEBUG已接电脑，其型号和功能仍在只读识别，不能据此外观假定接收或发射能力。下一步先用现有两根SMA验证独立接收端业务链；真实ADC遥控与业务同时运行还需独立100.5 MHz指令源及第三根同轴。长期连续接收、整体误码率、全频段及持久化启动仍待验收，见[同时联动计划](system-integration-plan.md)。
+本次结果限当前实物、第一路有线链及离散窗口。后续[独立接收板业务链](independent-receiver-validation.md)已完成，8窗口采样均来自新增COM18接收板；其TX及100.5 MHz能力仍未验证。真实ADC遥控与业务同时运行还需确认独立100.5 MHz指令源能力及第三根同轴。长期连续接收、整体误码率、全频段及持久化启动仍待验收，见[同时联动计划](system-integration-plan.md)。

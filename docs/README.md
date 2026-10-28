@@ -13,6 +13,8 @@
 | [调制业务验证摘要](validation/2026-10-28-rf-payload.json) | 最新采样/完整帧统计、边界和原始证据包 SHA-256 |
 | [业务序列与稳定性](rf-stability-validation.md) | 311.136秒保持输出、离散序列快照、UDP改频及拒绝/恢复的实测范围 |
 | [稳定性验证摘要](validation/2026-10-28-rf-stability.json) | 本轮帧/条件比特统计、时延口径及原始证据校验索引 |
+| [独立接收板验证](independent-receiver-validation.md) | COM18独立采样、两频点业务内容、UDP/SPI/RF关联及身份边界 |
+| [独立接收摘要](validation/2026-10-28-independent-receiver.json) | 8窗口统计、设备双重身份绑定及证据包校验和 |
 | [真实指令闭环摘要](validation/2026-10-28-analog-loop.json) | 有线100.5 MHz指令、ADC解调、UDP和SPI读回 |
 | [GUI验证摘要](validation/2026-10-28-gui-loop.json) | 实板自动控制启停及验证范围 |
 | [早期验证摘要](validation/2026-10-27.json) | 当日前期产物与测试记录，后续结果见验证与待办 |
