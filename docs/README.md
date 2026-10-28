@@ -8,7 +8,9 @@
 | [遥控链路 V2](telecontrol-v2.md) | 100.5 MHz 指令链、8 字节 body、金标准及 UDP 接口 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |
 | [业务转发联调](rf-forward-bringup.md) | 第一条有线单音链、RX I/Q修正、改频和关闭信号对照 |
-| [业务RF验证摘要](validation/2026-10-28-rf-forward.json) | 最新实测数值、固件和原始证据包 SHA-256 |
+| [业务RF单音摘要](validation/2026-10-28-rf-forward.json) | 单音实测数值、固件和原始证据包 SHA-256 |
+| [调制文本与UDP改频](rf-payload-validation.md) | 三段BPSK文本、CRC负例、网口控制后的实际频移与内容恢复 |
+| [调制业务验证摘要](validation/2026-10-28-rf-payload.json) | 最新采样/完整帧统计、边界和原始证据包 SHA-256 |
 | [真实指令闭环摘要](validation/2026-10-28-analog-loop.json) | 有线100.5 MHz指令、ADC解调、UDP和SPI读回 |
 | [GUI验证摘要](validation/2026-10-28-gui-loop.json) | 实板自动控制启停及验证范围 |
 | [早期验证摘要](validation/2026-10-27.json) | 当日前期产物与测试记录，后续结果见验证与待办 |

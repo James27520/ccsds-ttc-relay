@@ -2,7 +2,13 @@
 
 本项目面向嵌入式芯片与系统设计竞赛，实现遥控指令接收、频率参数解析和业务信号变频转发。当前遥控板采用 **Z7ADDALite（Zynq-7020 + AD9643）**，由 PL 采集 ADC 数据、PS 执行 C 解调与指令处理，再通过以太网控制 **LDSDR 转发板**。
 
-截至 **2026-10-28**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；真实100.5 MHz有线指令已由ADC_NORMAL自动解调，经UDP、匹配ACK及LDSDR独立SPI频率读回完成四组控制与恢复。[GUI实板验证](docs/validation/2026-10-28-gui-loop.json)另通过启停及ADC_NORMAL自动控制；GUI nettest按钮未实测。随后修正LDSDR接收I/Q顺序，[第一路有线单音转发](docs/rf-forward-bringup.md)通过900.5→1000.5 MHz、输出增加1 MHz及源端关闭/转发静音对照，固定版另通过三组UDP回归。结论限当前实物和工作点，调制业务数据、同时运行与长期连续运行仍待验收。
+截至 **2026-10-28**，已完成以下实板验证：
+
+- r4c ADC采集通过全通道、四个抽取位置的内部PN9/checker与独立DDR检查；板载ARM解调自测、网口1000 Mbps协商与PC ping 10/10通过。
+- 真实100.5 MHz指令经ADC_NORMAL、PS解调、UDP及匹配ACK控制LDSDR，独立SPI读回四组频率；[GUI启停及自动控制](docs/validation/2026-10-28-gui-loop.json)另已通过，GUI nettest按钮未实测。
+- 修正LDSDR接收I/Q顺序后，[单音变频转发](docs/rf-forward-bringup.md)与[100 ksym/s文本业务转发](docs/rf-payload-validation.md)通过。两轮文本测试共13个有效信号窗口、19个完整CRC有效帧，三段内容全部一致；静音、关源和坏CRC未误接收。另用遥控板UDP命令触发约1 MHz实际频移，新频点仍恢复正确文本。
+
+结论限当前实物、第一路有线链和短快照。文本使用实验帧，不能据此宣称完整CCSDS协议符合性；误码率、业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收。
 
 Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已归档至 [board/z7addalite/](board/z7addalite/README.md)。重建需要外部工具链、2018.3 embeddedsw 源归档及匹配的硬件产物；第三方依赖与命令见板级说明。原有 RTL 环回、PC 演示软件和串口工具继续保留为早期实现。
 
@@ -53,7 +59,8 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 | M3：C 解调 | 三组真实ADC_NORMAL指令由主机及PS正确解码、CRC通过，板端约277 ms；金标准与合成波形测试另已通过 | 本轮先关闭转发验证接收，再完成自动控制；未量化误码率和持续吞吐率 |
 | M4：网络控制 | 报文/ACK与网络负例通过；实板PHY识别、1000 Mbps协商及PC→遥控板ping 10/10通过 | UART_NETTEST负例及真实ADC_NORMAL自动控制均通过；LDSDR I/Q修正版另通过三组UART_NETTEST回归 |
 | 多板通信 | 真实SMA指令→ADC_NORMAL→自动C解调→UDP→ACK→LDSDR SPI读回四例通过，含900/1000 MHz恢复 | 当前有线100.5 MHz工作点；每例重复帧观察2秒无新UDP，关闭信号2秒无误触发；修正版尚未重跑真实ADC自动控制 |
-| 业务RF第一路 | RX I/Q修正后，900.5→1000.5 MHz单音转发及1 MHz改频通过；静音/关闭源下降30.43/30.12 dB | 单路有线短快照，无新增削顶；未验收调制业务数据、第二路或同时运行 |
+| 业务RF单音 | RX I/Q修正后，900.5→1000.5 MHz单音转发及1 MHz改频通过；静音/关闭源下降30.43/30.12 dB | 单路有线短快照，无新增削顶 |
+| 调制业务与UDP改频 | 三种BPSK文本及负例通过；UART_NETTEST/UDP将实际输出移频约1 MHz后仍正确解码 | 共19个CRC有效帧；实验文本帧，电脑1离线解码；未量化BER、第二路或同时运行 |
 
 本轮证据见 [真实输入闭环摘要](docs/validation/2026-10-28-analog-loop.json)，完整记录、产物摘要和未完成项见 [验证与待办](docs/validation.md)。早期 40 字节 RTL 环回结果见 [历史验证记录](docs/legacy-validation.md)，两者使用不同的板卡与协议路径。
 
@@ -81,6 +88,7 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 - [当前遥控链路 V2 协议](docs/telecontrol-v2.md)
 - [真实输入联调准备与离线工具](docs/signal-input-bringup.md)
 - [业务单音转发与I/Q修正](docs/rf-forward-bringup.md)
+- [调制文本与UDP实际改频验证](docs/rf-payload-validation.md)
 - [验证结果和后续验收项](docs/validation.md)
 - [早期 RTL 与射频实验记录](docs/legacy-validation.md)
 - [旧空间包与串口 CLI 协议](sw/link/PROTOCOL.md)

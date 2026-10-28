@@ -1,0 +1,716 @@
+{
+  "date": "2026-10-28",
+  "passed": true,
+  "scope": "Conducted BPSK experimental text forwarding and UART_NETTEST/UDP frequency control verified on actual RF payload",
+  "wiring": {
+    "signal": "7010_AD9363_SDR TX1A/JP1 -> LDSDR RX1; LDSDR TX1 -> sender RX1A/JP2",
+    "control": "Z7ADDALite RJ45 -> LDSDR RJ45",
+    "pc": "DEBUG UART commands/capture transfer; offline Python demodulation",
+    "adda_analog_input_connected": false,
+    "antennas": false,
+    "external_attenuator": false
+  },
+  "waveform": {
+    "format": "AAAA | one-byte UTF-8 byte length | payload | CRC-16/CCITT-FALSE over payload only, big-endian",
+    "format_origin": "Teammate gen_adda_coe.py/rx_board.py experimental text format",
+    "ccsds": false,
+    "fec": false,
+    "sample_rate_hz": 2500000,
+    "symbol_rate_sym_s": 100000,
+    "srrc_beta": 0.35,
+    "srrc_span_symbols": 8,
+    "source_complex_offset_hz": 500000,
+    "source_tx_lo_hz": 900000000,
+    "source_nominal_rf_hz": 900500000,
+    "normalized_complex_peak": 0.1,
+    "cyclic_complex_samples": 3200,
+    "frame_bits": 128,
+    "payload_bytes": 11,
+    "source_atten_db": 50,
+    "relay_atten_db": 50,
+    "receiver_gain_db": 30,
+    "relay_rx_gain_db": 30,
+    "receiver_lo_readback_hz": 1000749998,
+    "receiver_bandwidth_hz": 3000000,
+    "manifests": {
+      "hello": {
+        "format": "EXPERIMENTAL_TEXT_AAAA_LEN_UTF8_CRC16",
+        "ccsds": false,
+        "text": "hello world",
+        "payload_hex": "68656c6c6f20776f726c64",
+        "frame_hex": "aaaa0b68656c6c6f20776f726c64efeb",
+        "payload_bytes": 11,
+        "frame_bits": 128,
+        "complex_samples": 3200,
+        "byte_count": 12800,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "sample_rate_hz": 2500000,
+        "symbol_rate": 100000,
+        "samples_per_symbol": 25,
+        "beta": 0.35,
+        "span_symbols": 8,
+        "offset_hz": 500000,
+        "amplitude": 0.1,
+        "amplitude_reference": "normalized complex peak, not RF power",
+        "cyclic_shaping": "three frames shaped, center frame retained",
+        "crc": "CRC-16/CCITT-FALSE over payload only, big-endian",
+        "corrupt_crc": false,
+        "test_only": false,
+        "sha256": "479808a4d3cf7d2fc143c99784c1535297f23433202a1c191245e3464e20311e"
+      },
+      "text1": {
+        "format": "EXPERIMENTAL_TEXT_AAAA_LEN_UTF8_CRC16",
+        "ccsds": false,
+        "text": "relay test1",
+        "payload_hex": "72656c6179207465737431",
+        "frame_hex": "aaaa0b72656c61792074657374314912",
+        "payload_bytes": 11,
+        "frame_bits": 128,
+        "complex_samples": 3200,
+        "byte_count": 12800,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "sample_rate_hz": 2500000,
+        "symbol_rate": 100000,
+        "samples_per_symbol": 25,
+        "beta": 0.35,
+        "span_symbols": 8,
+        "offset_hz": 500000,
+        "amplitude": 0.1,
+        "amplitude_reference": "normalized complex peak, not RF power",
+        "cyclic_shaping": "three frames shaped, center frame retained",
+        "crc": "CRC-16/CCITT-FALSE over payload only, big-endian",
+        "corrupt_crc": false,
+        "test_only": false,
+        "sha256": "467ddeb6d358b0a5901399a01eb241b72b104e1f9bd8cfbf83a7af7387fd2a02"
+      },
+      "text2": {
+        "format": "EXPERIMENTAL_TEXT_AAAA_LEN_UTF8_CRC16",
+        "ccsds": false,
+        "text": "relay test2",
+        "payload_hex": "72656c6179207465737432",
+        "frame_hex": "aaaa0b72656c61792074657374327971",
+        "payload_bytes": 11,
+        "frame_bits": 128,
+        "complex_samples": 3200,
+        "byte_count": 12800,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "sample_rate_hz": 2500000,
+        "symbol_rate": 100000,
+        "samples_per_symbol": 25,
+        "beta": 0.35,
+        "span_symbols": 8,
+        "offset_hz": 500000,
+        "amplitude": 0.1,
+        "amplitude_reference": "normalized complex peak, not RF power",
+        "cyclic_shaping": "three frames shaped, center frame retained",
+        "crc": "CRC-16/CCITT-FALSE over payload only, big-endian",
+        "corrupt_crc": false,
+        "test_only": false,
+        "sha256": "b35be47748817b044996fdddc708e37e52400198daac80246d8b586a90be90f2"
+      },
+      "bad_crc": {
+        "format": "EXPERIMENTAL_TEXT_AAAA_LEN_UTF8_CRC16",
+        "ccsds": false,
+        "text": "hello world",
+        "payload_hex": "68656c6c6f20776f726c64",
+        "frame_hex": "aaaa0b68656c6c6f20776f726c64efea",
+        "payload_bytes": 11,
+        "frame_bits": 128,
+        "complex_samples": 3200,
+        "byte_count": 12800,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "sample_rate_hz": 2500000,
+        "symbol_rate": 100000,
+        "samples_per_symbol": 25,
+        "beta": 0.35,
+        "span_symbols": 8,
+        "offset_hz": 500000,
+        "amplitude": 0.1,
+        "amplitude_reference": "normalized complex peak, not RF power",
+        "cyclic_shaping": "three frames shaped, center frame retained",
+        "crc": "CRC-16/CCITT-FALSE over payload only, big-endian",
+        "corrupt_crc": true,
+        "test_only": true,
+        "sha256": "fb38de20034fa6973bb3ae0639c1da3262892fb5993809073171b972bbf0c65a"
+      }
+    }
+  },
+  "receiver": {
+    "format": "interleaved little-endian int16 I/Q, sign-extended 12-bit ADC",
+    "acquisition": "8192 complex samples per independent snapshot; three text windows each, two per UDP frequency",
+    "carrier": "pre-mix expected center then square-law residual FFT/interpolation",
+    "decisions": "SRRC matched filter, sample-phase search, both BPSK polarities, arbitrary bit alignment",
+    "text_blind_acquisition": true,
+    "crc_required": true,
+    "ber": null
+  },
+  "groups": {
+    "capture_full_r1": {
+      "passed": true,
+      "capture_completed": true,
+      "cases": [
+        {
+          "name": "quiet",
+          "expect_valid": false,
+          "passed": true,
+          "sha256": "f7b89e4455c5c2f56dad739dfbf5d4c3be04c1e09536172b94b68c7f2934e04d",
+          "carrier_offset_hz": -260149.37488649818,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 0,
+          "texts": [],
+          "expected_payload_hex": null,
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 0,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 319,
+          "band_power_dbfs": -74.17922233804816,
+          "rms_codes": 1.8050425787048625,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "hello_0",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "be646dc4a5c37c30a1b8acdff646372558273d920629c9c7d099b18f218b4a0e",
+          "carrier_offset_hz": -250069.45584198294,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 1,
+          "texts": [
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.16241764155921,
+          "rms_codes": 5.23267229768882,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "hello_1",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "e8d6b87fce9319338b7c1d9b7cd4391b1c6f504a9fb5f6d004de2ef65637deb5",
+          "carrier_offset_hz": -250064.34827249008,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 1,
+          "texts": [
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 319,
+          "band_power_dbfs": -54.27816106601762,
+          "rms_codes": 5.1559777390241415,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "hello_2",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "5363149e70c6628d68cb76ea29dc71bcc9fdeb9e80860701c393357bd886d1ce",
+          "carrier_offset_hz": -250063.81346130357,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 2,
+          "texts": [
+            "hello world",
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 2,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.36262989473598,
+          "rms_codes": 5.18846470698462,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "relay_muted",
+          "expect_valid": false,
+          "passed": true,
+          "sha256": "ab407d58c850b0f137f577297765dae5de6f18c6ea93a7ab77ea0812fddb5edd",
+          "carrier_offset_hz": -243827.68769322618,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 0,
+          "texts": [],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 0,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 319,
+          "band_power_dbfs": -74.08568172354877,
+          "rms_codes": 3.3078719143223334,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "source_off",
+          "expect_valid": false,
+          "passed": true,
+          "sha256": "bb5a4f6fa1ce1e07005fe4cb24dbb92c6f419612f3e9ea823a3531c7f9bf8003",
+          "carrier_offset_hz": -260192.15336326783,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 0,
+          "texts": [],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 0,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 319,
+          "band_power_dbfs": -74.12125875773268,
+          "rms_codes": 3.2808221447241697,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "text1_0",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "bbf6e08dac29895ea74fee9d3ca5252b5ca3ebb2e3e25c1e7ebaf29bc44819c8",
+          "carrier_offset_hz": -250064.35987091286,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 1,
+          "texts": [
+            "relay test1"
+          ],
+          "expected_payload_hex": "72656c6179207465737431",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.36513980236107,
+          "rms_codes": 5.141978355287972,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "text1_1",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "3e7bb6d55a3b5fd7a30fe1e5308fb6b5f1f341027a6a825ac6c39d973ab6ab63",
+          "carrier_offset_hz": -250062.79240996038,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 1,
+          "texts": [
+            "relay test1"
+          ],
+          "expected_payload_hex": "72656c6179207465737431",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.31855577279225,
+          "rms_codes": 5.136598442032188,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "text1_2",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "1bebdc9c2569ec9d4b9f335466c97f84ba942896446490254fff917724f1ebdf",
+          "carrier_offset_hz": -250060.1379508894,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 2,
+          "texts": [
+            "relay test1",
+            "relay test1"
+          ],
+          "expected_payload_hex": "72656c6179207465737431",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 2,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.39425208697627,
+          "rms_codes": 5.094205309405481,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "bad_crc_0",
+          "expect_valid": false,
+          "passed": true,
+          "sha256": "90ff1dba9bfd063aad7de3555f3fac094483a90839ede40a1559836df49acbc3",
+          "carrier_offset_hz": -250065.9502820417,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 0,
+          "texts": [],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 1,
+          "evaluable_symbol_bits": 319,
+          "band_power_dbfs": -54.371463691904445,
+          "rms_codes": 5.100958281600135,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "text2_0",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "f6210865d6fbd6f2f4cfa18bb9190de2ca8f3eacf5d67f064e5eb368cf71833d",
+          "carrier_offset_hz": 749934.2340037866,
+          "expected_offset_hz": 750000,
+          "valid_frame_count": 2,
+          "texts": [
+            "relay test2",
+            "relay test2"
+          ],
+          "expected_payload_hex": "72656c6179207465737432",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 2,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.695404094573775,
+          "rms_codes": 5.054717687313259,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "text2_1",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "88edb52ff1dbbb2b82955b5f2fe372366ae6984ec9c6f85dea41e5d45dda45d1",
+          "carrier_offset_hz": 749936.5465285388,
+          "expected_offset_hz": 750000,
+          "valid_frame_count": 2,
+          "texts": [
+            "relay test2",
+            "relay test2"
+          ],
+          "expected_payload_hex": "72656c6179207465737432",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 2,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 319,
+          "band_power_dbfs": -54.72516464613115,
+          "rms_codes": 5.017924414505215,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "text2_2",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "e4abd38c0305ae5d634eb8233bb38b1603f2374f20dc6153a9277b6adca2f705",
+          "carrier_offset_hz": 749938.5291214915,
+          "expected_offset_hz": 750000,
+          "valid_frame_count": 2,
+          "texts": [
+            "relay test2",
+            "relay test2"
+          ],
+          "expected_payload_hex": "72656c6179207465737432",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 2,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.61172919376337,
+          "rms_codes": 5.0781009614815655,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        }
+      ],
+      "positive_windows": 9,
+      "negative_windows": 4,
+      "accepted_frames": 14,
+      "accepted_payload_bits": 1232,
+      "accepted_payload_bit_errors": 0,
+      "ber": null,
+      "scope": "Independent short captures; CRC and payload confirmation, not continuous-link BER or FER",
+      "cleanup_errors": []
+    },
+    "capture_udp": {
+      "passed": true,
+      "capture_completed": true,
+      "cases": [
+        {
+          "name": "quiet",
+          "expect_valid": false,
+          "passed": true,
+          "sha256": "cffdcc0091e467aa247573cd12188b60a7b07a3db0117ae32f5acd147fa45376",
+          "carrier_offset_hz": -247741.36793131224,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 0,
+          "texts": [],
+          "expected_payload_hex": null,
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 0,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -73.84022539277558,
+          "rms_codes": 1.7917045175265367,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "udp_1000_0",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "d73ec3614c5b0367418d1feb724274cb1e872bf7cec0bd50a9945fbc3a3b2cd6",
+          "carrier_offset_hz": -250068.85031578693,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 1,
+          "texts": [
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.20943072503046,
+          "rms_codes": 5.18542880338743,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "udp_1000_1",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "99c32657f7024b45d16750f4520bf8d46e0b033f5861989840bcb5a8e2c67c4c",
+          "carrier_offset_hz": -250065.62104860926,
+          "expected_offset_hz": -250000,
+          "valid_frame_count": 1,
+          "texts": [
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.356958603665284,
+          "rms_codes": 5.136966783460353,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "udp_1001_0",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "a98032b219cc23374877ef32f6149b46f16a0508bb7e71113c8407adca7e3a44",
+          "carrier_offset_hz": 749930.0907705795,
+          "expected_offset_hz": 750000,
+          "valid_frame_count": 1,
+          "texts": [
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 1,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.602261514519526,
+          "rms_codes": 5.06819943449471,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        },
+        {
+          "name": "udp_1001_1",
+          "expect_valid": true,
+          "passed": true,
+          "sha256": "bd9a61b9150ec0c78871bbbd5491b4a3baf97d49b03ebab5388cc2f94a9c3a75",
+          "carrier_offset_hz": 749934.9951443806,
+          "expected_offset_hz": 750000,
+          "valid_frame_count": 2,
+          "texts": [
+            "hello world",
+            "hello world"
+          ],
+          "expected_payload_hex": "68656c6c6f20776f726c64",
+          "accepted_payload_bit_errors": 0,
+          "complete_evaluated_frames": 2,
+          "crc_rejected_frames": 0,
+          "evaluable_symbol_bits": 320,
+          "band_power_dbfs": -54.71467926220515,
+          "rms_codes": 5.039649917311966,
+          "clip_components": 0,
+          "relay_clip_delta": 0
+        }
+      ],
+      "positive_windows": 4,
+      "negative_windows": 1,
+      "accepted_frames": 5,
+      "accepted_payload_bits": 440,
+      "accepted_payload_bit_errors": 0,
+      "ber": null,
+      "scope": "Independent short captures; CRC and payload confirmation, not continuous-link BER or FER",
+      "cleanup_errors": []
+    }
+  },
+  "totals": {
+    "positive_windows": 13,
+    "negative_windows": 5,
+    "accepted_frames": 19,
+    "accepted_payload_bits": 1672,
+    "accepted_payload_bit_errors": 0,
+    "ber": null,
+    "note": "Counts refer only to complete CRC-accepted frames in saved snapshots, not all transmitted bits or frames"
+  },
+  "udp_control": {
+    "source": "UART_NETTEST",
+    "matched_ack_and_independent_spi": true,
+    "transactions": [
+      {
+        "rx_mhz": 900,
+        "tx_mhz": 1000,
+        "seq": 100,
+        "gain_db": 30,
+        "atten_db": 50,
+        "reply": "COMMAND source=UART_NETTEST rx=900 tx=1000 air_seq=100 rc=0\r\nUDP_SEND_ATTEMPT source=UART_NETTEST rx=900 tx=1000 air_seq=100 rc=0\r\nCLI_RESULT rc=0\r\nACK source=UART_NETTEST rx=900 tx=1000 air_seq=100 rc=0\r\n",
+        "adda_status": "CONTROLLER auto=0 capture_state=6 capture_valid=1 consumed=1\r\nSTATUS network=1 armed=0 decoded=180 applied=14 pending=0 retries=1 failures=0 gain=0 att=89\r\nCLI_RESULT rc=0\r\n"
+      },
+      {
+        "rx_mhz": 900,
+        "tx_mhz": 1001,
+        "seq": 101,
+        "gain_db": 30,
+        "atten_db": 50,
+        "reply": "COMMAND source=UART_NETTEST rx=900 tx=1001 air_seq=101 rc=0\r\nUDP_SEND_ATTEMPT source=UART_NETTEST rx=900 tx=1001 air_seq=101 rc=0\r\nCLI_RESULT rc=0\r\nACK source=UART_NETTEST rx=900 tx=1001 air_seq=101 rc=0\r\n",
+        "adda_status": "CONTROLLER auto=0 capture_state=6 capture_valid=1 consumed=1\r\nSTATUS network=1 armed=0 decoded=180 applied=15 pending=0 retries=1 failures=0 gain=0 att=89\r\nCLI_RESULT rc=0\r\n"
+      },
+      {
+        "rx_mhz": 900,
+        "tx_mhz": 1000,
+        "seq": 102,
+        "gain_db": 0,
+        "atten_db": 89,
+        "reply": "COMMAND source=UART_NETTEST rx=900 tx=1000 air_seq=102 rc=0\r\nUDP_SEND_ATTEMPT source=UART_NETTEST rx=900 tx=1000 air_seq=102 rc=0\r\nCLI_RESULT rc=0\r\nACK source=UART_NETTEST rx=900 tx=1000 air_seq=102 rc=0\r\n",
+        "adda_status": "CONTROLLER auto=0 capture_state=6 capture_valid=1 consumed=1\r\nSTATUS network=1 armed=0 decoded=180 applied=16 pending=0 retries=1 failures=0 gain=0 att=89\r\nCLI_RESULT rc=0\r\n"
+      }
+    ],
+    "direct_cli_tx1001_write_absent": true,
+    "mean_carrier_before_hz": -250067.23568219808,
+    "mean_carrier_after_hz": 749932.5429574801,
+    "measured_shift_hz": 999999.7786396781,
+    "applied_before": 13,
+    "applied_after": 16,
+    "note": "Positive RF captures follow UDP-controlled frequencies; restoration also received ACK after conservative CLI mute/restoration"
+  },
+  "tests": {
+    "offline_tests_passed": 9,
+    "command": "python -B -m unittest discover -s sw/tools -p test_rf_text_link.py -v",
+    "known_crc_vector": "123456789 -> 0x29B1",
+    "known_hello_frame": "aaaa0b68656c6c6f20776f726c64efeb"
+  },
+  "unchanged": {
+    "gui": true,
+    "telecontrol_v2": true,
+    "adda_firmware": true,
+    "ldsdr_firmware": true,
+    "sender_firmware": true,
+    "last_loaded_ldsdr_elf_sha256": "2fed9cd6927a2b364217741d6a02a7219ad582735ccf01b8d7c8f9bf4c50ee06",
+    "firmware_note": "Continued previous RAM-loaded fixed program; no new JTAG download or boot-media write this phase"
+  },
+  "initial_upload_failure": {
+    "before_transmission": true,
+    "reason": "Long interactive console line was truncated, leaving shell in continued quote input",
+    "recovery": "Ctrl+C, recheck LO off/DMA off/TX89/DDS0; retry with 512-hex-character chunks, preflight line bound and file hashes",
+    "failed_run": "capture_full",
+    "recovered_idle_log": "uart_recovery.json"
+  },
+  "final_state": {
+    "source_tx_lo_off": true,
+    "source_dma_off": true,
+    "source_dds_zero": true,
+    "source_tx_atten_db": [
+      89,
+      89
+    ],
+    "relay_mode": 2,
+    "relay_tx_atten_db": [
+      89,
+      89
+    ],
+    "relay_rx_gain_db": [
+      0,
+      0
+    ],
+    "relay_rx_hz": 900000000,
+    "relay_tx_hz": 1000000000,
+    "adda_auto": 0,
+    "adda_network": 0,
+    "adda_armed": 0,
+    "adda_pending": 0,
+    "adda_failures": 0,
+    "adda_applied": 16,
+    "adda_decoded": 180
+  },
+  "limits": [
+    "Experimental text frame, not CCSDS TM/TC compliance acceptance",
+    "CRC-accepted payload comparison does not establish BER=0 or total-frame delivery rate",
+    "Independent short snapshots, not uninterrupted streaming or long-duration performance",
+    "No ADC command reception during these tests; UDP source is UART_NETTEST",
+    "No second RF channel, antenna test, absolute-power calibration or persistent boot deployment",
+    "Business rate100ksym/s is this validation point, not the final required system rate"
+  ],
+  "source_hashes": {
+    "sw/tools/rf_text_link.py": "50241d8f7ee3a5961e2e0c867c91cc7523b91c2ea955bb938639c2503f01fc38",
+    "sw/tools/test_rf_text_link.py": "b12685b650febaadb93520a8a243772f1aae235e7f95b4ed57e74b548d9cf6d5",
+    "sw/ccsds/ccsds_tm_tx.py": "02768cd2fee17f9431f0a76bd445131485347aa9014ca635b32e825b37a40c9b"
+  },
+  "evidence_files": {
+    "capture_full_r1/result.json": {
+      "bytes": 49661,
+      "sha256": "b06ce34cb4f33562b2a5291502f0ec4f3f69df3be72d03409f9b8aacec97d11f"
+    },
+    "capture_full_r1/decode_summary.json": {
+      "bytes": 9409,
+      "sha256": "1f1cffc61766e73156b7982630b41f2350546641d530b7df310fe42f5da03271"
+    },
+    "capture_full_r1/runner_used.py": {
+      "bytes": 15288,
+      "sha256": "d223475b26f2418323a7a96e710c78fbd44026433b7320decdaed29ecb0e0be3"
+    },
+    "capture_full_r1/sender.json": {
+      "bytes": 2248392,
+      "sha256": "97f5f261c1fa2c8f3c5b12755d114648eefcbed8d5bde4ba540cba750188ad56"
+    },
+    "capture_full_r1/relay.json": {
+      "bytes": 32449,
+      "sha256": "a8d78b4948f805c567ed552a966ad9c5225fcb09c39ddc517d13f77b72bb2e2f"
+    },
+    "capture_udp/result.json": {
+      "bytes": 24244,
+      "sha256": "871dfd8ad3ca9744e428ab3ce150c69e304bf5bc3e65edb82fd225327a7fba45"
+    },
+    "capture_udp/decode_summary.json": {
+      "bytes": 3829,
+      "sha256": "bc7249cb079a49c8c92d0ce86553c822662fcea9b57a74d03e8213094bd70239"
+    },
+    "capture_udp/runner_used.py": {
+      "bytes": 17312,
+      "sha256": "c730ceb7b30e812ccd94872a966e3799c93e06e33b75da4c0db060810a1d90b3"
+    },
+    "capture_udp/sender.json": {
+      "bytes": 836820,
+      "sha256": "d0f57508a00b313c3a02c2e0444334e54b7cf92a5de09f2afd1ba7a9e291484a"
+    },
+    "capture_udp/relay.json": {
+      "bytes": 17049,
+      "sha256": "dd81368923772f82ebf3ec354db95a70d5b19f0cab9878c0d60e836127407f44"
+    }
+  },
+  "local_archive": {
+    "filename": "rf_payload_20261028.zip",
+    "location": "D:\\RelayTools\\releases\\rf_payload_20261028.zip",
+    "bytes": 910576,
+    "sha256": "2f0946c6fe73e8e6552ca716aaa2472759cd48a793df2d45e5c1a2b41e5b529c",
+    "files": 76,
+    "entry_hashes_verified": true
+  }
+}
