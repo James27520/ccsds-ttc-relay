@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-29",
+  "base_commit": "924a7d532a0c690c4bf93a2589b4f4883003ae03",
+  "passed": true,
+  "scope": "V2 GUI text after retained real RF telecontrol LO901/1000; sequential wired test",
+  "software_changed": false,
+  "firmware_changed": false,
+  "flash_sd_written": false,
+  "new_telecommand_this_round": false,
+  "bench_frequency_write": false,
+  "remote_mode_level_controlled_by_rf": false,
+  "second_computer_tested": false,
+  "six_link_concurrent_tested": false,
+  "preceding_rf_tc": "2026-10-29-frequency-tc.json",
+  "wiring": [
+    "sender TX1A -> LDSDR RX1",
+    "LDSDR TX1 -> independent receiver RX1A",
+    "ADDA J6 -> sender RX1A (idle)"
+  ],
+  "relay_lo_retained": {
+    "relay_rx_hz_readback": 900999998,
+    "relay_tx_hz_readback": 1000000000,
+    "relay_tx_atten_db_readback": 89,
+    "relay_rx_gain_db_readback": 0
+  },
+  "bench_enabled": {
+    "mode": 1,
+    "rx_gain_db": 30,
+    "tx_atten_db": 50
+  },
+  "result": {
+    "passed": true,
+    "text": "遥控联动 901.5MHz",
+    "message_id": "e1318af9:0000",
+    "payload_bytes": 21,
+    "windows": 32,
+    "positive_windows": 7,
+    "valid_frames": 21,
+    "unique_messages": 1,
+    "negative_before_preparation": 10,
+    "negative_after_confirmed_stop": 8,
+    "preparation_to_first_decode_seconds": 18.6104416847229,
+    "click_to_receive_seconds": null,
+    "timing_note": "Preparation status follows the sender stop/check step; not click-to-receive latency.",
+    "tx_receipt_to_first_decode_seconds": 4.972891569137573,
+    "tx_receipt_to_stopped_status_seconds": 31.72587752342224,
+    "carrier_hz_range": [
+      1000500094.3803796,
+      1000500101.3147426
+    ],
+    "processing_seconds_range": [
+      3.2295537999962107,
+      3.2536890000046697
+    ],
+    "clip_counter_changes": [
+      {
+        "time": 1793219593.5633552,
+        "clip": 22086156
+      },
+      {
+        "time": 1793219709.0766323,
+        "clip": 22412004
+      }
+    ],
+    "clip_counter_delta": 325848,
+    "clip_change_observation_interval_unix": [
+      1793219703.3874335,
+      1793219709.0766323
+    ],
+    "stable_and_stop_clip_delta": 0,
+    "receiver_adc_clipped_components": 0,
+    "receiver_settings": {
+      "rx_lo_mhz_requested": 1000.75,
+      "rx_lo_hz_readback": 1000749998,
+      "expected_rf_mhz": 1000.5,
+      "rx_gain_db_requested": 30,
+      "rx_gain_db_readback": 30,
+      "sample_rate_hz": 2500000,
+      "configured": true
+    }
+  },
+  "gui": {
+    "real_buttons_used": true,
+    "receiver_reads_own_iq_only": true,
+    "sender_plan_origin": "真实 RF 回报",
+    "sender_center_mhz": 901.5,
+    "receiver_target_mhz": 1000.5,
+    "auto_business_send": false,
+    "windows_left_open_disconnected": true
+  },
+  "checks": {
+    "blind_redecode_matches_saved_reports": true,
+    "pre_post_readonly_audit_passed": true,
+    "adda_applied_before": 4,
+    "adda_applied_after": 4,
+    "adda_events_before": 12,
+    "adda_events_after": 12,
+    "intentional_receive_cancel_events": 1,
+    "software_tests_rerun": false,
+    "software_test_note": "No application code changed; prior commit reports 267 passing tests."
+  },
+  "final_state": {
+    "endpoints": [
+      {
+        "role": "sender",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "900999998",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "receiver",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "2400000000",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ],
+    "relay_mode": 2,
+    "relay_spi": {
+      "relay_rx_hz_readback": 900999998,
+      "relay_tx_hz_readback": 1000000000,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "relay_clip_count": 22412004,
+    "adda_network": 0,
+    "adda_service_active": 0,
+    "adda_dac_idle": true
+  },
+  "limitations": [
+    "Business payload is experimental G1/BPSK/CRC16, not an NTN standards conformance test.",
+    "One unique message; repeated frames are not independent messages.",
+    "Each snapshot covers 13.1072 ms; acquisition gaps preclude continuous BER claims.",
+    "Relay clipping rose during sender preparation; cause and mitigation remain open.",
+    "Remote relay mode, level feedback and board-side timeout still require protocol/firmware work."
+  ],
+  "evidence": {
+    "local_work": "D:\\RelayTools\\work\\tc_business_20261029",
+    "archive": "D:\\RelayTools\\releases\\tc_business_20261029.zip",
+    "bytes": 1874831,
+    "sha256": "c6cfa7db119b0d48fa2ddc3281697df2087c1442ce8a2287f2476299440210b6",
+    "manifest_sha256": "f917da114c339bb7466727d69d812243b0466991291ebbf62f17a45475c8d20f"
+  }
+}
