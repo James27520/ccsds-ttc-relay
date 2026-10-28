@@ -2,7 +2,7 @@
 
 记录日期：2026-10-28。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
 
-最新GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
+最新业务序列与稳定性见 [稳定性验证摘要](validation/2026-10-28-rf-stability.json)；GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成
 
@@ -119,12 +119,22 @@ GUI新增持久显示`last_decoded`与`last_ack`，分别表示最近有效解�
 
 两轮合计19个完整CRC有效帧、1672个已接受payload bit与发送内容一致；这不是全体传输比特的BER测量，也不代表没有漏帧。所有采样无ADC削顶，采样前后LDSDR削顶计数增量0。9项离线测试通过，包括独立CRC/帧已知值；工具和详情见[调制文本验证](rf-payload-validation.md)，原始采样和日志包的校验和见[摘要](validation/2026-10-28-rf-payload.json)。GUI、遥控协议、三板固件和启动介质均未修改，结束时源关闭、转发静音、两端两路TX衰减89 dB。
 
+### 2026-10-28：业务序列、保持输出与UDP恢复
+
+沿用发送板TX1A→LDSDR RX1、LDSDR TX1→发送板RX1A的两根有线连接，没有ADDA SMA输入。实验BPSK文本序列为SEQ000:ABCD至SEQ007:ABCD循环，非遥控V2帧；离线序列工具8项测试通过。同一TX writer保持输出311.136秒、期间未重启，取得11次离散快照。另完成8次1000/1001 MHz交替UART_NETTEST/UDP设置及异常恢复；全轮11笔成功事务使applied从16增至27，最终pending=0、failures=0。
+
+全轮25个8192组I/Q窗口中，23个正例均恢复预期序列，共29个完整CRC有效帧、2552个已接受payload bit；2个负例（基线、源关闭）无有效帧。CRC选定同步与已知序列锚定后的7356个条件比较bit无差异，未发现非预期payload，窗口内6个序列转移均一致。所有窗口ADC削顶为0、逐窗口LDSDR削顶增量0，保持输出阶段累计增量亦0。离散窗口不能量化跨采样空档的丢帧或整体BER，也不是24小时运行结论。
+
+非法seq=256由CLI参数检查拒绝，未构成畸形UDP测试；network off验证软件disable后的拒绝与恢复，不是物理拔线。11笔事务从PC串口发指令到收到ACK通知为23.14～34.96 ms，不是纯网络或PLL时延。8次改频从请求到正确快照完成的主机流程上界约4.27～4.33秒，包含主机步骤，不代表射频建立时间。
+
+本轮completed=true、cleanup_errors为空；源端LO/DMA/DDS关闭、两路TX衰减89 dB，LDSDR静音、两路TX衰减89 dB、RX增益0、RX900/TX1000 MHz，ADDA auto/ARM/network关闭。GUI、遥控V2、固件及启动介质未改。详情见[业务序列与稳定性验证](rf-stability-validation.md)，数值与证据校验索引见[摘要](validation/2026-10-28-rf-stability.json)。
+
 ## 后续验收
 
 | 工作 | 验收要求 |
 |---|---|
-| 业务RF | 第一条有线单音、100 ksym/s实验文本/CRC及UDP实际改频已通过；继续量化误码率、长帧/持续吞吐、第二路及最终业务带宽 |
-| 联合控制与源码归档 | 修正版已通过UART_NETTEST回归；仍需重跑真实ADC自动控制并安排业务与遥控同时运行，确定活动LDSDR PL的完整源码与位流对应关系 |
+| 业务RF | 单音、实验文本/序列、311.136秒保持输出与离散快照及UDP实际改频已通过；下一步用两根SMA和已接DEBUG待识别的独立接收板验证业务链，继续量化误码率、长帧/持续吞吐、第二路及最终业务带宽 |
+| 联合控制与源码归档 | 修正版已通过UART_NETTEST回归；真实ADC与业务同时运行仍需独立100.5 MHz指令源及第三根同轴，重跑真实ADC自动控制并确定活动LDSDR PL的完整源码与位流对应关系 |
 | 接收性能边界 | 当前实物有线100.5 MHz工作点已通过；后续按目标工作范围开展电平标定、误码率、真实坏帧拒绝与接收边界测试 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 

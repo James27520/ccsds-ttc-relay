@@ -7,8 +7,9 @@
 - r4c ADC采集通过全通道、四个抽取位置的内部PN9/checker与独立DDR检查；板载ARM解调自测、网口1000 Mbps协商与PC ping 10/10通过。
 - 真实100.5 MHz指令经ADC_NORMAL、PS解调、UDP及匹配ACK控制LDSDR，独立SPI读回四组频率；[GUI启停及自动控制](docs/validation/2026-10-28-gui-loop.json)另已通过，GUI nettest按钮未实测。
 - 修正LDSDR接收I/Q顺序后，[单音变频转发](docs/rf-forward-bringup.md)与[100 ksym/s文本业务转发](docs/rf-payload-validation.md)通过。两轮文本测试共13个有效信号窗口、19个完整CRC有效帧，三段内容全部一致；静音、关源和坏CRC未误接收。另用遥控板UDP命令触发约1 MHz实际频移，新频点仍恢复正确文本。
+- [业务序列与稳定性验证](docs/rf-stability-validation.md)另完成同一TX writer保持输出311.136秒、11次离散快照及8次1000/1001 MHz交替UDP设置。全轮25个窗口中，23个正例恢复29个完整CRC有效帧；7356个条件比较bit无差异，2个负例无有效帧，采样无ADC削顶、转发削顶增量0。
 
-结论限当前实物、第一路有线链和短快照。文本使用实验帧，不能据此宣称完整CCSDS协议符合性；误码率、业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收。
+结论限当前实物、第一路有线链和离散快照。文本使用实验帧，条件比特比较不是整体BER测量；不能据此宣称完整CCSDS协议符合性、24小时稳定性或无跨窗口漏帧。独立接收板业务链、业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收。
 
 Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已归档至 [board/z7addalite/](board/z7addalite/README.md)。重建需要外部工具链、2018.3 embeddedsw 源归档及匹配的硬件产物；第三方依赖与命令见板级说明。原有 RTL 环回、PC 演示软件和串口工具继续保留为早期实现。
 
@@ -61,6 +62,7 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 | 多板通信 | 真实SMA指令→ADC_NORMAL→自动C解调→UDP→ACK→LDSDR SPI读回四例通过，含900/1000 MHz恢复 | 当前有线100.5 MHz工作点；每例重复帧观察2秒无新UDP，关闭信号2秒无误触发；修正版尚未重跑真实ADC自动控制 |
 | 业务RF单音 | RX I/Q修正后，900.5→1000.5 MHz单音转发及1 MHz改频通过；静音/关闭源下降30.43/30.12 dB | 单路有线短快照，无新增削顶 |
 | 调制业务与UDP改频 | 三种BPSK文本及负例通过；UART_NETTEST/UDP将实际输出移频约1 MHz后仍正确解码 | 共19个CRC有效帧；实验文本帧，电脑1离线解码；未量化BER、第二路或同时运行 |
+| 业务序列与稳定性 | 同一TX writer输出311.136秒、11次离散快照；8次UDP交替改频及软件拒绝/恢复通过 | 全轮25窗口、29个CRC有效帧；7356个条件比较bit无差异，不代表整体BER或连续无漏帧 |
 
 本轮证据见 [真实输入闭环摘要](docs/validation/2026-10-28-analog-loop.json)，完整记录、产物摘要和未完成项见 [验证与待办](docs/validation.md)。早期 40 字节 RTL 环回结果见 [历史验证记录](docs/legacy-validation.md)，两者使用不同的板卡与协议路径。
 
