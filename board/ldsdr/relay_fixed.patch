@@ -1,0 +1,430 @@
+--- a/src/ad9361.c
++++ b/src/ad9361.c
+@@ -1841,21 +1841,19 @@
+  * @return 0 in case of success
+  */
+ static int32_t ad9361_get_full_table_gain(struct ad9361_rf_phy *phy,
+-		uint32_t idx_reg,
+-		struct rf_rx_gain *rx_gain)
+-{
+-	struct spi_device *spi = phy->spi;
+-	uint32_t val;
+-
+-	rx_gain->fgt_lmt_index = val = ad9361_spi_readf(spi, idx_reg,
+-				       FULL_TABLE_GAIN_INDEX(~0));
+-	/* Read Digital Gain */
+-	rx_gain->digital_gain = ad9361_spi_readf(spi, idx_reg + 2,
+-				DIGITAL_GAIN_RX(~0));
+-
+-	rx_gain->gain_db = phy->gt_info[ad9361_gt(phy)].abs_gain_tbl[val];
+-
+-	return 0;
++        uint32_t idx_reg, struct rf_rx_gain *rx_gain)
++{
++    int32_t index, digital;
++    unsigned int table = ad9361_gt(phy);
++    index = ad9361_spi_readf(phy->spi, idx_reg, FULL_TABLE_GAIN_INDEX(~0));
++    if (index < 0) return index;
++    if ((unsigned int)index >= phy->gt_info[table].max_index) return -EINVAL;
++    digital = ad9361_spi_readf(phy->spi, idx_reg + 2, DIGITAL_GAIN_RX(~0));
++    if (digital < 0) return digital;
++    rx_gain->fgt_lmt_index = index;
++    rx_gain->digital_gain = digital;
++    rx_gain->gain_db = phy->gt_info[table].abs_gain_tbl[index];
++    return 0;
+ }
+ 
+ /**
+@@ -6679,7 +6677,7 @@
+ {
+ 	struct ad9361_rf_phy *phy = clk_priv->phy;
+ 	uint32_t fract, integer;
+-	uint8_t buf[5];
++	uint8_t buf[5] = {0};
+ 	uint32_t reg, div_mask, vco_div, profile;
+ 
+ 	dev_dbg(&clk_priv->spi->dev, "%s: Parent Rate %"PRIu32" Hz",
+@@ -6712,8 +6710,9 @@
+ 		vco_div = ad9361_fastlock_readval(phy->spi, tx, profile, 12) & 0xF;
+ 
+ 	} else {
+-		ad9361_spi_readm(clk_priv->spi, reg, &buf[0], ARRAY_SIZE(buf));
+-		vco_div = ad9361_spi_readf(clk_priv->spi, REG_RFPLL_DIVIDERS, div_mask);
++		if (ad9361_spi_readm(clk_priv->spi, reg, &buf[0], ARRAY_SIZE(buf)) < 0) return 0;
++		{ int32_t divider = ad9361_spi_readf(clk_priv->spi, REG_RFPLL_DIVIDERS, div_mask);
++		  if (divider < 0) { return 0; } vco_div = (uint32_t)divider; }
+ 	}
+ 
+ 	fract = (SYNTH_FRACT_WORD(buf[0]) << 16) | (buf[1] << 8) | buf[2];
+--- a/src/main.c
++++ b/src/main.c
+@@ -82,7 +82,7 @@
+  * The vendor example was 70 (= 0.07 dB, essentially full power) - that is
+  * almost certainly a decimal-point slip.  Measure the TX output before
+  * lowering this. */
+-uint32_t txatt       = 30000;
++uint32_t txatt       = 89000;
+ struct ad9361_rf_phy *ad9361_phy;
+ 
+ /* Visible through JTAG while UART and Ethernet control the radio. */
+@@ -105,6 +105,9 @@
+ 	RELAY_MAILBOX[5] = RELAY_MAILBOX[5] + 1u;
+ }
+ 
++static int probe_ready = 0;
++static int probe_init_rc = -1;
++extern volatile uint32_t relay_spi_error_count;
+ #include "relay_cli.h"
+ #include "relay_udp.h"
+ 
+@@ -156,7 +159,7 @@
+ 	0,		//rx_rf_port_input_select *** adi,rx-rf-port-input-select
+ 	0,		//tx_rf_port_input_select *** adi,tx-rf-port-input-select
+ 	/* TX Attenuation Control */
+-	10000,	//tx_attenuation_mdB *** adi,tx-attenuation-mdB
++	89000,	//tx_attenuation_mdB *** adi,tx-attenuation-mdB
+ 	0,		//update_tx_gain_in_alert_enable *** adi,update-tx-gain-in-alert-enable
+ 	/* Reference Clock Control */
+ 	0,		//xo_disable_use_ext_refclk_enable *** adi,xo-disable-use-ext-refclk-enable
+@@ -276,7 +279,7 @@
+ 	0,		//digital_interface_tune_skip_mode *** adi,digital-interface-tune-skip-mode
+ 	0,		//digital_interface_tune_fir_disable *** adi,digital-interface-tune-fir-disable
+ 	1,		//pp_tx_swap_enable *** adi,pp-tx-swap-enable
+-	1,		//pp_rx_swap_enable *** adi,pp-rx-swap-enable
++	0,		//pp_rx_swap_enable *** adi,pp-rx-swap-enable
+ 	0,		//tx_channel_swap_enable *** adi,tx-channel-swap-enable
+ 	0,		//rx_channel_swap_enable *** adi,rx-channel-swap-enable
+ 	1,		//rx_frame_pulse_mode_enable *** adi,rx-frame-pulse-mode-enable
+@@ -411,114 +414,89 @@
+ *******************************************************************************/
+ int main(void)
+ {
+-	Xil_ICacheEnable();
+-	Xil_DCacheEnable();
+-	//ad936x resetpin
+-	default_init_param.gpio_resetb = EMIO_RESET;
+-	default_init_param.gpio_sync=-1;
+-	default_init_param.gpio_cal_sw1=-1;
+-	default_init_param.gpio_cal_sw2=-1;
+-
+-	gpio_init(GPIO_DEVICE_ID);
+-	gpio_direction(default_init_param.gpio_resetb, 1);
+-
+-	gpio_initial();	//init gpio emio
+-
+-	spi_init(SPI_DEVICE_ID, 1, 0);	//init SPI
+-
+-	//initial ad936x
+-	ad9361_init(&ad9361_phy, &default_init_param);
+-	//set fir param
+-	ad9361_set_tx_fir_config(ad9361_phy, tx_fir_config);
+-	ad9361_set_rx_fir_config(ad9361_phy, rx_fir_config);
+-	ad9361_set_tx_fir_en_dis(ad9361_phy, 1);
+-	ad9361_set_rx_fir_en_dis(ad9361_phy, 1);
+-	//set sample rate
+-	ad9361_set_tx_sampling_freq(ad9361_phy, sample_rate);
+-	ad9361_set_rx_sampling_freq(ad9361_phy, sample_rate);
+-	//set lo
+-	ad9361_set_tx_lo_freq(ad9361_phy, tx_lo_freq);
+-	ad9361_set_rx_lo_freq(ad9361_phy, rx_lo_freq);
+-	//set bandwidth
+-	ad9361_set_tx_rf_bandwidth(ad9361_phy, bandwidth);
+-	ad9361_set_rx_rf_bandwidth(ad9361_phy, bandwidth);
+-	//set rx channel gain
+-	ad9361_set_rx_rf_gain(ad9361_phy, 0, gain);
+-	ad9361_set_rx_rf_gain(ad9361_phy, 1, gain);
+-	//set tx att
+-	ad9361_set_tx_attenuation(ad9361_phy, 0, txatt);
+-	ad9361_set_tx_attenuation(ad9361_phy, 1, txatt);
+-
+-	//SET I DELAY/DDS INCREAMENT
+-	AXI_REG_WRITE(I_DELAY_EN, 0x7f);
+-	AXI_REG_WRITE(I_DELAY_TAP, 8);
+-	AXI_REG_WRITE(DDS_PHASE_INC, 128);
+-	AXI_REG_WRITE(PHY_MODE, AD9361_PHY_MODE_2R2T);
+-
+-	/* ================= BIST MUST STAY OFF =================
+-	 * The original code enabled the AD9361 internal BIST:
+-	 *     ad9361_spi_write(ad9361_phy->spi, 0x3f4, 0x03);//tx tone
+-	 *     ad9361_spi_write(ad9361_phy->spi, 0x3f5, 0x01);//no rf loop
+-	 *     ad9361_spi_write(ad9361_phy->spi, 0x3f6, 0x00);
+-	 * 0x3F4 = REG_BIST_CONFIG: bit0 = BIST_ENABLE, bit[3:2] =
+-	 * BIST_CTRL_POINT.  0x03 therefore means "BIST on, inject at TX,
+-	 * tone mode" - the chip then generates its own digital tone and
+-	 * REPLACES the DAC data coming from the PL, so the relayed signal
+-	 * never reaches the antenna.  Left commented out on purpose.
+-	 * ====================================================== */
+-
+-	/* ---- PL relay bring-up ---------------------------------------- */
+-	relay_set_mode(RELAY_MODE_MUTE);      /* safe state while configuring */
+-	relay_set_ddc_freq(0);                /* no down-conversion offset     */
+-	relay_set_duc_freq(0);                /* no up-conversion offset       */
+-	relay_set_gain(RELAY_GAIN_UNITY, 0);  /* unity gain, DC blocker off    */
+-	relay_set_mode(RELAY_MODE_RELAY);     /* ADC -> DDC -> DUC -> DAC      */
+-
+-	printf("\r\n===== PL relay enabled =====\r\n");
+-	printf("  RX_LO       = %u Hz\r\n", (unsigned int)rx_lo_freq);
+-	printf("  TX_LO       = %u Hz\r\n", (unsigned int)tx_lo_freq);
+-	printf("  sample_rate = %u Hz\r\n", (unsigned int)sample_rate);
+-	printf("  TX atten    = %u mdB (%u dB)\r\n",
+-	       (unsigned int)txatt, (unsigned int)(txatt / 1000));
+-	printf("  relay mode  = RELAY, DDC=0, DUC=0, gain=1.0\r\n");
+-
+-	/* ---- health check --------------------------------------------- */
+-	{
+-		u32 n_in = 0, n_out = 0, n_clip = 0;
+-		int rc = relay_health_check(&n_in, &n_out, &n_clip);
+-		printf("  status      : in=%u out=%u clip=%u rc=%d\r\n",
+-		       (unsigned int)n_in, (unsigned int)n_out,
+-		       (unsigned int)n_clip, rc);
+-		if (rc != 0) {
+-			relay_set_mode(RELAY_MODE_MUTE);
+-			printf("  !! no data flowing through the PL relay - MUTED\r\n");
+-		} else {
+-			printf("  relay OK\r\n");
+-		}
+-	}
+-	printf("============================\r\n");
+-	relay_mailbox_init();
+-	cli_help();
+-	cli_stat();
+-	if (relay_udp_init() != 0)
+-		printf("ERROR: Ethernet/UDP initialization failed\r\n");
+-
+-	/* To demonstrate the digital frequency translation, replace the
+-	 * relay_set_duc_freq(0) call above with e.g.
+-	 *     relay_set_duc_freq(relay_freq_word(100000, sample_rate));
+-	 * for a +100 kHz offset.
+-	 */
+-
+-	while (1) {
+-		cli_poll();
+-		relay_udp_poll();
+-	}
+-
+-	Xil_DCacheDisable();
+-	Xil_ICacheDisable();
+-
+-
+-	return 0;
++    int rc = -1;
++    uint32_t spi_before;
++    struct relay_rf_command initial;
++
++    /* First PL access. No CH2/unknown register, PS7 init, PHY delay or bit load. */
++    relay_set_mode(RELAY_MODE_MUTE);
++    Xil_ICacheEnable();
++    Xil_DCacheEnable();
++    printf("\r\nRELAY_DIAG UDP5005 v1 start MUTED txatt=89000mdB auto=0\r\n");
++    default_init_param.gpio_resetb = EMIO_RESET;
++    default_init_param.gpio_sync = -1;
++    default_init_param.gpio_cal_sw1 = -1;
++    default_init_param.gpio_cal_sw2 = -1;
++    default_init_param.tx_attenuation_mdB = 89000;
++    default_init_param.rx_synthesizer_frequency_hz = rx_lo_freq;
++    default_init_param.tx_synthesizer_frequency_hz = tx_lo_freq;
++    ad9361_phy = NULL;
++    gpio_init(GPIO_DEVICE_ID);
++    gpio_direction(default_init_param.gpio_resetb, 1);
++    gpio_initial();
++    spi_before = relay_spi_error_count;
++    rc = spi_init(SPI_DEVICE_ID, 1, 0);
++    if (rc || relay_spi_error_count != spi_before) goto failed;
++    rc = ad9361_init(&ad9361_phy, &default_init_param);
++    if (rc || !ad9361_phy || relay_spi_error_count != spi_before) {
++        ad9361_phy = NULL; /* failed init frees its private allocation */
++        if (!rc) rc = -EIO;
++        goto failed;
++    }
++#define PROBE_STEP(call) do { \
++    spi_before = relay_spi_error_count; rc = (call); \
++    if (rc || relay_spi_error_count != spi_before) { \
++        printf("INIT_FAIL step=%s rc=%d spi_errors=%u\r\n", #call, rc, (unsigned)relay_spi_error_count); \
++        if (!rc) { rc = -EIO; } goto failed; \
++    } \
++} while (0)
++    PROBE_STEP(ad9361_set_tx_attenuation(ad9361_phy, 0, 89000));
++    PROBE_STEP(ad9361_set_tx_attenuation(ad9361_phy, 1, 89000));
++    PROBE_STEP(ad9361_spi_write(ad9361_phy->spi, REG_BIST_CONFIG, 0));
++    PROBE_STEP(ad9361_spi_write(ad9361_phy->spi, REG_OBSERVE_CONFIG, 0));
++    PROBE_STEP(ad9361_spi_write(ad9361_phy->spi, REG_BIST_AND_DATA_PORT_TEST_CONFIG, 0));
++    PROBE_STEP(ad9361_spi_write(ad9361_phy->spi, REG_DAC_TEST_2, 0));
++    PROBE_STEP(ad9361_set_tx_fir_config(ad9361_phy, tx_fir_config));
++    PROBE_STEP(ad9361_set_rx_fir_config(ad9361_phy, rx_fir_config));
++    PROBE_STEP(ad9361_set_tx_fir_en_dis(ad9361_phy, 1));
++    PROBE_STEP(ad9361_set_rx_fir_en_dis(ad9361_phy, 1));
++    PROBE_STEP(ad9361_set_tx_sampling_freq(ad9361_phy, sample_rate));
++    PROBE_STEP(ad9361_set_rx_sampling_freq(ad9361_phy, sample_rate));
++    PROBE_STEP(ad9361_set_tx_rf_bandwidth(ad9361_phy, bandwidth));
++    PROBE_STEP(ad9361_set_rx_rf_bandwidth(ad9361_phy, bandwidth));
++    PROBE_STEP(ad9361_set_rx_rf_gain(ad9361_phy, 0, 0));
++    PROBE_STEP(ad9361_set_rx_rf_gain(ad9361_phy, 1, 0));
++    initial.rx_hz = rx_lo_freq; initial.tx_hz = tx_lo_freq;
++    initial.rx_gain_db = 0; initial.tx_att_db = 89;
++    PROBE_STEP(probe_verify_config(&initial));
++    relay_set_ddc_freq(0);
++    relay_set_duc_freq(0);
++    relay_set_gain(RELAY_GAIN_UNITY, 0);
++    probe_ready = 1;
++    rc = 0;
++    goto cli_start;
++failed:
++    probe_ready = 0;
++    /* No dereference after failed ad9361_init; main never retries a freed PHY. */
++    if (ad9361_phy) {
++        ad9361_set_tx_attenuation(ad9361_phy, 0, 89000);
++        ad9361_set_tx_attenuation(ad9361_phy, 1, 89000);
++    }
++cli_start:
++    relay_set_mode(RELAY_MODE_MUTE);
++    probe_init_rc = rc;
++    cli_last_rc = rc;
++    printf("PROBE_INIT ready=%d rc=%d spi_errors=%u mode=2 auto=0\r\n",
++           probe_ready, rc, (unsigned)relay_spi_error_count);
++    relay_mailbox_init();
++    cli_help();
++    cli_stat();
++    if (ad9361_phy) probe_rfread();
++    if (probe_ready && relay_udp_init() != 0) {
++        relay_set_mode(RELAY_MODE_MUTE);
++        printf("ERROR: diagnostic UDP initialization failed\r\n");
++    }
++    while (1) { cli_poll(); if (probe_ready) relay_udp_poll(); }
+ }
+ 
+ void AXI_REG_WRITE(u32 REG_ADDR, u32 Data)
+--- a/src/platform.c
++++ b/src/platform.c
+@@ -82,6 +82,9 @@
+ /***************************************************************************//**
+  * @brief spi_init
+ *******************************************************************************/
++volatile uint32_t relay_spi_error_count = 0;
++static int32_t probe_spi_error(void) { ++relay_spi_error_count; return -EIO; }
++
+ int32_t spi_init(uint32_t device_id,
+ 		 uint8_t  clk_pha,
+ 		 uint8_t  clk_pol)
+@@ -92,18 +95,19 @@
+ #ifdef _XPARAMETERS_PS_H_
+ 
+ 	spi_config = XSpiPs_LookupConfig(device_id);
++	if (!spi_config) return probe_spi_error();
+ 	base_addr = spi_config->BaseAddress;
+ 
+-	XSpiPs_CfgInitialize(&spi_instance, spi_config, base_addr);
++	if (XSpiPs_CfgInitialize(&spi_instance, spi_config, base_addr) != XST_SUCCESS) return probe_spi_error();
+ 
+ 	spi_options = XSPIPS_MASTER_OPTION |
+ 		      (clk_pol ? XSPIPS_CLK_ACTIVE_LOW_OPTION : 0) |
+ 		      (clk_pha ? XSPIPS_CLK_PHASE_1_OPTION : 0) |
+ 		      XSPIPS_FORCE_SSELECT_OPTION;
+ 
+-	XSpiPs_SetOptions(&spi_instance, spi_options);
+-
+-	XSpiPs_SetClkPrescaler(&spi_instance, XSPIPS_CLK_PRESCALE_256);
++	if (XSpiPs_SetOptions(&spi_instance, spi_options) != XST_SUCCESS) return probe_spi_error();
++
++	if (XSpiPs_SetClkPrescaler(&spi_instance, XSPIPS_CLK_PRESCALE_256) != XST_SUCCESS) return probe_spi_error();
+ #else
+ 	XSpi_Initialize(&spi_instance, device_id);
+ 	XSpi_Stop(&spi_instance);
+@@ -129,9 +133,9 @@
+ 		 uint8_t bytes_number)
+ {
+ #ifdef _XPARAMETERS_PS_H_
+-	XSpiPs_SetSlaveSelect(&spi_instance, (spi->id_no == 0 ? 0 : 1));
+-
+-	XSpiPs_PolledTransfer(&spi_instance, data, data, bytes_number);
++	if (!spi || !data || !bytes_number) return probe_spi_error();
++	if (XSpiPs_SetSlaveSelect(&spi_instance, (spi->id_no == 0 ? 0 : 1)) != XST_SUCCESS) return probe_spi_error();
++	if (XSpiPs_PolledTransfer(&spi_instance, data, data, bytes_number) != XST_SUCCESS) return probe_spi_error();
+ #else
+ 	uint32_t cnt = 0;
+ #if defined(XPAR_AXI_SPI_0_DEVICE_ID) || defined(XPAR_SPI_0_DEVICE_ID)
+@@ -174,11 +178,14 @@
+ 			      0x00, 0x00, 0x00, 0x00
+ 			     };
+ 	uint8_t byte;
++	int32_t rc;
++	if (n_tx > sizeof(buffer) || n_rx > sizeof(buffer) - n_tx || !txbuf || (n_rx && !rxbuf)) return probe_spi_error();
+ 
+ 	for(byte = 0; byte < n_tx; byte++) {
+ 		buffer[byte] = (unsigned char)txbuf[byte];
+ 	}
+-	spi_read(spi, buffer, n_tx + n_rx);
++	rc = spi_read(spi, buffer, n_tx + n_rx);
++	if (rc < 0) return rc;
+ 	for(byte = n_tx; byte < n_tx + n_rx; byte++) {
+ 		rxbuf[byte - n_tx] = buffer[byte];
+ 	}
+--- a/src/relay_cli.h
++++ b/src/relay_cli.h
+@@ -41,7 +41,7 @@
+ 
+ static char cli_buf[CLI_BUF_LEN];
+ static int  cli_len      = 0;
+-static int  cli_auto     = 1;      /* periodic status enabled */
++static int  cli_auto     = 0;      /* diagnostic starts quiet */
+ static int  cli_last_rc  = 0;
+ 
+ /*----------------------- tiny string builder -----------------------------*/
+@@ -85,6 +85,10 @@
+     printf("%s\r\n", cli_out);
+     cli_out_len = 0;
+ }
++
++#include "relay_probe_diag.h"
++#include "relay_iqswap.h"
++#include "relay_diag_cli.h"
+ 
+ /*----------------------- parsing helpers --------------------------------*/
+ static int tok_eq(const char *a, const char *b)
+@@ -164,6 +168,7 @@
+ static void cli_help(void)
+ {
+     co_s("# relay CLI ready. commands:");  co_flush();
++    co_s("#  rfdiag | iqswap rx|tx <0|1> (muted, both actual TX attenuation >=30dB)"); co_flush();
+     co_s("#  status | rfread | auto <0|1> | mode <0..3> | ddc <v> | duc <v>"); co_flush();
+     co_s("#  off <hz> | xoff <hz> | gain <v> | dc <0|1>");            co_flush();
+     co_s("#  rxgain <db> | txatt <db> | lo <rxMHz> <txMHz> | rate <MSPS>"); co_flush();
+@@ -175,20 +180,31 @@
+     char *av[6];
+     int   ac = cli_split(line, av, 6);
+     if (ac == 0) return;
++    if (tok_eq(av[0], "rfdiag") && ac == 1) { diag_rfdiag(); return; }
++    if (tok_eq(av[0], "iqswap")) {
++        int rc = -EINVAL;
++        if (ac == 3 && (tok_eq(av[1], "tx") || tok_eq(av[1], "rx")) &&
++            (tok_eq(av[2], "0") || tok_eq(av[2], "1")))
++            rc = diag_iqswap(tok_eq(av[1], "tx"), av[2][0] - '0');
++        else relay_set_mode(RELAY_MODE_MUTE);
++        cli_last_rc = rc;
++        co_s(rc ? "ERR iqswap rc=" : "OK iqswap rc="); co_i(rc);
++        co_s(" side="); co_s(ac >= 2 ? av[1] : "invalid");
++        co_s(" mode=2"); co_flush(); return;
++    }
++    if (!probe_ready && !(tok_eq(av[0], "status") || tok_eq(av[0], "r") ||
++        tok_eq(av[0], "help") || tok_eq(av[0], "?") ||
++        (ac == 2 && tok_eq(av[0], "mode") && tok_eq(av[1], "2")))) {
++        relay_set_mode(RELAY_MODE_MUTE); cli_last_rc = -ENODEV;
++        co_s("ERR radio initialization failed; MUTED"); co_flush(); return;
++    }
+ 
+     if (tok_eq(av[0], "help") || tok_eq(av[0], "?")) {
+         cli_help();
+     } else if (tok_eq(av[0], "status") || tok_eq(av[0], "r")) {
+         cli_stat();
+     } else if (tok_eq(av[0], "rfread")) {
+-        uint64_t rx = 0, tx = 0;
+-        int rx_rc = ad9361_get_rx_lo_freq(ad9361_phy, &rx);
+-        int tx_rc = ad9361_get_tx_lo_freq(ad9361_phy, &tx);
+-        co_s("RFREAD rx_rc="); co_i(rx_rc);
+-        co_s(" tx_rc="); co_i(tx_rc);
+-        co_s(" rx_hz="); co_u64(rx);
+-        co_s(" tx_hz="); co_u64(tx);
+-        co_flush();
++        probe_rfread();
+     } else if (tok_eq(av[0], "auto") && ac >= 2) {
+         cli_auto = (int)cli_num(av[1]) ? 1 : 0;
+         co_s("OK auto="); co_u((unsigned)cli_auto, 0); co_flush();

@@ -1,0 +1,400 @@
+{
+  "date": "2026-10-28",
+  "scope": "First-channel conducted single-tone frequency forwarding; separate UART_NETTEST control regression",
+  "passed": true,
+  "gui_and_telecontrol_protocol_unchanged": true,
+  "wiring": {
+    "source": "7010_AD9363_SDR TX1A/JP1 -> LDSDR RX1",
+    "returned_rf": "LDSDR TX1 -> 7010_AD9363_SDR RX1A/JP2",
+    "control": "Z7ADDALite RJ45 -> LDSDR RJ45; PC uses DEBUG UARTs only",
+    "adda_analog_input_connected": false,
+    "antennas": false,
+    "external_attenuator": false
+  },
+  "correction": {
+    "rx_swap_default": 0,
+    "tx_swap_default": 1,
+    "register_0x010": "0x88",
+    "prior_register": "0xC8",
+    "observed_prior_output_nominal_hz": 999500000,
+    "corrected_output_nominal_hz": 1000500000,
+    "temporary_iqswap_command_used_in_final_acceptance": false,
+    "diagnosis": "RX LO step inverted output shift, DUC step retained expected direction; RX-only toggle corrected the spectrum"
+  },
+  "settings": {
+    "source_atten_db": 50,
+    "relay_atten_db": 50,
+    "source_tx_lo_hz": 900000000,
+    "source_tone_offset_hz": 500000,
+    "receiver_lo_hz": 1000750000,
+    "receiver_gain_db": 30,
+    "relay_rx_gain_db": 30,
+    "relay_rx_lo_hz": 900000000,
+    "relay_mode": 1,
+    "duc_offset_hz": 0,
+    "expected_offset_hz": -250000,
+    "sender_settings": {
+      "out_altvoltage1_TX_LO_frequency": "900000000",
+      "out_voltage_sampling_frequency": "2500000",
+      "out_voltage_rf_bandwidth": "3000000",
+      "out_voltage0_rf_port_select": "A",
+      "in_voltage0_gain_control_mode": "manual",
+      "in_voltage0_hardwaregain": "30.000000 dB",
+      "in_voltage0_rf_port_select": "A_BALANCED",
+      "in_voltage_rf_bandwidth": "3000000",
+      "out_altvoltage0_RX_LO_frequency": "1000749998"
+    },
+    "initial_pll": {
+      "rx_rc": 0,
+      "tx_rc": 0,
+      "rx_hz": 900000000,
+      "tx_hz": 1000000000
+    },
+    "shifted_pll": {
+      "rx_rc": 0,
+      "tx_rc": 0,
+      "rx_hz": 900000000,
+      "tx_hz": 1000999998
+    },
+    "waveform_sha256": "8da930f5b3253d61bb9d97caf67b0a55da6e1b0f70c24c7e9e97a5b783c7444d"
+  },
+  "captures": [
+    {
+      "samples": 8192,
+      "bytes": 32768,
+      "sha256": "96550fa5ab35c24d7c8cf24c249e0c9d64caaa29dbdf91decf950e5b5006d936",
+      "sample_rate_hz": 2500000,
+      "adc_bits": 12,
+      "expected_offset_hz": -250000,
+      "search_half_width_hz": 20000,
+      "fft_bin_hz": 305.17578125,
+      "peak_offset_hz": -269642.7362452728,
+      "band_power_dbfs": -80.80035182391454,
+      "band_to_median_noise_db": 0.4876760695051025,
+      "rms_codes": 1.7930325764783248,
+      "min_code": -5,
+      "max_code": 5,
+      "clip_components": 0,
+      "mean_i": 0.1326904296875,
+      "mean_q": 0.05126953125,
+      "level_reference": "ADC full-scale complex magnitude; not RF dBm",
+      "name": "quiet",
+      "relay_clip_delta": 0,
+      "source_tx_powerdown": 1
+    },
+    {
+      "samples": 8192,
+      "bytes": 32768,
+      "sha256": "267db939e3c0c26c40af4b8e191a654df1082edbb84f4a335118c86717412f3b",
+      "sample_rate_hz": 2500000,
+      "adc_bits": 12,
+      "expected_offset_hz": -250000,
+      "search_half_width_hz": 20000,
+      "fft_bin_hz": 305.17578125,
+      "peak_offset_hz": -250075.56051909304,
+      "band_power_dbfs": -50.43514644258623,
+      "band_to_median_noise_db": 30.705647116692077,
+      "rms_codes": 7.000714946748296,
+      "min_code": -14,
+      "max_code": 13,
+      "clip_components": 0,
+      "mean_i": 0.291259765625,
+      "mean_q": 0.28857421875,
+      "level_reference": "ADC full-scale complex magnitude; not RF dBm",
+      "name": "relay_on",
+      "relay_clip_delta": 0,
+      "source_tx_powerdown": 0
+    },
+    {
+      "samples": 8192,
+      "bytes": 32768,
+      "sha256": "6054cee008f147cf75db2e565f0e7a891435fdb82039e7d97941aa9a95de83b2",
+      "sample_rate_hz": 2500000,
+      "adc_bits": 12,
+      "expected_offset_hz": -250000,
+      "search_half_width_hz": 20000,
+      "fft_bin_hz": 305.17578125,
+      "peak_offset_hz": -235366.5498635956,
+      "band_power_dbfs": -80.87001208219226,
+      "band_to_median_noise_db": 0.5308484172930307,
+      "rms_codes": 3.2535850119041765,
+      "min_code": -7,
+      "max_code": 7,
+      "clip_components": 0,
+      "mean_i": 0.4493408203125,
+      "mean_q": -0.065185546875,
+      "level_reference": "ADC full-scale complex magnitude; not RF dBm",
+      "name": "relay_muted",
+      "relay_clip_delta": 0,
+      "source_tx_powerdown": 0
+    },
+    {
+      "samples": 8192,
+      "bytes": 32768,
+      "sha256": "5e88997630b0749311b943db84c812f60538d66b3a3b3eb8e1058d034e4b7da0",
+      "sample_rate_hz": 2500000,
+      "adc_bits": 12,
+      "expected_offset_hz": -250000,
+      "search_half_width_hz": 20000,
+      "fft_bin_hz": 305.17578125,
+      "peak_offset_hz": -241323.7501773359,
+      "band_power_dbfs": -80.55326705802771,
+      "band_to_median_noise_db": 0.8924236842684419,
+      "rms_codes": 3.2627641475921147,
+      "min_code": -7,
+      "max_code": 7,
+      "clip_components": 0,
+      "mean_i": 0.2108154296875,
+      "mean_q": -0.230712890625,
+      "level_reference": "ADC full-scale complex magnitude; not RF dBm",
+      "name": "source_off",
+      "relay_clip_delta": 0,
+      "source_tx_powerdown": 1
+    },
+    {
+      "samples": 8192,
+      "bytes": 32768,
+      "sha256": "8d4d9304d5827f439fb851b43b90ea7b829923b99d1d054a7a318e4b317170e1",
+      "sample_rate_hz": 2500000,
+      "adc_bits": 12,
+      "expected_offset_hz": 750000,
+      "search_half_width_hz": 20000,
+      "fft_bin_hz": 305.17578125,
+      "peak_offset_hz": 749936.6692189947,
+      "band_power_dbfs": -50.784540868422056,
+      "band_to_median_noise_db": 30.427403741788094,
+      "rms_codes": 6.806324250628051,
+      "min_code": -12,
+      "max_code": 12,
+      "clip_components": 0,
+      "mean_i": 0.33447265625,
+      "mean_q": 0.3692626953125,
+      "level_reference": "ADC full-scale complex magnitude; not RF dBm",
+      "name": "tx_lo_shifted",
+      "relay_clip_delta": 0,
+      "source_tx_powerdown": 0
+    }
+  ],
+  "comparisons": {
+    "mute_drop_db": 30.43486563960603,
+    "source_off_drop_db": 30.118120615441484,
+    "measured_shift_hz": 1000012.2297380877
+  },
+  "criteria": {
+    "mute_drop_min_db": 15,
+    "source_off_drop_min_db": 15,
+    "band_contrast_min_db": 15,
+    "shift_tolerance_hz": 5000,
+    "carrier_offset_tolerance_hz": 10000
+  },
+  "level_reference": "ADC complex full-scale power integrated over +/-20kHz; not RF dBm; median-bin contrast is not calibrated SNR",
+  "frequency_reference": "Board LO and sample-rate referenced, not calibrated absolute-frequency measurement",
+  "udp_regression": {
+    "passed": true,
+    "source": "UART_NETTEST",
+    "cases": [
+      {
+        "requested_mhz": [
+          901,
+          1000
+        ],
+        "seq": 90,
+        "spi_rx_hz": 900999998,
+        "spi_tx_hz": 1000000000,
+        "adda": {
+          "network": 1,
+          "armed": 0,
+          "decoded": 180,
+          "applied": 11,
+          "pending": 0,
+          "retries": 1,
+          "failures": 0,
+          "gain": 0,
+          "att": 89
+        }
+      },
+      {
+        "requested_mhz": [
+          901,
+          1001
+        ],
+        "seq": 91,
+        "spi_rx_hz": 900999998,
+        "spi_tx_hz": 1000999998,
+        "adda": {
+          "network": 1,
+          "armed": 0,
+          "decoded": 180,
+          "applied": 12,
+          "pending": 0,
+          "retries": 1,
+          "failures": 0,
+          "gain": 0,
+          "att": 89
+        }
+      },
+      {
+        "requested_mhz": [
+          900,
+          1000
+        ],
+        "seq": 92,
+        "spi_rx_hz": 900000000,
+        "spi_tx_hz": 1000000000,
+        "adda": {
+          "network": 1,
+          "armed": 0,
+          "decoded": 180,
+          "applied": 13,
+          "pending": 0,
+          "retries": 1,
+          "failures": 0,
+          "gain": 0,
+          "att": 89
+        }
+      }
+    ],
+    "before": {
+      "network": 1,
+      "armed": 0,
+      "decoded": 180,
+      "applied": 10,
+      "pending": 0,
+      "retries": 1,
+      "failures": 0,
+      "gain": 0,
+      "att": 89
+    },
+    "final": {
+      "network": 0,
+      "armed": 0,
+      "decoded": 180,
+      "applied": 13,
+      "pending": 0,
+      "retries": 1,
+      "failures": 0,
+      "gain": 0,
+      "att": 89
+    },
+    "final_auto": 0,
+    "rx_iq_preserved": true,
+    "actual_adc_auto_control_retested": false
+  },
+  "evidence_audit": {
+    "passed": true,
+    "checked_without_hardware": true,
+    "fixed_capture_hashes_valid": true,
+    "all_capture_adc_and_relay_clip_deltas_zero": true,
+    "rf_and_network_pll_locks_and_test_sources_verified": true,
+    "final_controller_auto": 0,
+    "final_network": 0,
+    "final_armed": 0,
+    "final_pending": 0,
+    "final_applied": 13,
+    "final_decoded": 180,
+    "final_failures": 0,
+    "note": "Independent audit checks full raw diagnostics and CONTROLLER line, supplementing the original network runner."
+  },
+  "analysis_unit_tests": {
+    "command": "python -B -m unittest discover -s sw/tools -p test_rf_tone_check.py -v",
+    "passed": 5
+  },
+  "firmware": {
+    "original_udp_elf_sha256": "c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+    "loaded_fixed_elf_sha256": "2fed9cd6927a2b364217741d6a02a7219ad582735ccf01b8d7c8f9bf4c50ee06",
+    "source_directory": "board/ldsdr",
+    "portable_rebuild_elf_sha256": "bde12cef50ae4ea58f720d23c3d6de41c4415b030987d6fae104717a8b292025",
+    "runtime_load_layout_and_payloads_identical": true,
+    "full_elf_hash_note": "DWARF/source paths differ; portable rebuild was not separately loaded",
+    "offline_check_count": 16,
+    "native_fault_test_groups": 6,
+    "bsp_and_cached_network_objects_external": true,
+    "baseline_udp_packet_control_headers_unchanged": true,
+    "loaded_address_window": [
+      "0x04000000",
+      "0x043FFFFF"
+    ],
+    "mmu_table": "0x04028000",
+    "boot_media_written": false,
+    "pl_replaced": false,
+    "active_pl_full_provenance_unresolved": true
+  },
+  "load_recovery": {
+    "early_warm_load_failed": true,
+    "suspected_reason": "Diagnostic r1 LOAD overlaps the old ELF page-table address; actual pre-failure TTBR was not captured, so live page-table corruption is a high-risk candidate, not a confirmed root cause",
+    "recovery": "One physical LDSDR power cycle with SMA disconnected, then guarded r2/fixed PS-only loads",
+    "mitigation": "Read actual TTBR, reject active page-table overlap before dow; not a generic warm-loader guarantee"
+  },
+  "final_state": {
+    "sender_tx_lo_powerdown": 1,
+    "sender_tx_buffer": 0,
+    "sender_rx_buffer": 0,
+    "sender_dds_all_zero": true,
+    "sender_tx_attenuation_db": [
+      89,
+      89
+    ],
+    "relay_mode": 2,
+    "relay_tx_attenuation_db": [
+      89,
+      89
+    ],
+    "relay_rx_gain_db": [
+      0,
+      0
+    ],
+    "relay_rx_hz": 900000000,
+    "relay_tx_hz": 1000000000,
+    "relay_spi_errors": 0,
+    "adda_auto": 0,
+    "adda_network": 0,
+    "adda_armed": 0,
+    "adda_pending": 0
+  },
+  "limits": [
+    "Single channel, current boards and current frequency points only",
+    "No modulated business payload or BER acceptance",
+    "No long-duration, second-channel or simultaneous command/business validation",
+    "Fixed PS image is RAM loaded, not persistent across power cycles",
+    "Current active LDSDR PL has not been reproduced from identified source",
+    "No antenna/wireless test or absolute RF power calibration"
+  ],
+  "evidence_files": {
+    "fixed_acceptance/result.json": {
+      "bytes": 33818,
+      "sha256": "bab5fafe97d27a0b7eb1f3a86a88175241127576301228158e62052b1091a8e7"
+    },
+    "fixed_network_regression/result.json": {
+      "bytes": 6213,
+      "sha256": "30292fd5530b7f1a53764b5bafa252b3cad30a32ec6778408833a628460ac200"
+    },
+    "fixed_network_regression/adda.json": {
+      "bytes": 3002,
+      "sha256": "75733284935c1ce987fcc087722932564e77c64ea52605f15e9ecd5efed1c733"
+    },
+    "fixed_load/xsdb.log": {
+      "bytes": 965,
+      "sha256": "f28e46564af4363636bb389c782ee238e5971fc11b46db8078282725cdb83236"
+    },
+    "fixed_load/relay.json": {
+      "bytes": 1295,
+      "sha256": "504a2fd84265b9c1e1cbe28f6215ebb91b18e46701eaa622b035fa8476ddca7e"
+    },
+    "portable_rebuild/offline_verification.json": {
+      "bytes": 3075,
+      "sha256": "adf1e8fe27acc55f757e72a7b9c4f0606b83bea5bc62296ed8227bc45463727e"
+    },
+    "evidence_audit.json": {
+      "bytes": 513,
+      "sha256": "a81c5836d7d2711faaf4fbe97db52984524b1417588d582b9d1c8a5e654518a6"
+    }
+  },
+  "local_archive": {
+    "filename": "rf_forward_20261028.zip",
+    "location": "D:\\RelayTools\\releases\\rf_forward_20261028.zip",
+    "bytes": 3098554,
+    "sha256": "f1dcddd13bb52031bbc6acb5b0b933a9e164a05692e5b45e64f1f09bc40246e9",
+    "files": 285,
+    "entry_hashes_verified": true
+  }
+}

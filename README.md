@@ -2,7 +2,7 @@
 
 本项目面向嵌入式芯片与系统设计竞赛，实现遥控指令接收、频率参数解析和业务信号变频转发。当前遥控板采用 **Z7ADDALite（Zynq-7020 + AD9643）**，由 PL 采集 ADC 数据、PS 执行 C 解调与指令处理，再通过以太网控制 **LDSDR 转发板**。
 
-截至 **2026-10-28**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；真实100.5 MHz有线指令已由ADC_NORMAL自动解调，经UDP、匹配ACK及LDSDR独立SPI频率读回完成四组控制与恢复。[GUI实板验证](docs/validation/2026-10-28-gui-loop.json)另通过启停及ADC_NORMAL自动控制；GUI nettest按钮未实测。结论限本次实物和工作点，业务RF与长期连续运行仍待验收。
+截至 **2026-10-28**，r4c 完整 M2 已通过临时 JTAG 上板验证：A/B 全通道四个抽取位置的内部 PN9/checker 快照、normal 样点格式与模式切换均通过板端及独立 DDR 检查；板载 ARM 合成波形解调自测通过。PHY 地址识别修复后，`network on` 成功并自动协商至 1000 Mbps，PC 到遥控板连续 10 次 ping 全部成功（<1～2 ms）；真实100.5 MHz有线指令已由ADC_NORMAL自动解调，经UDP、匹配ACK及LDSDR独立SPI频率读回完成四组控制与恢复。[GUI实板验证](docs/validation/2026-10-28-gui-loop.json)另通过启停及ADC_NORMAL自动控制；GUI nettest按钮未实测。随后修正LDSDR接收I/Q顺序，[第一路有线单音转发](docs/rf-forward-bringup.md)通过900.5→1000.5 MHz、输出增加1 MHz及源端关闭/转发静音对照，固定版另通过三组UDP回归。结论限当前实物和工作点，调制业务数据、同时运行与长期连续运行仍待验收。
 
 Z7ADDALite 的 FPGA、PS、GUI、可移植测试 runner 和 BSP 重建入口已归档至 [board/z7addalite/](board/z7addalite/README.md)。重建需要外部工具链、2018.3 embeddedsw 源归档及匹配的硬件产物；第三方依赖与命令见板级说明。原有 RTL 环回、PC 演示软件和串口工具继续保留为早期实现。
 
@@ -51,8 +51,9 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 | M1：时序 | WNS +0.483 ns，WHS +0.075 ns，TNS/THS = 0 | 已上板 PN9 诊断版本 |
 | M2：完整采集工程 | r4c WNS +0.483 ns、WHS +0.022 ns、WPWS +0.264 ns；TNS/THS/TPWS=0，DRC=0；全通道/四个k的真实快照检查通过 | 56条ADC路径与198个动态mailbox端点已复核；早期normal仅格式与切换，本轮另验证真实SMA输入 |
 | M3：C 解调 | 三组真实ADC_NORMAL指令由主机及PS正确解码、CRC通过，板端约277 ms；金标准与合成波形测试另已通过 | 本轮先关闭转发验证接收，再完成自动控制；未量化误码率和持续吞吐率 |
-| M4：网络控制 | 报文/ACK与网络负例通过；实板PHY识别、1000 Mbps协商及PC→遥控板ping 10/10通过 | UART_NETTEST负例及真实ADC_NORMAL自动控制均通过；业务RF待验收 |
-| 多板通信 | 真实SMA指令→ADC_NORMAL→自动C解调→UDP→ACK→LDSDR SPI读回四例通过，含900/1000 MHz恢复 | 当前有线100.5 MHz工作点；每例重复帧观察2秒无新UDP，关闭信号2秒无误触发；业务RF待验收 |
+| M4：网络控制 | 报文/ACK与网络负例通过；实板PHY识别、1000 Mbps协商及PC→遥控板ping 10/10通过 | UART_NETTEST负例及真实ADC_NORMAL自动控制均通过；LDSDR I/Q修正版另通过三组UART_NETTEST回归 |
+| 多板通信 | 真实SMA指令→ADC_NORMAL→自动C解调→UDP→ACK→LDSDR SPI读回四例通过，含900/1000 MHz恢复 | 当前有线100.5 MHz工作点；每例重复帧观察2秒无新UDP，关闭信号2秒无误触发；修正版尚未重跑真实ADC自动控制 |
+| 业务RF第一路 | RX I/Q修正后，900.5→1000.5 MHz单音转发及1 MHz改频通过；静音/关闭源下降30.43/30.12 dB | 单路有线短快照，无新增削顶；未验收调制业务数据、第二路或同时运行 |
 
 本轮证据见 [真实输入闭环摘要](docs/validation/2026-10-28-analog-loop.json)，完整记录、产物摘要和未完成项见 [验证与待办](docs/validation.md)。早期 40 字节 RTL 环回结果见 [历史验证记录](docs/legacy-validation.md)，两者使用不同的板卡与协议路径。
 
@@ -67,6 +68,7 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 | [sw/gui/](sw/gui/) | 原遥测参数演示 GUI | 含原开发机的模块搜索路径；不是新遥控板 GUI |
 | [sw/link/](sw/link/) | 原空间包封装和 LDSDR 串口 CLI 适配 | 保留旧线格式兼容约定，见该目录协议说明 |
 | [board/z7addalite/](board/z7addalite/README.md) | r4c PL、PS、GUI源码及重建/测试/快照工具 | 当前Z7ADDALite路线；工具需匹配产物及明确线缆 |
+| [board/ldsdr/](board/ldsdr/README.md) | 接收I/Q修正、SPI诊断、安全启动补丁及离线重建/测试 | 第一条有线转发链已实测；依赖已知外部UDP构建缓存，未完成独立BSP重建 |
 | [sw/tools/](sw/tools/)、其余 [board/](board/) | 原板卡实验和调试脚本 | 旧工程范围，运行前核对目标板、固件、地址与工具路径 |
 | [docs/](docs/) | 当前架构与验收说明、历史图表和报告索引 | 以本 README、V2 协议和最新验证记录为当前描述 |
 
@@ -78,6 +80,7 @@ SMA 接线前需确认实际 TX/RX 端口、输入允许电平和衰减配置。
 
 - [当前遥控链路 V2 协议](docs/telecontrol-v2.md)
 - [真实输入联调准备与离线工具](docs/signal-input-bringup.md)
+- [业务单音转发与I/Q修正](docs/rf-forward-bringup.md)
 - [验证结果和后续验收项](docs/validation.md)
 - [早期 RTL 与射频实验记录](docs/legacy-validation.md)
 - [旧空间包与串口 CLI 协议](sw/link/PROTOCOL.md)

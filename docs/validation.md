@@ -99,11 +99,24 @@ GUI新增持久显示`last_decoded`与`last_ack`，分别表示最近有效解�
 
 结束时GUI关闭network/auto/ARM，decoded=180、applied=10、pending=0、failures=0。发送板LO关闭、buffer=0、两路TX衰减89 dB、DDS全零；LDSDR mode=2、TX衰减89 dB。未修改PL/PS或启动介质。此次验证当前实物有线100.5 MHz输入的GUI启停及自动控制，业务RF、功率校准、全频段、误码率和长期连续运行仍待验收。证据见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)。
 
+### 2026-10-28：第一路业务单音转发与I/Q修正
+
+接线为发送板TX1A→LDSDR RX1、LDSDR TX1→发送板RX1A；遥控板本轮没有模拟输入。原LDSDR接收I/Q配置将+500 kHz基带翻转为−500 kHz。RX LO与DUC步进、重启后重现以及仅切换RX swap位的对照定位到接收侧；固定版默认RX swap=0、TX swap=1，0x010读回0x88。
+
+重新加载固定版后，900 MHz源本振加500 kHz单音，经900/1000 MHz转发本振输出到约1000.5 MHz。接收LO读回1000749998 Hz，测得峰值−250075.56 Hz；TX LO改为1001 MHz后峰值+749936.67 Hz，两次相差1000012.23 Hz。转发静音及源端关闭时，目标频带功率分别下降30.43、30.12 dB。五份8192组I/Q快照均无ADC削顶，采集前后转发器累计削顶计数增量为0。相对功率使用ADC参考dBFS，不是校准dBm；峰值频率基于板卡LO与采样时钟。
+
+同一固定版另完成三组UART_NETTEST→UDP→ACK→独立SPI读回，900/1000 MHz恢复成功，RX swap保持0；遥控板applied从10到13，pending/failures均0。GUI、遥控协议和Z7ADDALite固件未修改；此次没有重复真实ADC自动控制测试。
+
+源代码和六组故障注入测试见[board/ldsdr](../board/ldsdr/README.md)，16项源码/链接布局检查通过。重建程序的全部运行时LOAD布局及载荷与实测ELF一致，完整ELF hash因DWARF路径不同而不同。该入口依赖原UDP BSP/对象缓存，不是从零重建厂商工程。活动LDSDR PL的完整来源仍待归档。
+
+早期诊断暖加载后板端未启动且调试访问异常，LOAD与旧ELF页表地址重叠是候选原因；故障前实际TTBR未取得，尚未确认根因。一次断电恢复后，后续加载先检查实际TTBR并拒绝覆盖活动页表。固定版仅下载PS RAM，未写启动介质。结束时发送板LO/DMA/DDS关闭、两路89 dB；LDSDR静音、两路89 dB、RX增益0；遥控板auto/network/armed/pending均0。断电后修正不会自动保留。详见[联调记录](rf-forward-bringup.md)及[数值和证据索引](validation/2026-10-28-rf-forward.json)。
+
 ## 后续验收
 
 | 工作 | 验收要求 |
 |---|---|
-| 业务RF | 真实ADC_NORMAL自动控制及GUI启停、匹配ACK和独立SPI频率读回已通过；仍需验收实际业务RF转发 |
+| 业务RF | 第一条有线单音变频及改频已通过；继续验收调制业务数据/CRC或误码率、第二路及预期业务带宽 |
+| 联合控制与源码归档 | 修正版已通过UART_NETTEST回归；仍需重跑真实ADC自动控制并安排业务与遥控同时运行，确定活动LDSDR PL的完整源码与位流对应关系 |
 | 接收性能边界 | 当前实物有线100.5 MHz工作点已通过；后续按目标工作范围开展电平标定、误码率、真实坏帧拒绝与接收边界测试 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 

@@ -1,13 +1,17 @@
 # 文档索引
 
-## 当前架构（2026-10-27）
+## 当前架构（2026-10-28）
 
 | 文档 | 内容 |
 |---|---|
 | [项目首页](../README.md) | Z7ADDALite 遥控板、LDSDR 转发板和当前系统范围 |
 | [遥控链路 V2](telecontrol-v2.md) | 100.5 MHz 指令链、8 字节 body、金标准及 UDP 接口 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |
-| [验证摘要](validation/2026-10-27.json) | 关键产物与测试记录的 SHA-256 |
+| [业务转发联调](rf-forward-bringup.md) | 第一条有线单音链、RX I/Q修正、改频和关闭信号对照 |
+| [业务RF验证摘要](validation/2026-10-28-rf-forward.json) | 最新实测数值、固件和原始证据包 SHA-256 |
+| [真实指令闭环摘要](validation/2026-10-28-analog-loop.json) | 有线100.5 MHz指令、ADC解调、UDP和SPI读回 |
+| [GUI验证摘要](validation/2026-10-28-gui-loop.json) | 实板自动控制启停及验证范围 |
+| [早期验证摘要](validation/2026-10-27.json) | 当日前期产物与测试记录，后续结果见验证与待办 |
 
 ## 历史实现与资料
 

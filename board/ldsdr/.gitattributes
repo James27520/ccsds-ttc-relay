@@ -1,0 +1,5 @@
+# Preserve byte-hashed build inputs across Windows/Linux checkouts.
+headers/*.h -text
+relay_fixed.ld -text whitespace=-blank-at-eof,cr-at-eol
+# Unified diff context intentionally prefixes existing whitespace with a space.
+relay_fixed.patch -text whitespace=-blank-at-eol,-space-before-tab
