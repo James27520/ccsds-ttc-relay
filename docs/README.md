@@ -14,6 +14,8 @@
 | [测控下行实收摘要](validation/2026-10-28-telemetry-rf.json) | 原始IQ哈希、快照字段、收尾状态及本地证据包 |
 | [测控下行GUI采集](telemetry-live-validation.md) | 当前会话绑定、约17秒单次采集、真实GUI与关闭清理验证 |
 | [GUI下行采集摘要](validation/2026-10-28-telemetry-live.json) | 新增8帧、静默对照、取消和原始IQ复核索引 |
+| [真实遥控与射频回报闭环](telecontrol-roundtrip-validation.md) | 同一事务的ADC_NORMAL、UDP/ACK、独立SPI与实际IQ关联 |
+| [测控闭环摘要](validation/2026-10-28-telecontrol-roundtrip.json) | 两条新指令、八个下行帧、限时停发与证据包校验 |
 | [六线系统计划](six-link-system-plan.md) | 双向业务及双向测控的功能分配、共用本振限制与待办 |
 | [遥控链路 V2](telecontrol-v2.md) | 100.5 MHz 指令链、8 字节 body、金标准及 UDP 接口 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |

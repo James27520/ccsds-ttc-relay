@@ -101,7 +101,9 @@ python -m venv .venv
 
 IQ模式显示实际文件SHA256；JSON中的路径/哈希明确作为报告声明。文件修改时间不代表RF接收时间，CRC仅检查内容完整性，不能证明文件来源或认证发送设备。窗口不会使用USB TM1、发送清单或报告中的预期状态填充结果。
 
-前一阶段实测为3次发送、12个CRC正确帧、3份不同快照，详见[实收报告](../../docs/telemetry-rf-validation.md)。新增在线控制器和GUI各恢复一份快照，共8个CRC正确帧，静默对照和采集中关闭均通过，见[GUI采集验证](../../docs/telemetry-live-validation.md)。两份新快照返回已有UART_NETTEST状态；真实ADC指令与下行返回同一事务仍待验证。
+前一阶段实测为3次发送、12个CRC正确帧、3份不同快照，详见[实收报告](../../docs/telemetry-rf-validation.md)。在线控制器和GUI随后各恢复一份快照，共8个CRC正确帧，静默对照和采集中关闭均通过，见[GUI采集验证](../../docs/telemetry-live-validation.md)。该阶段返回已有UART_NETTEST状态。
+
+后续[真实测控闭环](../../docs/telecontrol-roundtrip-validation.md)通过两条新ADC_NORMAL指令及对应的八个下行帧。验证入口为`python -m sw.ground_station.tc_roundtrip`，整笔控制尚未合并为GUI按钮。该测试将发送板TX1A改接遥控板ADC1/J5；采用此接线时先使用测控验证入口，恢复业务演示前需停发并按业务接线表恢复第一根线。
 
 ## 如何解释接收结果
 

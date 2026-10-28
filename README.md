@@ -14,7 +14,8 @@
 - [演示提速与测控状态回传](docs/station-speed-telemetry-validation.md)：DEBUG临时高速传输将快照周期降至2.87–2.91秒，另完成29快照/26有效帧回归。发送GUI新增带CRC的TM1监控，独立展示UDP/ACK与SPI读回；该管理状态经USB返回。
 - [DAC下行数字实现与板端验证](docs/telemetry-downlink-validation.md)：新增90.5MHz有限状态发送链，完整ADC/DAC时序及板端配置读回、单次发送/取消、PN9和网口回归通过。
 - [测控下行SMA实收](docs/telemetry-rf-validation.md)：J6/DAC1经新增同轴连接SDR RX1A，三次有限发送恢复12个CRC正确帧、3份不同状态快照；五个停发窗口无有效帧。
-- [测控下行GUI采集](docs/telemetry-live-validation.md)：新增会话核验、单次有限发送与真实IQ接收解码，GUI一次约17秒；新增8个CRC正确帧、2份快照，静默对照及采集中关闭清理通过。真实ADC指令与下行回报的同一事务闭环尚待验证。
+- [测控下行GUI采集](docs/telemetry-live-validation.md)：新增会话核验、单次有限发送与真实IQ接收解码，GUI一次约17秒；新增8个CRC正确帧、2份快照，静默对照及采集中关闭清理通过。该阶段返回已有UART网络测试记录。
+- [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。整笔事务使用独立验证入口，尚未合并为GUI一键操作。
 
 结论限当前实物、第一路有线链和离散快照。文本使用实验帧，条件比特比较不是整体BER测量；不能据此宣称完整CCSDS协议符合性、24小时稳定性或无跨窗口漏帧。业务与真实遥控同时运行、长期连续运行及持久化启动仍待验收；新接收板的TX与100.5 MHz能力尚未验证。
 

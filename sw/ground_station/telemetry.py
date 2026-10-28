@@ -94,14 +94,14 @@ class TelemetrySerial:
             raise ValueError('此通道只允许只读查询')
         return self._exchange(command)
 
-    def _exchange(self, command):
+    def _exchange(self, command, timeout=2):
         """Internal CLI framing; subclasses must enforce their own command gate."""
         self.port.reset_input_buffer()
         data = (command+'\r\n').encode('ascii')
         if self.port.write(data) != len(data):
             raise RuntimeError('遥测查询未完整写入')
         raw = bytearray()
-        deadline = time.monotonic()+2
+        deadline = time.monotonic()+timeout
         while time.monotonic() < deadline:
             raw.extend(self.port.read(max(1, min(self.port.in_waiting, 4096))))
             if len(raw) > 32768:

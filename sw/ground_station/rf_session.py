@@ -271,7 +271,7 @@ def _close_all(*connections):
                 pass  # Cleanup must still reach the other owned port.
 
 
-def probe_pair(rx_port, adda_port, record=lambda **event: None):
+def probe_pair(rx_port, adda_port, record=lambda **event: None, *, adda_continuity=None):
     """Read-only probe, always close both ports; returned dict is JSON serializable."""
     if rx_port.casefold() == adda_port.casefold():
         raise ValueError('Receiver and ADDA must use distinct ports')
@@ -279,6 +279,9 @@ def probe_pair(rx_port, adda_port, record=lambda **event: None):
     try:
         receiver = SessionRxConsole(rx_port, record)
         adda = SessionAdda(adda_port, record)
+        if adda_continuity is not None:
+            adda._boot_interval, adda._uptime = adda_continuity
+            adda.verify_binding()
         binding = dict(schema=1, process_token=_PROCESS_TOKEN, token=uuid.uuid4().hex,
                        receiver=copy.deepcopy(receiver.info), adda=copy.deepcopy(adda.info))
         _BINDINGS[binding['token']] = dict(binding=copy.deepcopy(binding),

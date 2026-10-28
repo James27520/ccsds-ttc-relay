@@ -158,10 +158,25 @@ class PairTests(unittest.TestCase):
             rf.open_pair(binding)
         for handle in self.handles[-2:]:
             handle.close.assert_called_once()
+
         binding = self.probe()
         self.usb['ADDA_PORT']['usb_serial'] = 'changed'
         with self.assertRaisesRegex(RuntimeError, 'ADDA changed'):
             rf.open_pair(binding)
+        for handle in self.handles[-2:]:
+            handle.close.assert_called_once()
+
+    def test_control_to_downlink_probe_preserves_old_boot_constraint(self):
+        a = rf.SessionAdda('ADDA_PORT')
+        continuity = (a._boot_interval, a._uptime)
+        a.close()
+        binding = rf.probe_pair('RX_PORT', 'ADDA_PORT', adda_continuity=continuity)
+        self.assertIn(binding['token'], rf._BINDINGS)
+        count = len(rf._BINDINGS)
+        self.uptime_offset -= 5000
+        with self.assertRaisesRegex(RuntimeError, 'uptime'):
+            rf.probe_pair('RX_PORT', 'ADDA_PORT', adda_continuity=continuity)
+        self.assertEqual(len(rf._BINDINGS), count)
         for handle in self.handles[-2:]:
             handle.close.assert_called_once()
 

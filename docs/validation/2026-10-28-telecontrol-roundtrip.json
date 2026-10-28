@@ -1,0 +1,179 @@
+{
+  "date": "2026-10-28",
+  "scope": "Sequential ADC_NORMAL -> UDP/ACK -> independent SPI -> DAC RF reply",
+  "base_commit": "2c82d4a9515648a85f95e69974ec41f563ccf0f8",
+  "firmware_changed": false,
+  "flash_sd_written": false,
+  "business_concurrent": false,
+  "gui_one_button": false,
+  "successful_transactions": 2,
+  "crc_valid_frames": 8,
+  "cases": [
+    {
+      "assessment": {
+        "passed": true,
+        "rf_source": "actual_iq_crc_checked",
+        "transaction": {
+          "rx_mhz": 900,
+          "tx_mhz": 1001,
+          "air_seq": 240,
+          "udp_seq": 5,
+          "decoded_event": 9,
+          "send_event": 10,
+          "ack_event": 11
+        },
+        "physical_frame_count": 4,
+        "unique_snapshot_count": 1,
+        "dac_sequence": 18,
+        "frozen_events": 11,
+        "decoded": 1,
+        "applied": 5,
+        "failures": 0,
+        "rf_uptime_ms": 11906852,
+        "ack": {
+          "udp_seq": 5,
+          "rc": 0,
+          "rx_hz": 900000000,
+          "tx_hz": 1000999998
+        },
+        "spi": {
+          "rx_hz": 900000000,
+          "tx_hz": 1000999998,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        },
+        "spi_source": "independent_relay_diagnostics",
+        "acquisition_authentication": "caller must retain actual IQ and acquisition logs"
+      },
+      "iq_sha256": "45e57757d9dc9d2eb7dad885b08a458d562c48e22ffd833ec62263002988465e",
+      "iq_bytes": 1048576,
+      "rms_codes": 18.090313362709757,
+      "clipped": 0,
+      "adc_capture": {
+        "auto": 0,
+        "state": 6,
+        "valid": 1,
+        "consumed": 0
+      },
+      "total_logged_seconds": 112.98065066337585,
+      "downlink_capture_seconds": 16.862954099999115,
+      "independent_redecode_passed": true,
+      "relay_frequency_write_commands": 0
+    },
+    {
+      "assessment": {
+        "passed": true,
+        "rf_source": "actual_iq_crc_checked",
+        "transaction": {
+          "rx_mhz": 900,
+          "tx_mhz": 1000,
+          "air_seq": 241,
+          "udp_seq": 6,
+          "decoded_event": 12,
+          "send_event": 13,
+          "ack_event": 14
+        },
+        "physical_frame_count": 4,
+        "unique_snapshot_count": 1,
+        "dac_sequence": 19,
+        "frozen_events": 14,
+        "decoded": 2,
+        "applied": 6,
+        "failures": 0,
+        "rf_uptime_ms": 12076607,
+        "ack": {
+          "udp_seq": 6,
+          "rc": 0,
+          "rx_hz": 900000000,
+          "tx_hz": 1000000000
+        },
+        "spi": {
+          "rx_hz": 900000000,
+          "tx_hz": 1000000000,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        },
+        "spi_source": "independent_relay_diagnostics",
+        "acquisition_authentication": "caller must retain actual IQ and acquisition logs"
+      },
+      "iq_sha256": "b0c32a8046393e1d5b69f75d72691b557edb5ff1870a927cc3cc38a2f5da6c6b",
+      "iq_bytes": 1048576,
+      "rms_codes": 18.639386758662788,
+      "clipped": 0,
+      "adc_capture": {
+        "auto": 0,
+        "state": 6,
+        "valid": 1,
+        "consumed": 0
+      },
+      "total_logged_seconds": 112.99305129051208,
+      "downlink_capture_seconds": 16.86712280000029,
+      "independent_redecode_passed": true,
+      "relay_frequency_write_commands": 0
+    }
+  ],
+  "guard": {
+    "host_silence_seconds": 33.00009789999967,
+    "configured_guard_seconds": 30,
+    "after": {
+      "powerdown": "1",
+      "tx_buffer": "0",
+      "gain0": "-89.000000 dB",
+      "gain1": "-89.000000 dB",
+      "guard_state": "stopped"
+    },
+    "late_request_did_not_restart": true,
+    "adc_and_applied_counters_unchanged": true,
+    "usb_physical_disconnect_test": false
+  },
+  "postflight": {
+    "passed": true,
+    "dac": {
+      "enabled": 1,
+      "seq": 20,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    },
+    "source_and_receiver_tx_off": true,
+    "source_and_receiver_buffers": 0,
+    "relay_rx_hz": 900000000,
+    "relay_tx_hz": 1000000000,
+    "relay_mode": 2,
+    "relay_atten_db": 89,
+    "relay_gain_db": 0,
+    "spi_errors": 0,
+    "adda_decoded": 2,
+    "adda_applied": 6,
+    "adda_failures": 0
+  },
+  "software_tests": {
+    "ground_station": 162,
+    "final_session_tests": 13,
+    "passed": true
+  },
+  "final_wiring": [
+    "Source TX1A -> Z7ADDALite ADC1/J5",
+    "Z7ADDALite DAC1/J6 -> same source RX1A/JP2",
+    "LDSDR TX1 -> independent receiver RX1A",
+    "Z7ADDALite RJ45 -> LDSDR RJ45; DEBUG USB unchanged"
+  ],
+  "limitations": [
+    "Sequential test; no simultaneous business/control",
+    "Experimental ATM1 downlink; not full CCSDS/NTN conformity",
+    "Current-boot device binding, no permanent authentication",
+    "No calibrated RF power or absolute frequency",
+    "Two command transactions and short IQ captures; not a BER or long-duration reliability claim"
+  ],
+  "archive": {
+    "local_path": "D:\\RelayTools\\releases\\telecontrol_roundtrip_20261028.zip",
+    "bytes": 743185,
+    "sha256": "fad88057bc8c82810ff5431ebe14fbe57fd8cf802dc3e248317560894e226113",
+    "manifest_entries": 63,
+    "verified": true
+  }
+}
