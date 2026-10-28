@@ -1,0 +1,630 @@
+{
+  "date": "2026-10-28",
+  "passed": true,
+  "scope": "Two-cable time-separated true ADC control followed by independent receiver business proof; not simultaneous",
+  "wiring": {
+    "control": "Sender TX1A -> Z7ADDALite ADC1/J5; LDSDR TX1 -> independent receiver RX1A",
+    "business": "Sender TX1A -> LDSDR RX1; LDSDR TX1 -> independent receiver RX1A",
+    "ethernet": "Z7ADDALite RJ45 <-> LDSDR RJ45 throughout",
+    "antennas": false,
+    "rewire": "Only first cable receive end moved twice, after confirmed mute; USB and Ethernet retained"
+  },
+  "source": {
+    "control_nominal_rf_hz": 100500000,
+    "control_tx_atten_db": 30,
+    "business_nominal_rf_hz": 900500000,
+    "business_tx_atten_db": 50,
+    "normalized_complex_peak": 0.1,
+    "sample_rate_hz": 2500000,
+    "symbol_rate_sym_s": 100000,
+    "control_format": "V2 eight-byte body, CCSDS-related synchronization/randomization/convolutional coding; not full standard conformance",
+    "business_format": "Experimental AAAA/length/UTF8/CRC16 sequence, no FEC",
+    "control_manifests": [
+      {
+        "source": "OFFLINE_REFERENCE",
+        "mode": "cmd",
+        "sample_rate_hz": 2500000,
+        "symbol_rate_sym_s": 100000,
+        "srrc_beta": 0.35,
+        "srrc_span_symbols": 8,
+        "complex_offset_hz": 500000,
+        "nominal_carrier": {
+          "lo_hz": 100000000,
+          "center_hz": 100500000,
+          "note": "Nominal convention only; board support is not established."
+        },
+        "amplitude": 0.1,
+        "amplitude_units": "normalized complex peak; int16 scale 32767; not RF power",
+        "rx_mhz": 900,
+        "tx_mhz": 1000,
+        "seq": 160,
+        "body_hex": "018403e803a09293",
+        "frame_hex": "1acffc1dbcd9eb6542b10008a92698d327c1a642",
+        "frame_bits": 160,
+        "complex_samples": 4000,
+        "byte_count": 16000,
+        "block_duration_seconds": 0.0016,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "iq_file": "iq_s16le.bin",
+        "sha256": "68a5cd2ce4e3b35a1d41f1cf37f74acbca98b34fa2794fa4f7d4be47c7b41ba4",
+        "shaping": "three repeated frames, center frame retained"
+      },
+      {
+        "source": "OFFLINE_REFERENCE",
+        "mode": "cmd",
+        "sample_rate_hz": 2500000,
+        "symbol_rate_sym_s": 100000,
+        "srrc_beta": 0.35,
+        "srrc_span_symbols": 8,
+        "complex_offset_hz": 500000,
+        "nominal_carrier": {
+          "lo_hz": 100000000,
+          "center_hz": 100500000,
+          "note": "Nominal convention only; board support is not established."
+        },
+        "amplitude": 0.1,
+        "amplitude_units": "normalized complex peak; int16 scale 32767; not RF power",
+        "rx_mhz": 901,
+        "tx_mhz": 1000,
+        "seq": 161,
+        "body_hex": "018503e803a128e3",
+        "frame_hex": "1acffc1dbcd9eb660d010008a92698d0b5323e08",
+        "frame_bits": 160,
+        "complex_samples": 4000,
+        "byte_count": 16000,
+        "block_duration_seconds": 0.0016,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "iq_file": "iq_s16le.bin",
+        "sha256": "2eb361465191eee5ab24e283c52d23ab822885f2cce4e0f1283bd81b3fa5df0b",
+        "shaping": "three repeated frames, center frame retained"
+      },
+      {
+        "source": "OFFLINE_REFERENCE",
+        "mode": "cmd",
+        "sample_rate_hz": 2500000,
+        "symbol_rate_sym_s": 100000,
+        "srrc_beta": 0.35,
+        "srrc_span_symbols": 8,
+        "complex_offset_hz": 500000,
+        "nominal_carrier": {
+          "lo_hz": 100000000,
+          "center_hz": 100500000,
+          "note": "Nominal convention only; board support is not established."
+        },
+        "amplitude": 0.1,
+        "amplitude_units": "normalized complex peak; int16 scale 32767; not RF power",
+        "rx_mhz": 901,
+        "tx_mhz": 1001,
+        "seq": 162,
+        "body_hex": "018503e903a22fb0",
+        "frame_hex": "1acffc1dbcd9eb660d01000be69698dec47883c2",
+        "frame_bits": 160,
+        "complex_samples": 4000,
+        "byte_count": 16000,
+        "block_duration_seconds": 0.0016,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "iq_file": "iq_s16le.bin",
+        "sha256": "1a02e03b9450a46fc9e58a235d56b81e225904cf33c1e3dd1f19f416b9c299b3",
+        "shaping": "three repeated frames, center frame retained"
+      },
+      {
+        "source": "OFFLINE_REFERENCE",
+        "mode": "cmd",
+        "sample_rate_hz": 2500000,
+        "symbol_rate_sym_s": 100000,
+        "srrc_beta": 0.35,
+        "srrc_span_symbols": 8,
+        "complex_offset_hz": 500000,
+        "nominal_carrier": {
+          "lo_hz": 100000000,
+          "center_hz": 100500000,
+          "note": "Nominal convention only; board support is not established."
+        },
+        "amplitude": 0.1,
+        "amplitude_units": "normalized complex peak; int16 scale 32767; not RF power",
+        "rx_mhz": 900,
+        "tx_mhz": 1001,
+        "seq": 163,
+        "body_hex": "018403e903a395c0",
+        "frame_hex": "1acffc1dbcd9eb6542b1000be69698dd568b1b88",
+        "frame_bits": 160,
+        "complex_samples": 4000,
+        "byte_count": 16000,
+        "block_duration_seconds": 0.0016,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "iq_file": "iq_s16le.bin",
+        "sha256": "473abe232f448e9e9668c670877d9ea2af8d75c8f5a8fc74f76504322bf11175",
+        "shaping": "three repeated frames, center frame retained"
+      }
+    ]
+  },
+  "offline": {
+    "command_profiles": 8,
+    "passed": true,
+    "scope": "Generated commands checked through ideal sampling model and existing C receiver; not RF acceptance"
+  },
+  "actual_control": {
+    "origin": "ADC_NORMAL",
+    "cases": [
+      {
+        "name": "baseline",
+        "requested_mhz": [
+          900,
+          1000
+        ],
+        "air_seq": 160,
+        "spi_hz": [
+          900000000,
+          1000000000
+        ],
+        "before": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "180",
+          "applied": "30",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "after": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "182",
+          "applied": "31",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "repeated": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "193",
+          "applied": "31",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "duplicate_observation_seconds": 2.0,
+        "passed": true
+      },
+      {
+        "name": "rx_only",
+        "requested_mhz": [
+          901,
+          1000
+        ],
+        "air_seq": 161,
+        "spi_hz": [
+          900999998,
+          1000000000
+        ],
+        "before": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "196",
+          "applied": "31",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "after": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "198",
+          "applied": "32",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "repeated": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "210",
+          "applied": "32",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "duplicate_observation_seconds": 2.0,
+        "passed": true
+      },
+      {
+        "name": "tx_only",
+        "requested_mhz": [
+          901,
+          1001
+        ],
+        "air_seq": 162,
+        "spi_hz": [
+          900999998,
+          1000999998
+        ],
+        "before": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "212",
+          "applied": "32",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "after": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "214",
+          "applied": "33",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "repeated": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "226",
+          "applied": "33",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "duplicate_observation_seconds": 2.0,
+        "passed": true
+      },
+      {
+        "name": "retain",
+        "requested_mhz": [
+          900,
+          1001
+        ],
+        "air_seq": 163,
+        "spi_hz": [
+          900000000,
+          1000999998
+        ],
+        "before": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "228",
+          "applied": "33",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "after": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "230",
+          "applied": "34",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "repeated": {
+          "network": "1",
+          "armed": "1",
+          "decoded": "242",
+          "applied": "34",
+          "pending": "0",
+          "retries": "1",
+          "failures": "0",
+          "gain": "0",
+          "att": "89"
+        },
+        "duplicate_observation_seconds": 2.0,
+        "passed": true
+      }
+    ],
+    "applied_before": 30,
+    "applied_after": 34,
+    "signal_off": {
+      "seconds": 2.0,
+      "before": {
+        "network": "1",
+        "armed": "1",
+        "decoded": "244",
+        "applied": "34",
+        "pending": "0",
+        "retries": "1",
+        "failures": "0",
+        "gain": "0",
+        "att": "89"
+      },
+      "after": {
+        "network": "1",
+        "armed": "1",
+        "decoded": "244",
+        "applied": "34",
+        "pending": "0",
+        "retries": "1",
+        "failures": "0",
+        "gain": "0",
+        "att": "89"
+      },
+      "spi_hz": [
+        900000000,
+        1000999998
+      ],
+      "reply": {
+        "adda": "WAVEFORM_DECODE source=ADC_NORMAL epoch=387 rc=0 elapsed_ms=279\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=387 config_epoch=388 source=ADC_NORMAL channel=0 k=0 first=-10 last=-12\r\nCAPTURE state=1 valid=0 error=OK epoch=388 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=388 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=388 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=388 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=388 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=388 rc=0 elapsed_ms=280\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=388 config_epoch=389 source=ADC_NORMAL channel=0 k=0 first=-13 last=-10\r\nCAPTURE state=1 valid=0 error=OK epoch=389 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=389 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=389 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=389 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=389 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=389 rc=0 elapsed_ms=279\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=389 config_epoch=390 source=ADC_NORMAL channel=0 k=0 first=-9 last=-13\r\nCAPTURE state=1 valid=0 error=OK epoch=390 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=390 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=390 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=390 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=390 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=390 rc=0 elapsed_ms=280\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=390 config_epoch=391 source=ADC_NORMAL channel=0 k=0 first=-10 last=-14\r\nCAPTURE state=1 valid=0 error=OK epoch=391 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=391 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=391 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=391 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=391 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=391 rc=0 elapsed_ms=279\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=391 config_epoch=392 source=ADC_NORMAL channel=0 k=0 first=-11 last=-14\r\nCAPTURE state=1 valid=0 error=OK epoch=392 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=392 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=392 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=392 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=392 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=392 rc=0 elapsed_ms=280\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=392 config_epoch=393 source=ADC_NORMAL channel=0 k=0 first=-10 last=-11\r\nCAPTURE state=1 valid=0 error=OK epoch=393 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=393 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=393 copied_words=1024\r\nCONTROLLER auto=1 capture_state=4 capture_valid=0 consumed=0\r\nSTATUS network=1 armed=1 decoded=244 applied=34 pending=0 retries=1 failures=0 gain=0 att=89\r\nCLI_RESULT rc=0\r\nCAPTURE state=5 valid=0 error=OK epoch=393 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=393 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=393 rc=0 elapsed_ms=280\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=393 config_epoch=394 source=ADC_NORMAL channel=0 k=0 first=-14 last=-11\r\nCAPTURE state=1 valid=0 error=OK epoch=394 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=394 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=394 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=394 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=394 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=394 rc=0 elapsed_ms=279\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=394 config_epoch=395 source=ADC_NORMAL channel=0 k=0 first=-8 last=-10\r\nCAPTURE state=1 valid=0 error=OK epoch=395 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=395 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=395 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=395 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=395 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=395 rc=0 elapsed_ms=279\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=395 config_epoch=396 source=ADC_NORMAL channel=0 k=0 first=-12 last=-10\r\nCAPTURE state=1 valid=0 error=OK epoch=396 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=396 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=396 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=396 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=396 copied_words=65536\r\nWAVEFORM_DECODE source=ADC_NORMAL epoch=396 rc=0 elapsed_ms=280\r\nSNAPSHOT_DDR address=0x011000c0 bytes=262144 epoch=396 config_epoch=397 source=ADC_NORMAL channel=0 k=0 first=-12 last=-10\r\nCAPTURE state=1 valid=0 error=OK epoch=397 copied_words=65536\r\nCAPTURE state=3 valid=0 error=OK epoch=397 copied_words=65536\r\nCAPTURE state=4 valid=0 error=OK epoch=397 copied_words=1024\r\nCAPTURE state=5 valid=0 error=OK epoch=397 copied_words=65536\r\nCAPTURE state=6 valid=1 error=OK epoch=397 copied_words=65536\r\n",
+        "relay": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000999998\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n"
+      },
+      "passed": true
+    },
+    "reg010": "0x88",
+    "all_cases_relay_mode": 2,
+    "all_cases_tx_atten_db": 89,
+    "local_gain_db": 0,
+    "local_atten_db": 89,
+    "no_local_lo_or_uart_nettest_command": true,
+    "retained_rx_hz": 900000000,
+    "retained_tx_hz": 1000999998,
+    "raw_adc_dump_saved_this_phase": false,
+    "provenance": "Actual auto-normal acquisition/decode UART reports, matching ACK and independent radio SPI readback"
+  },
+  "bridge": {
+    "control_result_sha256": "7fb6fae43bed0b0879942e21b26d1d195cf3a2e714399779e4434a04e84d91f2",
+    "air_seq": 163,
+    "requested_mhz": [
+      900,
+      1001
+    ],
+    "applied_unchanged_during_business": 34,
+    "network_off_during_business": true,
+    "initial_retained_spi": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000999998\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=0 rx2_db_rc=0 value=0\r\r\nRFATT tx1_mdB_rc=0 value=89000 tx2_mdB_rc=0 value=89000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n",
+    "after_captures_spi": "RFPORT1 addr=0x010 rc=0 raw=0x88\r\r\nRFPORT2 addr=0x011 rc=0 raw=0x00\r\r\nRFPORT3 addr=0x012 rc=0 raw=0x10\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000999998\r\r\nRFPLL_RX addr=0x247 rc=0 raw=0x02 locked=1\r\r\nRFPLL_TX addr=0x287 rc=0 raw=0x02 locked=1\r\r\nRF_PRODUCT_ID addr=0x037 rc=0 raw=0x0A\r\r\nRF_PRODUCT_ID_NOTE shared_family_register_not_exact_part_identification\r\r\nRFGAIN rx1_db_rc=0 value=30 rx2_db_rc=0 value=30\r\r\nRFATT tx1_mdB_rc=0 value=50000 tx2_mdB_rc=0 value=50000\r\r\nRFBIST addr=0x3F4 rc=0 raw=0x00\r\r\nRFLOOP addr=0x3F5 rc=0 raw=0x00\r\r\nRFPORT_TEST addr=0x3F6 rc=0 raw=0x00\r\r\nRFDAC_TEST addr=0x3FE rc=0 raw=0x00\r\r\nRFREAD_END rc=0 spi_errors_total=0\r\r\nRFDIAG_END rc=0 ready=1 init_rc=0 spi_errors_total=0\r\r\n",
+    "no_intervening_relay_frequency_write": true,
+    "allowed_local_changes": "Relay gain/attenuation/mute changed for business; these are not V2 fields. Source and receiver configured for business.",
+    "cleanup_only_lo_write": "lo 900 1000 after all six captures; not counted as a true ADC transaction"
+  },
+  "business": {
+    "receiver": "Independent COM18, pinned USB instance and IIO hw_serial 104473023196000bf5ff1a00aae12c3ca8",
+    "receiver_lo_readback_hz": 1000749998,
+    "relay_rx_gain_db": 30,
+    "relay_tx_atten_db": 50,
+    "receiver_gain_db": 30,
+    "complex_samples_per_window": 8192,
+    "sample_rate_hz": 2500000,
+    "totals": {
+      "windows": 6,
+      "positive_windows": 3,
+      "negative_windows": 3,
+      "accepted_frames": 6,
+      "conditional_compared_bits": 960,
+      "conditional_bit_errors": 0,
+      "ber": null,
+      "frame_delivery_rate": null
+    },
+    "cases": [
+      {
+        "name": "baseline",
+        "expected_valid": false,
+        "passed": true,
+        "sha256": "fa9acc8c07d778b9d70fabe06713e59338c5341b84d81b809d37e048204ac685",
+        "accepted_frames": 0,
+        "sequence_ids": [],
+        "conditional_compared_bits": 0,
+        "conditional_bit_errors": 0,
+        "acquisition_failed": true,
+        "rms_codes": 2.0892851180936267,
+        "band_power_dbfs": -73.88717260506604,
+        "carrier_offset_hz": null,
+        "adc_clip_components": 0,
+        "relay_clip_delta": 0
+      },
+      {
+        "name": "retained_1001_0",
+        "expected_valid": true,
+        "passed": true,
+        "sha256": "5fbb29f53e77ee7b01d46b8895faf903846d4260d90ff8b352aabfc870d07b5d",
+        "accepted_frames": 2,
+        "sequence_ids": [
+          3,
+          4
+        ],
+        "conditional_compared_bits": 320,
+        "conditional_bit_errors": 0,
+        "acquisition_failed": false,
+        "rms_codes": 5.1645884282111485,
+        "band_power_dbfs": -54.61255336617868,
+        "carrier_offset_hz": 750085.1342393626,
+        "adc_clip_components": 0,
+        "relay_clip_delta": 0
+      },
+      {
+        "name": "retained_1001_1",
+        "expected_valid": true,
+        "passed": true,
+        "sha256": "5a064fa714f6988de4057c4063808bfc0a48a5e4265e47ab7fa37138ddb6c52a",
+        "accepted_frames": 2,
+        "sequence_ids": [
+          3,
+          4
+        ],
+        "conditional_compared_bits": 320,
+        "conditional_bit_errors": 0,
+        "acquisition_failed": false,
+        "rms_codes": 5.142880394292677,
+        "band_power_dbfs": -54.689820304713095,
+        "carrier_offset_hz": 750084.0716349594,
+        "adc_clip_components": 0,
+        "relay_clip_delta": 0
+      },
+      {
+        "name": "relay_muted",
+        "expected_valid": false,
+        "passed": true,
+        "sha256": "2cfa95e48f01e81d97c84acb587143dd4ddfcc385f0ad6b6e6d7c94d95c5903c",
+        "accepted_frames": 0,
+        "sequence_ids": [],
+        "conditional_compared_bits": 0,
+        "conditional_bit_errors": 0,
+        "acquisition_failed": true,
+        "rms_codes": 3.4959519000552626,
+        "band_power_dbfs": -74.12075503768939,
+        "carrier_offset_hz": null,
+        "adc_clip_components": 0,
+        "relay_clip_delta": 0
+      },
+      {
+        "name": "source_stopped",
+        "expected_valid": false,
+        "passed": true,
+        "sha256": "8b4bf81ca9455f018d15abafeaf4830de5b11792145b3b4161bfc447e2496f0b",
+        "accepted_frames": 0,
+        "sequence_ids": [],
+        "conditional_compared_bits": 0,
+        "conditional_bit_errors": 0,
+        "acquisition_failed": true,
+        "rms_codes": 3.4362391153428917,
+        "band_power_dbfs": -73.75568303135955,
+        "carrier_offset_hz": null,
+        "adc_clip_components": 0,
+        "relay_clip_delta": 0
+      },
+      {
+        "name": "source_recovered",
+        "expected_valid": true,
+        "passed": true,
+        "sha256": "1c27657b352999ed7e5fdfdf0c50095ac3908eaaa93cbc599a11cecaeb6a1125",
+        "accepted_frames": 2,
+        "sequence_ids": [
+          4,
+          5
+        ],
+        "conditional_compared_bits": 320,
+        "conditional_bit_errors": 0,
+        "acquisition_failed": false,
+        "rms_codes": 5.134245186277385,
+        "band_power_dbfs": -54.76534359865407,
+        "carrier_offset_hz": 750095.4676312034,
+        "adc_clip_components": 0,
+        "relay_clip_delta": 0
+      }
+    ],
+    "mean_carrier_offset_hz": 750088.2245018418,
+    "inferred_rf_hz": 1001500086.2245018,
+    "frequency_reference": "Board LO and sample clocks, not a calibrated absolute frequency instrument",
+    "all_raw_captures_redecoded_and_hash_verified": true
+  },
+  "unchanged": {
+    "gui": true,
+    "telecontrol_v2": true,
+    "board_firmware": true,
+    "boot_media": true,
+    "last_loaded_ldsdr_elf_sha256": "2fed9cd6927a2b364217741d6a02a7219ad582735ccf01b8d7c8f9bf4c50ee06"
+  },
+  "final_state": {
+    "source_tx_lo_off": true,
+    "receiver_tx_lo_off": true,
+    "buffers_off": true,
+    "dds_zero": true,
+    "source_tx_atten_db": [
+      89,
+      89
+    ],
+    "receiver_tx_atten_db": [
+      89,
+      89
+    ],
+    "relay_mode": 2,
+    "relay_tx_atten_db": [
+      89,
+      89
+    ],
+    "relay_rx_gain_db": 0,
+    "relay_rx_hz": 900000000,
+    "relay_tx_hz": 1000000000,
+    "adda_auto": 0,
+    "adda_network": 0,
+    "adda_armed": 0,
+    "adda_pending": 0,
+    "adda_failures": 0,
+    "adda_decoded": 244,
+    "adda_applied": 34,
+    "last_adc_ack": "seq163 RX900/TX1001 is historical; final local cleanup restored TX1000 without another ACK",
+    "cleanup_errors": []
+  },
+  "limits": [
+    "Time-separated wiring, not concurrent command/business operation",
+    "Two-second duplicate and signal-off observations, not long-duration false-trigger statistics",
+    "Short IQ windows and CRC-selected synchronization; no overall BER or delivery rate measured",
+    "No malformed-RF command injection, absolute RF power calibration, second RF channel or antenna trial this phase",
+    "Receiver TX capability, firmware cold boot persistence and full LDSDR PL source provenance remain outstanding"
+  ],
+  "source_hashes": {
+    "sw/tools/telecontrol_waveform.py": "603363ba95fd8229202c8b0a6346f5cd8aaf981e9f998a67db589f7fe6062eac",
+    "sw/tools/test_telecontrol_receiver.py": "202c34f774efb5ed30cd0ded3112eae57648d13cee8cff1009f729a84470d1a5",
+    "sw/tools/rf_sequence_check.py": "2752af1b39403b8413209851dd095cb0cdd2f6ad67e10137d12b626fc24cb927",
+    "sw/tools/rf_text_link.py": "50241d8f7ee3a5961e2e0c867c91cc7523b91c2ea955bb938639c2503f01fc38",
+    "sw/tools/rf_tone_check.py": "a186cda2478df26487f3014a4a2e0f680141bbffa927cd2f9d8a5f8900a7424b",
+    "sw/ccsds/ccsds_tm_tx.py": "02768cd2fee17f9431f0a76bd445131485347aa9014ca635b32e825b37a40c9b",
+    "board/z7addalite/tools/analyze_adc_capture.py": "703c0635c1dca6f08ca805edee942dfaaff67435e2df856e19f984f6b9cee12b"
+  },
+  "evidence_files": {
+    "control/result.json": {
+      "bytes": 97563,
+      "sha256": "7fb6fae43bed0b0879942e21b26d1d195cf3a2e714399779e4434a04e84d91f2"
+    },
+    "control/runner_used.py": {
+      "bytes": 15603,
+      "sha256": "bef8bdc523b51ece8b3d4a771225057b8c84b760bdc4f8e1b5dfd6c7a2e36553"
+    },
+    "control/adda.txt": {
+      "bytes": 72090,
+      "sha256": "c54d92f56e032a4f9b71292f30e2a771b158822a8d444eff3bbdd82ef5da17e3"
+    },
+    "control/relay.txt": {
+      "bytes": 6142,
+      "sha256": "7c2669c788b27dcf51014064e985f2e3f8f5bde5d0e551b1e3c37731edb4cbb6"
+    },
+    "business/result.json": {
+      "bytes": 54095,
+      "sha256": "44888797ecf0c86034d65d46a9728aedf1ee51fb50d55244c14e3a647c0e2869"
+    },
+    "business/runner_used.py": {
+      "bytes": 23939,
+      "sha256": "3906f8aee835a48a09889256ca574eba54248cebec5e18f0df58a706a20f74ee"
+    },
+    "business/receiver.json": {
+      "bytes": 962036,
+      "sha256": "0bb22ecfc149f4b80681aea3bb71bf75c8e1c95de2e2278dec35377f5c33133c"
+    },
+    "business/relay.json": {
+      "bytes": 17950,
+      "sha256": "3bc788630bf9a7c9aaf61b984125cd32cd92ddec9653e89b511e63eefced216a"
+    }
+  },
+  "local_archive": {
+    "filename": "rf_adc_business_20261028.zip",
+    "location": "D:\\RelayTools\\releases\\rf_adc_business_20261028.zip",
+    "bytes": 630599,
+    "sha256": "88a5aa3fd92ecbb3b1b9fca62b1d213cb7acebf06e33276b4a98ced5174c318b",
+    "files": 64,
+    "entry_hashes_verified": true
+  }
+}

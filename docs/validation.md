@@ -2,7 +2,7 @@
 
 记录日期：2026-10-28。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
 
-最新独立接收板验证见 [独立接收摘要](validation/2026-10-28-independent-receiver.json)；业务序列与稳定性见 [稳定性验证摘要](validation/2026-10-28-rf-stability.json)；GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
+最新真实ADC与业务分时验证见 [分时验证摘要](validation/2026-10-28-adc-business-staged.json)；独立接收板验证见 [独立接收摘要](validation/2026-10-28-independent-receiver.json)；业务序列与稳定性见 [稳定性验证摘要](validation/2026-10-28-rf-stability.json)；GUI实板控制见 [GUI实板控制摘要](validation/2026-10-28-gui-loop.json)；真实输入闭环见 [真实输入闭环摘要](validation/2026-10-28-analog-loop.json)；UART_NETTEST双板UDP验证见 [双板UDP验证摘要](validation/2026-10-27-dual-udp.json)；网口验证及修复回归见 [网络验证摘要](validation/2026-10-27-network.json)；r4c时序、全通道快照和历史串口证据见 [r4c完整M2验证摘要](validation/2026-10-27-m2.json)。[早期摘要](validation/2026-10-27.json) 保留为当天前期快照；原40字节RTL环回另见 [历史验证记录](legacy-validation.md)。原始采样二进制和完整厂商构建输出不随源码包分发。
 
 ## 已完成
 
@@ -137,14 +137,24 @@ GUI新增持久显示`last_decoded`与`last_ack`，分别表示最近有效解�
 
 接收板Linux 5.15、固件v0.38-1-g6f8e-dirty；设备树Z7010/AD9363与IIO Z7010-AD9361字符串只记录软件身份。USB换线后枚举成功，无稳定factory serial，使用Windows完整实例与IIO hw_serial双重绑定。新接收端TX全程关闭；未验证其发射或100.5 MHz能力。原源板准备时发现重启迹象、uptime约613秒且旧RAM波形不存在，原因未知，重登录恢复配置与上传不计作故障恢复验收。
 
-本轮复用既有IIO格式、bench runner及文本/序列分析，无新增解码器、GUI或固件。结束时源与接收端TX LO/buffer/DDS关闭、两路TX89 dB；LDSDR静音、RX增益0、两路TX89 dB、RX900/TX1000 MHz；ADDA auto/network/ARM关闭、pending/failures=0。详见[独立接收板验证](independent-receiver-validation.md)及[摘要与证据校验](validation/2026-10-28-independent-receiver.json)。下一步两线可分时复核真实ADC与修正版LDSDR；同时运行仍需独立100.5 MHz源能力确认及第三根同轴。
+本轮复用既有IIO格式、bench runner及文本/序列分析，无新增解码器、GUI或固件。结束时源与接收端TX LO/buffer/DDS关闭、两路TX89 dB；LDSDR静音、RX增益0、两路TX89 dB、RX900/TX1000 MHz；ADDA auto/network/ARM关闭、pending/failures=0。详见[独立接收板验证](independent-receiver-validation.md)及[摘要与证据校验](validation/2026-10-28-independent-receiver.json)。后续两线分时验证见下一节；同时运行仍需独立100.5 MHz源能力确认及第三根同轴。
+
+### 2026-10-28：真实ADC指令与保留设置后的业务转发
+
+第一根SMA先接发送板TX1A→Z7ADDALite ADC1/J5，LDSDR保持静音及两路TX89 dB。100.5 MHz V2命令seq160～163依次设置900/1000、901/1000、901/1001、900/1001 MHz，均通过ADC_NORMAL有效解码、匹配UDP ACK与独立SPI读回，applied从30增至34。每笔重复波形观察2秒无新应用；关闭源2秒，decoded=244、applied=34不变，pending/failures=0。I/Q修正版0x010始终0x88，未使用UART_NETTEST或本地lo代替真实指令。该阶段保留板端采集/解码日志，未另存遥控板原始ADC数据。
+
+关闭ADDA自动接收与网络，保留最后900/1001 MHz设置。停发后用户将第一根SMA接回LDSDR RX1，第二根LDSDR TX1→独立接收板RX1A保持不动。业务阶段只调整源、接收器及转发增益/衰减/静音，未再次设置转发频率；六窗前后SPI均为900000000/1000999998 Hz，applied仍34。
+
+独立接收端取得6份8192组I/Q，3个正例恢复6个CRC有效完整序列帧，960个条件比较bit无差异；低输出基线、转发静音、源关闭3个负例无有效帧。采样无ADC削顶，逐窗LDSDR削顶增量0。固定接收LO1000749998 Hz下的平均载波偏移+750088.225 Hz，对应约1001.500086 MHz业务输出。全部原始采样重新校验hash和离线解码，与报告一致；结果不代表整体BER、跨窗口无漏帧或同时联动。
+
+六窗完成后才通过本地lo恢复900/1000 MHz并SPI确认；最后ADC ACK仍是seq163的历史900/1001 MHz，不能替代收尾后的PLL状态。源与接收端TX LO/buffer/DDS关闭、两路TX89 dB；LDSDR mode=2、RX增益0、两路TX89 dB；ADDA auto/network/ARM关闭、pending/failures=0。清理无错误，GUI、V2、板端固件及启动介质未改。详情见[分时验证记录](adc-business-staged-validation.md)及[摘要与证据校验](validation/2026-10-28-adc-business-staged.json)。
 
 ## 后续验收
 
 | 工作 | 验收要求 |
 |---|---|
 | 业务RF | 单音、实验文本/序列、311.136秒保持输出与离散快照及UDP实际改频已通过；独立接收板两频点业务链另已通过8窗口验证；继续量化误码率、长帧/持续吞吐、第二路及最终业务带宽 |
-| 联合控制与源码归档 | 修正版已通过UART_NETTEST回归；真实ADC与业务同时运行仍需独立100.5 MHz指令源及第三根同轴，重跑真实ADC自动控制并确定活动LDSDR PL的完整源码与位流对应关系 |
+| 联合控制与源码归档 | 修正版已通过四组真实ADC自动控制及设置保持后的独立接收业务分时验证；同时运行仍需独立100.5 MHz指令源及第三根同轴，活动LDSDR PL的完整源码与位流对应关系仍待归档 |
 | 接收性能边界 | 当前实物有线100.5 MHz工作点已通过；后续按目标工作范围开展电平标定、误码率、真实坏帧拒绝与接收边界测试 |
 | 连续运行与启动 | 验证持续采集/控制、异常恢复、重复上电和启动介质方案，量化吞吐率与漏帧边界 |
 

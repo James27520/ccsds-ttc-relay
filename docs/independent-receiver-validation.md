@@ -34,4 +34,4 @@ ADDA以UART_NETTEST发送seq140设置900/1000 MHz、seq141设置900/1001 MHz，�
 
 发送端及新接收端TX LO关闭、buffers清零、DDS全零、两路TX衰减89 dB；LDSDR mode=2、两路TX衰减89 dB、RX增益0、RX900/TX1000 MHz；ADDA auto/network/ARM关闭、pending=0、failures=0。清理无错误，GUI、遥控V2、固件及启动介质未改，本轮不需要新上板固件。
 
-现有两根线可先静音停发、分段换线复核真实ADC遥控与修正版LDSDR。真实遥控与业务同时运行仍需确认独立100.5 MHz指令源能力及第三根同轴；新接收板TX未测试，不能先假定它能兼任指令源。绝对功率、全频段、第二路RF、整体误码率及长期连续运行未验收，见[同时联动计划](system-integration-plan.md)。
+后续已用现有两根线完成[真实ADC与修正版LDSDR分时验证](adc-business-staged-validation.md)：四组实际指令通过，保留最后频率设置换线后独立接收端恢复正确业务。真实遥控与业务同时运行仍需确认独立100.5 MHz指令源能力及第三根同轴；新接收板TX未测试，不能先假定它能兼任指令源。绝对功率、全频段、第二路RF、整体误码率及长期连续运行未验收，见[同时联动计划](system-integration-plan.md)。
