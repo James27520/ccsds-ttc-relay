@@ -92,6 +92,10 @@ class TelemetrySerial:
     def _command(self, command):
         if command not in ('status', 'telemetry'):
             raise ValueError('此通道只允许只读查询')
+        return self._exchange(command)
+
+    def _exchange(self, command):
+        """Internal CLI framing; subclasses must enforce their own command gate."""
         self.port.reset_input_buffer()
         data = (command+'\r\n').encode('ascii')
         if self.port.write(data) != len(data):

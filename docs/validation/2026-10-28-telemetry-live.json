@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-28",
+  "scope": "single wired experimental ATM1 telemetry GUI capture",
+  "base_commit": "72e14643ba875ca4bef9415b7309b224879e3414",
+  "firmware_changed": false,
+  "flash_or_sd_written": false,
+  "wiring_changed": false,
+  "workpoint": {
+    "dac_nominal_hz": 90500000,
+    "dac_peak_code": 128,
+    "dac_full_scale": 32768,
+    "burst_ms": 33.6,
+    "rx_lo_hz": 90000000,
+    "sample_rate_hz": 2500000,
+    "symbol_rate": 100000,
+    "bandwidth_hz": 3000000,
+    "rx_gain_db": 20,
+    "samples": 262144
+  },
+  "results": {
+    "successful_bursts": 2,
+    "crc_valid_frames": 8,
+    "fresh_snapshots": 2,
+    "snapshot_sequences": [
+      16,
+      17
+    ],
+    "completed_quiet_windows": 2,
+    "quiet_valid_frames": 0,
+    "gui_request_to_result_seconds": 16.91983739999887,
+    "cancelled_operations": 1,
+    "cancelled_result_published": false,
+    "cancelled_raw_audit_frames": 0,
+    "adc_normal_commands_this_stage": 0,
+    "new_udp_transactions_this_stage": 0,
+    "returned_state_origin": "UART_NETTEST",
+    "returned_air_sequence": 232,
+    "returned_ack_rx_hz": 900000000,
+    "returned_ack_tx_hz": 1000000000
+  },
+  "iq": [
+    {
+      "group": "controller",
+      "file": "rf_000001.bin",
+      "bytes": 1048576,
+      "sha256": "17050c8b37b738fdf044ad756c8bcfcb75833b5e50d28d33ee1f53ceb62ca14e",
+      "frames": 0,
+      "sequences": [],
+      "rms_codes": 1.6812719634369278,
+      "clipped": 0,
+      "published_report": true
+    },
+    {
+      "group": "controller",
+      "file": "rf_000002.bin",
+      "bytes": 1048576,
+      "sha256": "359900432821e5198bb4521c6215573da407514b344bd363c38bd76b8262b60e",
+      "frames": 4,
+      "sequences": [
+        16
+      ],
+      "rms_codes": 19.618785676076097,
+      "clipped": 0,
+      "published_report": true
+    },
+    {
+      "group": "controller",
+      "file": "rf_000003.bin",
+      "bytes": 1048576,
+      "sha256": "a59abef777637abd0957967a853fc1591f4853f7270ee5c3396910f56c586a14",
+      "frames": 0,
+      "sequences": [],
+      "rms_codes": 1.682625972572104,
+      "clipped": 0,
+      "published_report": true
+    },
+    {
+      "group": "gui",
+      "file": "rf_000001.bin",
+      "bytes": 1048576,
+      "sha256": "72eb8f6cc048eb4ab1b4be23c43410318243326667c9cdba8c05712582670470",
+      "frames": 4,
+      "sequences": [
+        17
+      ],
+      "rms_codes": 19.81279699060848,
+      "clipped": 0,
+      "published_report": true
+    },
+    {
+      "group": "gui",
+      "file": "rf_000002.bin",
+      "bytes": 1048576,
+      "sha256": "74c3ddac9338f350f5ca51074a9cfb9ce3c47004832e5c3474af610aabb581c4",
+      "frames": 0,
+      "sequences": [],
+      "rms_codes": 1.7259592236490464,
+      "clipped": 0,
+      "published_report": false
+    }
+  ],
+  "cleanup": {
+    "independent_port_reopen_passed": true,
+    "adda_tmstatus": {
+      "enabled": 1,
+      "seq": 18,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    },
+    "sdr_tx_powerdown": 1,
+    "sdr_rx_tx_buffers": 0,
+    "sdr_tx_attenuation_db": 89,
+    "relay_tx_attenuation_db": 89,
+    "relay_spi_errors": 0
+  },
+  "software_tests": {
+    "ground_station": 135,
+    "after_display_polish_rf_window": 23,
+    "passed": true
+  },
+  "identity_scope": "one-use process binding, RX Linux boot/USB/model/IIO and ADDA USB/uptime; not permanent authentication",
+  "limitations": [
+    "Existing UART_NETTEST state only, not same-transaction ADC_NORMAL return",
+    "Snapshot acquisition with gaps; not continuous real-time telemetry",
+    "Ordinary TX identity checks remain unchanged",
+    "No reverse business, shared-LO concurrency or six-cable system acceptance"
+  ],
+  "archive": {
+    "local_path": "D:\\RelayTools\\releases\\telemetry_live_20261028.zip",
+    "bytes": 1324331,
+    "sha256": "ade6807495a23f9ab99444b42f2946d5ea532a244945ad9949cd2b32e886a637",
+    "manifest_entries": 55,
+    "verified": true
+  }
+}

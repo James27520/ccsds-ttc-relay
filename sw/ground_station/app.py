@@ -96,7 +96,8 @@ class StationApp:
                  controller_factory: Callable[..., Any] | None = None,
                  log_dir: str | None = None,
                  telemetry_controller_factory: Callable[..., Any] | None = None,
-                 rf_telemetry_decoder: Callable[..., Any] | None = None):
+                 rf_telemetry_decoder: Callable[..., Any] | None = None,
+                 rf_telemetry_controller_factory: Callable[..., Any] | None = None):
         if role not in {"sender", "receiver"}:
             raise ValueError("role must be sender or receiver")
         self.root, self.role = root, role
@@ -111,6 +112,7 @@ class StationApp:
         self.telemetry_controller_factory = telemetry_controller_factory
         self.rf_telemetry_window = None
         self.rf_telemetry_decoder = rf_telemetry_decoder
+        self.rf_telemetry_controller_factory = rf_telemetry_controller_factory
         self.devices: dict[str, str] = {}
         self.readbacks: dict[str, tk.StringVar] = {}
         self.requested: dict[str, tk.StringVar] = {}
@@ -730,17 +732,25 @@ class StationApp:
             self.rf_telemetry_window.show()
             return
         from .rf_telemetry_window import RFTelemetryWindow
-        self.rf_telemetry_window = RFTelemetryWindow(
-            self.root, on_closed=self._rf_telemetry_closed, decode_iq=self.rf_telemetry_decoder)
+        try:
+            self.rf_telemetry_window = RFTelemetryWindow(
+                self.root, on_closed=self._rf_telemetry_closed, decode_iq=self.rf_telemetry_decoder,
+                rf_telemetry_controller_factory=self.rf_telemetry_controller_factory)
+        except Exception as error:
+            self._log(f"RF 测控下行启动失败：{error}", "error")
 
     def _rf_telemetry_closed(self) -> None:
         self.rf_telemetry_window = None
+        self._finish_close_if_ready()
 
     def _finish_close_if_ready(self) -> None:
         if not self._station_closed:
             return
         if self.telemetry_window is not None and not self.telemetry_window.closed:
             self.footer_var.set("业务控制器已清理，继续等待测控监控串口关闭回执。")
+            return
+        if self.rf_telemetry_window is not None and not self.rf_telemetry_window.closed:
+            self.footer_var.set("业务控制器已清理，继续等待 RF 下行控制器停止并释放串口。")
             return
         self.closed = True
         if self._poll_id:
