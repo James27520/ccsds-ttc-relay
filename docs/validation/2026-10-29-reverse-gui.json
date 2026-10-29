@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-29",
+  "passed": true,
+  "scope": "V2 reverse business GUI on one PC through real LDSDR channel 2",
+  "physical_path": [
+    "terminal TX1A",
+    "LDSDR RX2",
+    "LDSDR TX2",
+    "gateway RX2A"
+  ],
+  "gui_sessions": {
+    "receiver": "20261029_174027_receiver_543e6aba",
+    "sender": "20261029_174147_sender_6f1fdf0d"
+  },
+  "gui_window_count": 3,
+  "rx_scan_elements": [
+    "voltage2",
+    "voltage3"
+  ],
+  "samples_per_capture": 32768,
+  "sample_rate_hz": 2500000,
+  "rx_lo_hz_readback": 1000749998,
+  "source_tx_lo_hz_readback": 900999998,
+  "source_tx_attenuation_db": 60,
+  "relay_gain_db": 30,
+  "relay_attenuation_db": 50,
+  "relay_rx_lo_hz_readback": 900999998,
+  "relay_tx_lo_hz_readback": 1000000000,
+  "relay_enable_source": "UART_NETTEST via ADDA then UDP; outside business GUI",
+  "relay_lease_ms": 300000,
+  "firmware_reloaded": false,
+  "flash_sd_written": false,
+  "raw_iq_redecode_verified": true,
+  "captures": 57,
+  "valid_frames": 36,
+  "unique_messages": 2,
+  "transmissions": [
+    {
+      "text": "电脑2回信 Hello 29",
+      "message_id": "6f1fdf0d:0000",
+      "valid_frames": 20,
+      "submit_to_first_receive_s": 17.64560031890869,
+      "tx_receipt_to_first_receive_s": 4.623168230056763,
+      "stop_confirmed_at": 1793267319.9796376,
+      "carrier_hz_range": [
+        1000499856.4178587,
+        1000499867.9813339
+      ]
+    },
+    {
+      "text": "回信测试 第二条",
+      "message_id": "6f1fdf0d:0001",
+      "valid_frames": 16,
+      "submit_to_first_receive_s": 18.570348739624023,
+      "tx_receipt_to_first_receive_s": 5.5325706005096436,
+      "stop_confirmed_at": 1793267437.1091309,
+      "carrier_hz_range": [
+        1000499855.6755117,
+        1000499862.9557852
+      ]
+    }
+  ],
+  "negative_before": 14,
+  "negative_after": 5,
+  "capture_seconds_median": 3.425665200004005,
+  "capture_seconds_range": [
+    3.4143850000109524,
+    3.5064162999915425
+  ],
+  "receiver_clipped_components": 0,
+  "relay_clip_delta": 0,
+  "relay_clip_count": 55363007,
+  "final_quiet_audit": true,
+  "offline_tests_passed": 97,
+  "limitations": [
+    "One PC with independent endpoint workers; second physical PC not tested.",
+    "Reverse direction only, not simultaneous duplex or six-wire operation.",
+    "13.1072 ms RF windows with gaps; CRC acceptance is not continuous BER or delivery rate.",
+    "Relay mode prepared outside GUI via UART_NETTEST/UDP, no ADC telecommand in this run.",
+    "Only the commissioned 901.5 to 1000.5 MHz reverse profile is enabled."
+  ],
+  "archive": {
+    "name": "reverse_gui_20261029.zip",
+    "sha256": "7f81c610adc4f89c1e51646ab0371ab13245d9f622cc5e88a76eb327b5a866ba",
+    "bytes": 2442550
+  }
+}

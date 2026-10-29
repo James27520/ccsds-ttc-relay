@@ -153,6 +153,20 @@ class FakeBoard:
         return self.raw
 
 
+class ReverseFakeBoard(FakeBoard):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.debug = '/debug'
+        self.two_channels = '1'
+        self.bad_layout = False
+    def read(self, path):
+        if path.endswith('adi,2rx-2tx-mode-enable'):
+            return self.two_channels
+        if path.endswith('_index'):
+            return '0' if self.bad_layout else path.split('in_voltage')[1][0]
+        return super().read(path)
+
+
 class WorkerTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
@@ -162,11 +176,11 @@ class WorkerTests(unittest.TestCase):
             self.c.submit('close');self.c.worker.join(4)
             self.assertFalse(self.c.worker.is_alive())
         self.temp.cleanup()
-    def make(self,role='sender',factory=None):
+    def make(self,role='sender',factory=None,direction='forward'):
         def create(port,record):
             b=FakeBoard(port,record);self.boards.append(b);return b
         self.c=BusinessController(role,self.events.put,self.root/'session',console_factory=factory or create,
-                                  lease_factory=lambda p:PortLease(p,self.root/'locks'))
+                                  lease_factory=lambda p:PortLease(p,self.root/'locks'),direction=direction)
         self.wait('status','disconnected')
         return self.c
     def wait(self,kind,state=None):
@@ -191,6 +205,53 @@ class WorkerTests(unittest.TestCase):
         self.wait('status','stopped');self.assertEqual(b.powerdown,'1')
         self.c.submit('disconnect');self.wait('status','disconnected')
         self.assertTrue(b.closed);self.connect()
+
+    def test_reverse_receiver_selects_second_pair_and_only_decodes_local_iq(self):
+        self.make('receiver', factory=ReverseFakeBoard, direction='reverse'); self.connect()
+        b = self.c.console
+        self.assertEqual(self.c.settings['rx_channel'], 2)
+        self.assertIn(('write', '/phy/in_voltage1_hardwaregain', 30), b.calls)
+        self.assertNotIn(('write', '/phy/in_voltage0_hardwaregain', 30), b.calls)
+        self.c.submit('receive'); self.wait('status', 'receiving')
+        event = self.wait('rx')
+        self.assertEqual(event['direction'], 'reverse')
+        self.assertEqual(event['rx_channel'], 2)
+        self.assertTrue(event['messages'])
+        self.assertEqual(event['messages'][0]['text'], '来自接收采样')
+        commands = [x for x in b.calls if isinstance(x, str) and 'iio_readdev' in x]
+        self.assertTrue(commands)
+        self.assertIn('voltage2 voltage3', commands[0])
+        self.assertNotIn('voltage0 voltage1', commands[0])
+        self.assertIsNone(self.c.relay)
+        self.assertNotIn('start', b.calls)
+
+    def test_reverse_receiver_rejects_missing_channel_before_rx_configuration(self):
+        def factory(port, record):
+            b = ReverseFakeBoard(port, record); b.two_channels = '0'; return b
+        self.make('receiver', factory=factory, direction='reverse')
+        self.c.submit('connect', port='TEST'); self.wait('identity'); self.wait('status', 'ready')
+        b = self.c.console
+        self.c.submit('configure')
+        self.assertIn('第二射频通道', self.wait('status', 'error')['message'])
+        self.assertFalse(any(isinstance(x, tuple) and x[0] == 'write' and '/in_' in x[1] for x in b.calls))
+
+    def test_reverse_layout_change_during_capture_never_publishes_wrong_channel(self):
+        self.make('receiver', factory=ReverseFakeBoard, direction='reverse'); self.connect()
+        b = self.c.console
+        b.download_hook = lambda: setattr(b, 'bad_layout', True)
+        self.c.submit('receive'); self.wait('status', 'receiving')
+        self.assertIn('I/Q格式', self.wait('status', 'error')['message'])
+        self.assertFalse(list((self.root/'session').glob('rx_*.json')))
+
+    def test_reverse_sender_default_is_muted_and_rejects_untested_frequency(self):
+        self.make(direction='reverse'); self.connect(); b = self.c.console
+        self.assertEqual(self.c.settings['expected_rf_hz'], 901500000)
+        self.assertEqual(self.c.settings['tx_atten_db_requested'], 60)
+        self.assertEqual(b.powerdown, '1')
+        self.assertNotIn('start', b.calls)
+        self.c.submit('configure', tx_rf_mhz=900.5)
+        self.assertIn('回信当前工作点', self.wait('status', 'error')['message'])
+        self.assertNotIn('start', b.calls)
 
     def test_both_sender_centers_apply_while_muted_and_send_uses_applied_lo(self):
         self.make();self.connect();b=self.boards[-1]

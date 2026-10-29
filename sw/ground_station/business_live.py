@@ -113,6 +113,9 @@ class BusinessReceiver(SessionRxConsole):
             self.phy+'/in_voltage0_gain_control_mode': {'manual'},
             self.phy+'/in_voltage0_hardwaregain': {'30'},
             self.phy+'/in_voltage0_rf_port_select': {'A_BALANCED'},
+            self.phy+'/in_voltage1_gain_control_mode': {'manual'},
+            self.phy+'/in_voltage1_hardwaregain': {'30'},
+            self.phy+'/in_voltage1_rf_port_select': {'A_BALANCED'},
             self.phy+'/out_altvoltage0_RX_LO_frequency': {'1000750000', '1001750000'},
             self.phy+'/out_altvoltage1_TX_LO_powerdown': {'1'},
             self.phy+'/out_voltage0_hardwaregain': {'-89'},
@@ -126,7 +129,12 @@ class BusinessReceiver(SessionRxConsole):
 
 class BusinessController(StationController):
     """Reuse the established decoder and presentation events, never RelayConsole."""
-    def __init__(self, role, emit, log_dir=None, *, console_factory=None, lease_factory=PortLease):
+    def __init__(self, role, emit, log_dir=None, *, console_factory=None, lease_factory=PortLease,
+                 direction='forward'):
+        if direction not in ('forward', 'reverse'):
+            raise ValueError('未知业务方向')
+        self.direction = direction
+        self.rx_channel = 2 if direction == 'reverse' else 1
         self.port_lease = None
         self.lease_factory = lease_factory
         self.source_taken = False
@@ -134,6 +142,19 @@ class BusinessController(StationController):
         self.last_guard_check = 0
         super().__init__(role, emit, log_dir,
                          console_factory=console_factory or (BusinessSource if role=='sender' else BusinessReceiver))
+
+    def event(self, kind, **data):
+        super().event(kind, direction=self.direction, rx_channel=self.rx_channel, **data)
+
+    def _verify_rx_channel(self):
+        c = self.console
+        if self.rx_channel == 2 and c.read(c.debug+'/adi,2rx-2tx-mode-enable') != '1':
+            raise RuntimeError('回信接收需要已启用第二射频通道')
+        first = (self.rx_channel-1)*2
+        for index in (first, first+1):
+            prefix = c.rx+f'/scan_elements/in_voltage{index}'
+            if c.read(prefix+'_type') != 'le:S12/16>>0' or c.read(prefix+'_index') != str(index):
+                raise RuntimeError('接收通道I/Q格式不匹配')
 
     def _check_cancel(self):
         if self.interrupt.is_set():
@@ -150,6 +171,11 @@ class BusinessController(StationController):
         c.require_idle()
         if c.read(c.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
             raise RuntimeError('本地板卡正在发射，拒绝接管')
+        c.info['business_direction'] = self.direction
+        c.info['physical_role'] = ('local TX1A to LDSDR RX2' if self.direction == 'reverse'
+                                   else 'local TX1A to LDSDR RX1') if self.role == 'sender' else (
+                                   'local RX2A from LDSDR TX2' if self.direction == 'reverse'
+                                   else 'local RX1A from LDSDR TX1')
         self._check_cancel()
         self.source_taken = True
         if self.role == 'receiver':
@@ -165,11 +191,15 @@ class BusinessController(StationController):
         c = self.console
         c.verify_binding(); c.require_idle(); self._check_cancel()
         self.configured = False
+        if self.direction == 'reverse':
+            key, default = ('tx_rf_mhz', 901.5) if self.role == 'sender' else ('expected_rf_mhz', 1000.5)
+            if self._finite(values.get(key, default)) != default:
+                raise ValueError('回信当前工作点：发送901.5 MHz、接收1000.5 MHz')
         if self.role == 'sender':
-            attenuation = self._finite(values.get('tx_atten_db', 50))
+            attenuation = self._finite(values.get('tx_atten_db', 60 if self.direction == 'reverse' else 50))
             if attenuation != int(attenuation) or not 50 <= attenuation <= 89 or set(values)-{'tx_atten_db', 'tx_rf_mhz'}:
                 raise ValueError('业务发送仅允许受限中心频率和50–89 dB整数衰减')
-            plan = business_frequency_plan('sender', values.get('tx_rf_mhz', 900.5))
+            plan = business_frequency_plan('sender', values.get('tx_rf_mhz', 901.5 if self.direction == 'reverse' else 900.5))
             got = c.apply_frequency(plan['lo_hz'], self._check_cancel)
             self.settings = dict(tx_lo_mhz_requested=plan['lo_hz']/1e6, tx_lo_hz_readback=int(got),
                                  tx_atten_db_requested=int(attenuation),
@@ -180,19 +210,19 @@ class BusinessController(StationController):
             if set(values)-{'expected_rf_mhz'}:
                 raise ValueError('本地接收目标只开放1000.5/1001.5 MHz')
             plan = business_frequency_plan('receiver', rf)
+            self._verify_rx_channel()
+            channel = self.rx_channel-1
             for name, value in [('in_voltage_sampling_frequency', FS), ('in_voltage_rf_bandwidth', 3000000),
-                                ('in_voltage0_gain_control_mode', 'manual'), ('in_voltage0_hardwaregain', 30),
-                                ('in_voltage0_rf_port_select', 'A_BALANCED')]:
+                                (f'in_voltage{channel}_gain_control_mode', 'manual'), (f'in_voltage{channel}_hardwaregain', 30),
+                                (f'in_voltage{channel}_rf_port_select', 'A_BALANCED')]:
                 self._check_cancel(); c.write(c.phy+'/'+name, value)
             got = c.write(c.phy+'/out_altvoltage0_RX_LO_frequency', plan['lo_hz'], 10)
-            for channel, index in [('voltage0','0'), ('voltage1','1')]:
-                if (c.read(c.rx+'/scan_elements/in_'+channel+'_type') != 'le:S12/16>>0' or
-                        c.read(c.rx+'/scan_elements/in_'+channel+'_index') != index):
-                    raise RuntimeError('接收I/Q格式不匹配')
+            self._verify_rx_channel()
             self.settings = dict(rx_lo_mhz_requested=plan['lo_hz']/1e6,rx_lo_hz_readback=int(got),
                                  expected_rf_mhz=rf,rx_gain_db_requested=30,rx_gain_db_readback=30,sample_rate_hz=FS)
         self._check_cancel()
         self.configured = True
+        self.settings.update(direction=self.direction, rx_channel=self.rx_channel)
         self.settings['configured'] = True
         self.event('settings', values=dict(self.settings))
         self.status('ready', '本地配置就绪；远端业务链由实际接收确认')
@@ -274,6 +304,8 @@ class BusinessController(StationController):
         c=self.console; c.verify_stream_binding(); c.require_idle()
         if c.read(c.phy+'/out_altvoltage1_TX_LO_powerdown')!='1':
             raise RuntimeError('接收板TX未关闭')
+        if self.rx_channel == 2:
+            self._verify_rx_channel()
         begin=time.monotonic();self.capture_index+=1
         stem=f'rx_{self.capture_index:06d}'
         directory='/tmp/business_rx_'+uuid.uuid4().hex[:12]
@@ -281,7 +313,7 @@ class BusinessController(StationController):
         # Wrapper records its own PID/ticks before exec, even for a short capture.
         script=(f'echo "$$ $(awk \'{{print $22}}\' /proc/$$/stat)" > {directory}/owned || exit 1; '
                 f'exec iio_readdev -u local: -T 1500 -b {CAPTURE_SAMPLES} -s {CAPTURE_SAMPLES} '
-                'cf-ad9361-lpc voltage0 voltage1')
+                f'cf-ad9361-lpc voltage{(self.rx_channel-1)*2} voltage{(self.rx_channel-1)*2+1}')
         self.capture_directory=directory
         try:
             result=c.run(f'sh -c {shlex.quote(script)} > {directory}/capture.bin 2> {directory}/err; '
@@ -291,6 +323,10 @@ class BusinessController(StationController):
             c.verify_stream_binding()
             raw=c.download(directory+'/capture.bin',CAPTURE_SAMPLES*4)
             self._check_cancel();c.verify_stream_binding()
+            if self.rx_channel == 2:
+                self._verify_rx_channel()
+                if c.read(c.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
+                    raise RuntimeError('回信采集期间本地TX状态变化')
             self._publish_capture(raw,stem,begin)
             # Only the current private snapshot files; preserve files on failure.
             c.run(f'rm -f {directory}/capture.bin {directory}/owned {directory}/err; rmdir {directory}')

@@ -77,6 +77,8 @@ class ReviewSession:
         self.source_selection = tk.StringVar(root)
         self.receiver_selection = tk.StringVar(root)
         self.windows = {}
+        self.business_directions = {'sender': 'forward', 'receiver': 'forward'}
+        self.business_history = {}
         self.devices = {}
         self.aliases = load_device_aliases() if aliases is None else aliases
         self.next_sequence = 0
@@ -158,7 +160,7 @@ class ReviewSession:
             return
         self._destroy_page(role)
 
-    def _destroy_page(self, role):
+    def _destroy_page(self, role, *, keep_root=False):
         if threading.current_thread() is not threading.main_thread():
             raise RuntimeError('Tk windows must be disposed on the main thread')
         page = self.windows.pop(role)
@@ -180,9 +182,27 @@ class ReviewSession:
                     any(isinstance(item, (tk.Variable, tk.Misc)) for item in value)):
                 setattr(page, name, None)
         value = None
-        if not self.windows:
+        if not self.windows and not keep_root:
             self.root.destroy()
             self.source_selection = self.receiver_selection = self.root = None
+
+    def replace_business_page(self, role, direction):
+        page = self.windows[role]
+        geometry = page.window.geometry()
+        self.business_history[(role, page.direction)] = dict(
+            rows=[page.history.item(i, 'values') for i in page.history.get_children()],
+            draft=page.message_input.get('1.0', 'end-1c') if page.flow_role == 'sender' else None)
+        self._destroy_page(role, keep_root=True)
+        self.business_directions[role] = direction
+        replacement = self.show(role)
+        replacement.window.geometry(geometry)
+        saved = self.business_history.get((role, direction), {})
+        for values in saved.get('rows', []):
+            replacement.history.insert('', 'end', values=(*values[:3], '历史发送' if replacement.flow_role == 'sender' else values[3]))
+        if saved.get('draft') is not None:
+            replacement.message_input.insert('1.0', saved['draft'])
+            replacement.message_input.edit_modified(True)
+            replacement._text_changed()
 
     def update_online_controls(self):
         for role, page in self.windows.items():
@@ -208,7 +228,7 @@ class ReviewSession:
         self.sender_center_plan = format_mhz(plan['center_hz'])
         self.sender_plan_origin = '真实 RF 回报'
         page = self.windows.get('sender')
-        if page and not page.closed and not page.closing:
+        if page and not page.closed and not page.closing and page.direction == 'forward':
             page.setting_rf_plan = True
             try:
                 page.business_plan_origin = '真实 RF 回报'
@@ -221,6 +241,10 @@ class ReviewSession:
 class StationReview:
     def __init__(self, session, role):
         self.session, self.role = session, role
+        self.direction = session.business_directions.get(role, 'forward')
+        self.flow_role = ({'sender': 'receiver', 'receiver': 'sender'}[role]
+                          if self.direction == 'reverse' else role)
+        self.replacement_direction = None
         self.online = session.online_control and role == 'control'
         self.business_online = session.online_business and role in ('sender', 'receiver')
         self.live = self.online or self.business_online
@@ -235,7 +259,7 @@ class StationReview:
         self.business_tx_ids = set()
         self.business_applied_plan = self.business_config_request = None
         self.business_plan_dirty = True
-        self.business_plan_origin = session.sender_plan_origin if role == 'sender' else '本地计划'
+        self.business_plan_origin = session.sender_plan_origin if role == 'sender' and self.direction == 'forward' else '本地计划'
         self.setting_rf_plan = False
         self.controller = None
         self.events = queue.Queue()
@@ -254,6 +278,8 @@ class StationReview:
         self._poll_id = None
         self.window = tk.Toplevel(session.root)
         self.window.title(ROLES[role][0])
+        if self.direction == 'reverse':
+            self.window.title('电脑1 · 接收回信' if role == 'sender' else '电脑2 · 文本回发')
         offset = {'sender': 0, 'receiver': 1, 'control': 2}[role]
         self.window.geometry(f'1160x860+{40+offset*70}+{35+offset*55}')
         self.window.minsize(1040, 800)
@@ -281,13 +307,20 @@ class StationReview:
         badge = label(mast, ' 在线测控 ' if self.online else ' 在线业务 ' if self.business_online else ' 界面审阅 ',
                       color=TEAL if self.live else AMBER, size=9, bg=PALE if self.live else '#FBF2DE')
         badge.pack(side='right', padx=(15, 0))
-        label(mast, ROLES[self.role][3], color=TEAL, bold=True, bg=BG).pack(side='right')
+        label(mast, '02 → 01  /  业务回信' if self.direction == 'reverse' else ROLES[self.role][3], color=TEAL, bold=True, bg=BG).pack(side='right')
 
         header = tk.Frame(main, bg=BG)
         header.pack(fill='x', pady=(15, 18))
         heading = tk.Frame(header, bg=BG)
         heading.pack(side='left')
-        label(heading, ROLES[self.role][1], size=25, bold=True, bg=BG).pack(anchor='w')
+        title = ('接收回信' if self.role == 'sender' else '文本回发') if self.direction == 'reverse' else ROLES[self.role][1]
+        label(heading, title, size=25, bold=True, bg=BG).pack(anchor='w')
+        if self.role in ('sender', 'receiver'):
+            switch_text = ('发送文本' if self.direction == 'reverse' else '接收回信') if self.role == 'sender' else (
+                          '接收文本' if self.direction == 'reverse' else '回发文本')
+            self.direction_label = switch_text+'  ⇄'
+            self.direction_button = button(header, self.direction_label, self.switch_business_direction)
+            self.direction_button.pack(side='right', padx=(10, 0), pady=8)
         if self.role != 'receiver':
             other = 'control' if self.role == 'sender' else 'sender'
             button(header, '改频控制  →' if other == 'control' else '←  文本发送',
@@ -295,7 +328,7 @@ class StationReview:
 
         connection = card(main, padding=12)
         connection.edge.pack(fill='x', pady=(0, 14))
-        label(connection, '接收板' if self.role == 'receiver' else '发送板', bold=True).pack(side='left', padx=(2, 15))
+        label(connection, '本地板卡' if self.role != 'control' else '发送板', bold=True).pack(side='left', padx=(2, 15))
         self.port_combo = ttk.Combobox(connection, textvariable=self.selection,
             values=tuple(self.session.devices), state='readonly', style='V2.TCombobox', width=32)
         self.port_combo.pack(side='left')
@@ -318,14 +351,24 @@ class StationReview:
 
         self.body = tk.Frame(main, bg=BG)
         self.body.pack(fill='both', expand=True)
-        getattr(self, '_build_'+self.role)()
+        getattr(self, '_build_'+self.flow_role)()
+
+    def switch_business_direction(self):
+        if (self.role not in ('sender', 'receiver') or self.closed or self.closing or self.local_claimed
+                or self.cancel_pending or self.business_pending is not None or self.session.other_owner(self.role)):
+            return
+        self.replacement_direction = 'reverse' if self.direction == 'forward' else 'forward'
+        if self.business_online and self.controller is not None:
+            self.close_business()  # Wait for this worker's closed event before replacement.
+        else:
+            self.session.replace_business_page(self.role, self.replacement_direction)
 
     def _build_details(self):
-        if self.role == 'sender':
+        if self.flow_role == 'sender':
             row = tk.Frame(self.details, bg=PAPER)
             row.pack(fill='x', pady=(8, 0))
             label(row, '发射衰减  dB', size=9).pack(side='left', padx=(0, 10))
-            self.attenuation = tk.StringVar(self.window, '50')
+            self.attenuation = tk.StringVar(self.window, '60' if self.direction == 'reverse' else '50')
             self.attenuation_spin = ttk.Spinbox(row, from_=50, to=89, width=6, textvariable=self.attenuation,
                         state='readonly', style='V2.TSpinbox')
             self.attenuation_spin.pack(side='left')
@@ -333,8 +376,8 @@ class StationReview:
             label(row, variable=self.attenuation_note, color=MUTED, size=9).pack(side='left')
             label(self.details, '业务中心以本地本振回读 + 0.5 MHz 显示；不代表远端接收。' if self.business_online else '本振 900 MHz + 基带偏移 0.5 MHz = 业务中心 900.5 MHz。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
-        elif self.role == 'receiver':
-            label(self.details, '本地接收本振=中心+0.25 MHz，增益30 dB；频谱仅来自本地接收采样。',
+        elif self.flow_role == 'receiver':
+            label(self.details, ('回信使用 RX2A；' if self.direction == 'reverse' else '')+'本地接收本振=中心+0.25 MHz，增益30 dB；频谱仅来自本地接收采样。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
         else:
             self.mapping = tk.StringVar(self.window, '业务中心减去 0.5 MHz 为协议本振；当前报文的本振精度为 1 MHz。')
@@ -375,7 +418,8 @@ class StationReview:
             if factory is None:
                 from .business_live import BusinessController
                 factory = BusinessController
-            self.controller = factory(self.role, self.events.put, log_dir=None)
+            options = {'direction': 'reverse'} if self.direction == 'reverse' else {}
+            self.controller = factory(self.flow_role, self.events.put, log_dir=None, **options)
         except Exception as error:
             self.online_state = 'error'
             self.business_note.set(f'在线业务启动失败：{error}')
@@ -398,6 +442,9 @@ class StationReview:
         available = not self.closing and not self.cancel_pending and not blocked
         idle = available and self.business_pending is None
         disconnected = self.online_state in ('disconnected', 'error')
+        can_switch = available and disconnected and not self.local_claimed and self.business_pending is None
+        self.direction_button.configure(state='normal' if can_switch else 'disabled',
+                                        text=self.direction_label if can_switch else '断开后切换')
         self.port_combo.configure(state='readonly' if idle and disconnected else 'disabled')
         self.refresh_button.configure(state='normal' if idle and disconnected else 'disabled')
         self.connect_button.configure(text='断开中' if self.cancel_pending else '取消连接' if self.accept_connected else
@@ -409,7 +456,7 @@ class StationReview:
             self.online_state in ('ready', 'stopped') and self.business_plan_dirty else 'disabled')
         self.business_stop_button.configure(state='normal' if available and
             (self.business_pending is not None or self.online_state in ('transmitting', 'receiving')) else 'disabled')
-        if self.role == 'sender':
+        if self.flow_role == 'sender':
             text = self.message_input.get('1.0', 'end-1c')
             try:
                 text_bytes(text)
@@ -424,9 +471,9 @@ class StationReview:
             self.expected_combo.configure(state='disabled' if self.closing else 'readonly')
 
     def _business_plan_values(self):
-        center = self.tx_rf.get() if self.role == 'sender' else self.expected_rf.get()
-        plan = business_frequency_plan(self.role, center)
-        if self.role == 'receiver':
+        center = self.tx_rf.get() if self.flow_role == 'sender' else self.expected_rf.get()
+        plan = business_frequency_plan(self.flow_role, center)
+        if self.flow_role == 'receiver':
             return dict(expected_rf_mhz=plan['center_hz']/1e6)
         attenuation = int(self.attenuation.get())
         if str(attenuation) != self.attenuation.get() or not 50 <= attenuation <= 89:
@@ -441,15 +488,16 @@ class StationReview:
         try:
             plan = self._business_plan_values()
             self.business_plan_dirty = plan != self.business_applied_plan
-            if self.role == 'sender':
-                self.session.sender_center_plan = self.tx_rf.get()
-                self.session.sender_plan_origin = self.business_plan_origin
+            if self.flow_role == 'sender':
+                if self.direction == 'forward':
+                    self.session.sender_center_plan = self.tx_rf.get()
+                    self.session.sender_plan_origin = self.business_plan_origin
         except ValueError as error:
             self.business_plan_dirty = True
             self.business_note.set(str(error))
         self.plan_status.set(('待应用 · ' if self.business_plan_dirty else '已应用 · ') + self.business_plan_origin)
         if not self.business_online:
-            if self.role == 'sender':
+            if self.flow_role == 'sender':
                 self.sender_frequency.set(self.tx_rf.get())
                 self.sender_frequency_note.set('MHz / 待应用计划，尚未设备回读')
             return
@@ -527,7 +575,7 @@ class StationReview:
         self.session.update_online_controls()
 
     def send_business(self):
-        if (not self.business_online or self.role != 'sender' or self.closing or self.cancel_pending
+        if (not self.business_online or self.flow_role != 'sender' or self.closing or self.cancel_pending
                 or self.business_pending is not None or not self.business_configured or self.online_identity is None
                 or self.business_plan_dirty
                 or self.online_state not in ('ready', 'stopped', 'transmitting') or self.session.other_owner(self.role)):
@@ -542,12 +590,12 @@ class StationReview:
         self.business_accept_tx = True
         self.business_pending = 'send'
         self.online_state = 'busy'
-        self.business_note.set('正在提交本地限时循环发送；不代表电脑2已收到。')
+        self.business_note.set('正在提交本地限时发送；对端实收以接收窗口为准。')
         self._business_submit('send', text=text)
         self.session.update_online_controls()
 
     def receive_business(self):
-        if (not self.business_online or self.role != 'receiver' or self.closing or self.cancel_pending
+        if (not self.business_online or self.flow_role != 'receiver' or self.closing or self.cancel_pending
                 or self.business_pending is not None or not self.business_configured or self.online_identity is None
                 or self.business_plan_dirty
                 or self.online_state not in ('ready', 'stopped')):
@@ -588,7 +636,7 @@ class StationReview:
         self.session.update_online_controls()
 
     def _clear_business_readback(self):
-        if self.role == 'sender':
+        if self.flow_role == 'sender':
             self.sender_frequency.set('—')
             self.sender_frequency_note.set('MHz / 本地实际中心 · 尚未回读')
             self.sender_readback.set('设备回读：—')
@@ -614,7 +662,7 @@ class StationReview:
         self.connection_status.set('●  业务异常 · 已断开' if state == 'error' else '●  未连接')
         self.business_note.set(str(message))
         self._clear_business_readback()
-        if self.role == 'receiver':
+        if self.flow_role == 'receiver':
             self.capture_note.set('已断开')
             self.received_meta.set('历史接收记录 · 本地连接已释放；尚无新的接收结果。')
         elif self.business_tx_row:
@@ -629,11 +677,17 @@ class StationReview:
         if self.closed:
             return
         kind = event.get('type')
+        if kind in ('settings', 'rx', 'tx') and self.direction == 'reverse':
+            if event.get('direction') != 'reverse' or (self.flow_role == 'receiver' and event.get('rx_channel') != 2):
+                return
         if kind == 'closed':
             if self._poll_id:
                 self.window.after_cancel(self._poll_id)
                 self._poll_id = None
             self.controller = None
+            if self.replacement_direction:
+                self.session.replace_business_page(self.role, self.replacement_direction)
+                return
             self.session._destroy_page(self.role)
             self.session.update_online_controls()
             return
@@ -655,7 +709,7 @@ class StationReview:
             if self.online_identity is None or (self.cancel_pending and self.business_pending != 'stop'):
                 return
             values = event.get('values', {})
-            if self.role == 'sender':
+            if self.flow_role == 'sender':
                 lo = values.get('tx_lo_hz_readback')
                 if self._finite_business(lo):
                     self.sender_frequency.set(f'{(lo+500_000)/1e6:.3f}')
@@ -668,8 +722,8 @@ class StationReview:
                 if self._finite_business(lo):
                     self.receiver_plan_note.set(f'本地 LO {lo/1e6:.3f} MHz\n先验 {values.get("expected_rf_mhz", self.expected_rf.get())} MHz · 远端状态未知')
             if self.business_pending == 'configure' and values.get('configured') is True and self.business_config_request:
-                key = 'tx_rf_mhz' if self.role == 'sender' else 'expected_rf_mhz'
-                plan = business_frequency_plan(self.role, self.business_config_request[key])
+                key = 'tx_rf_mhz' if self.flow_role == 'sender' else 'expected_rf_mhz'
+                plan = business_frequency_plan(self.flow_role, self.business_config_request[key])
                 self.business_settings_seen = self._finite_business(lo) and abs(lo-plan['lo_hz']) <= 10
         elif kind == 'status':
             state = event.get('state')
@@ -703,7 +757,7 @@ class StationReview:
                         self._refresh_business_plan()
                     finally:
                         self.setting_rf_plan = False
-                    if self.role == 'receiver':
+                    if self.flow_role == 'receiver':
                         self.received_meta.set('本地接收已就绪 · 等待开始接收；历史消息见下方记录。')
                         self.capture_note.set('已就绪 · 待开始')
                 elif state == 'stopped':
@@ -719,9 +773,9 @@ class StationReview:
                     self.online_state = 'stopped'
                     self.connection_status.set('●  本端已停止')
                     self.business_note.set(message)
-                    if self.role == 'sender' and self.business_tx_row:
+                    if self.flow_role == 'sender' and self.business_tx_row:
                         self.history.set(self.business_tx_row, 'status', '本地已停发 / 静音')
-                    elif self.role == 'receiver':
+                    elif self.flow_role == 'receiver':
                         self.capture_note.set('接收已停止')
                 elif self.online_identity is not None:
                     if state == 'transmitting' and not self.business_accept_tx or state == 'receiving' and not self.business_accept_rx:
@@ -742,7 +796,7 @@ class StationReview:
             self.business_pending = None
             self.business_tx_row = self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'),
                 message_id, event['text'], '本地限时循环发送'))
-            self.business_note.set('本地约 30 秒有界循环发送；未表示电脑2已收到。')
+            self.business_note.set('本地最多发送30秒；对端实收以接收窗口为准。')
         elif kind == 'rx':
             if not self.business_accept_rx or self.cancel_pending or self.online_identity is None:
                 return
@@ -1230,7 +1284,7 @@ class StationReview:
         self.byte_count = tk.StringVar(self.window, '0 / 32 字节')
         self.byte_label = label(toolbar, variable=self.byte_count, color=MUTED, size=9)
         self.byte_label.pack(side='left')
-        self.send_button = button(toolbar, '发送文本', self.send_business, primary=True, disabled=True)
+        self.send_button = button(toolbar, '回发文本' if self.direction == 'reverse' else '发送文本', self.send_business, primary=True, disabled=True)
         self.send_button.pack(side='right')
         self.business_stop_button = button(toolbar, '停止', self.stop_business, disabled=True)
         if self.business_online:
@@ -1241,7 +1295,7 @@ class StationReview:
         rail.grid(row=0, column=1, sticky='nsew', pady=(0, 14))
         frequency = card(rail, '业务发送频率')
         frequency.edge.pack(fill='x', pady=(0, 14))
-        self.tx_rf = tk.StringVar(self.window, self.session.sender_center_plan)
+        self.tx_rf = tk.StringVar(self.window, '901.5' if self.direction == 'reverse' else self.session.sender_center_plan)
         self.plan_status = tk.StringVar(self.window, '待应用 · '+self.business_plan_origin)
         self.sender_frequency = tk.StringVar(self.window, '—' if self.business_online else self.tx_rf.get())
         self.sender_frequency_note = tk.StringVar(self.window, 'MHz / 本地实际中心 · 尚未回读' if self.business_online else 'MHz / 计划信号中心')
@@ -1250,7 +1304,7 @@ class StationReview:
         label(frequency, variable=self.sender_frequency_note, color=MUTED, size=9).pack(anchor='w', pady=(0, 10))
         label(frequency, variable=self.sender_readback, color=MUTED, size=9, wrap=240).pack(anchor='w')
         plan_row = tk.Frame(frequency, bg=PAPER)
-        self.tx_frequency_combo = ttk.Combobox(plan_row, textvariable=self.tx_rf, values=BUSINESS_TX_CENTERS,
+        self.tx_frequency_combo = ttk.Combobox(plan_row, textvariable=self.tx_rf, values=('901.5',) if self.direction == 'reverse' else BUSINESS_TX_CENTERS,
                                                state='readonly', style='V2.TCombobox', width=8)
         self.business_apply_button = button(plan_row, '应用', self.configure_business, disabled=True)
         if self.business_online:
@@ -1323,7 +1377,7 @@ class StationReview:
         self.business_apply_button = button(expectation, '应用', self.configure_business, disabled=True)
         if self.business_online:
             self.business_apply_button.pack(side='left', padx=5)
-        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=BUSINESS_RX_CENTERS,
+        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=('1000.5',) if self.direction == 'reverse' else BUSINESS_RX_CENTERS,
                      state='readonly', style='V2.TCombobox', width=8)
         self.expected_combo.pack(side='right')
         self.receiver_plan_note = tk.StringVar(self.window, 'MHz · 本地接收计划，未应用')

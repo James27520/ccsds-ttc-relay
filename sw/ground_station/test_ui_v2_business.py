@@ -11,8 +11,9 @@ from .ui_v2 import ReviewSession, main
 
 
 class FakeBusinessController:
-    def __init__(self, role, emit, log_dir=None):
+    def __init__(self, role, emit, log_dir=None, direction='forward'):
         self.role, self.emit, self.calls = role, emit, []
+        self.direction = direction
 
     def submit(self, action, **kwargs):
         self.calls.append((action, kwargs))
@@ -37,6 +38,9 @@ class BusinessWindowTests(unittest.TestCase):
             self.serial_patch.stop()
 
     def event(self, page, kind, **values):
+        if page.direction == 'reverse':
+            values.setdefault('direction', 'reverse')
+            values.setdefault('rx_channel', 2)
         page._handle_online_event(dict(type=kind, **values))
 
     def connect(self, page):
@@ -49,7 +53,7 @@ class BusinessWindowTests(unittest.TestCase):
         self.event(page, 'status', state='ready', message='connected, await configure')
         self.assertFalse(page.business_configured)
         values = dict(configured=True)
-        if page.role == 'receiver':
+        if page.flow_role == 'receiver':
             center=float(page.expected_rf.get())
             values.update(rx_lo_hz_readback=int((center+.25)*1e6), expected_rf_mhz=center)
         else:
@@ -86,6 +90,72 @@ class BusinessWindowTests(unittest.TestCase):
         self.assertFalse(hasattr(self.sender, 'relay_port_combo'))
         self.assertTrue(self.sender.send_button.instate(['disabled']))
         self.assertTrue(self.receiver.receive_button.instate(['disabled']))
+
+    def reverse(self, role):
+        old = self.session.windows[role]
+        old.switch_business_direction()
+        self.assertEqual(old.controller.calls, [('close', {})])
+        self.assertIs(self.session.windows[role], old)
+        self.event(old, 'closed')
+        page = self.session.windows[role]
+        if role == 'sender': self.sender = page
+        else: self.receiver = page
+        return page
+
+    def test_reverse_switch_preserves_physical_board_and_requires_new_connection(self):
+        selected = self.sender.selection.get()
+        page = self.reverse('sender')
+        self.assertEqual(page.selection.get(), selected)
+        self.assertEqual(page.controller.role, 'receiver')
+        self.assertEqual(page.controller.direction, 'reverse')
+        self.assertEqual(page.controller.calls, [])
+        self.assertEqual(len(self.session.windows), 3)
+        self.assertFalse(page.local_claimed)
+        self.assertTrue(page.receive_button.instate(['disabled']))
+        self.ready(page)
+        page.receive_business()
+        self.event(page, 'status', state='receiving', message='接收回信')
+        self.rx(page, rx_channel=1)
+        self.assertEqual(page.history.get_children(), ())
+        self.rx(page)
+        self.assertEqual(page.received_text.get(), 'RF received only')
+
+    def test_switch_is_blocked_when_connected_or_control_owns_pc1(self):
+        self.ready(self.sender)
+        page = self.sender
+        page.switch_business_direction()
+        self.assertIsNone(page.replacement_direction)
+        self.assertTrue(page.direction_button.instate(['disabled']))
+        self.event(page, 'status', state='disconnected', message='released')
+        self.control.local_claimed = True
+        page.switch_business_direction()
+        self.assertIsNone(page.replacement_direction)
+
+    def test_reverse_reply_never_populates_pc1_without_actual_rx_event(self):
+        rx = self.reverse('sender'); tx = self.reverse('receiver')
+        self.ready(tx)
+        self.assertEqual(tx.tx_rf.get(), '901.5')
+        self.assertEqual(tx.attenuation.get(), '60')
+        tx.message_input.insert('1.0', '回信测试')
+        tx.send_business()
+        self.event(tx, 'tx', text='回信测试', message_id='fixture:0007', payload_bytes=12)
+        self.assertEqual(len(tx.history.get_children()), 1)
+        self.assertEqual(rx.history.get_children(), ())
+        self.assertNotEqual(rx.received_text.get(), '回信测试')
+        self.event(tx, 'status', state='disconnected', message='released')
+        tx.switch_business_direction(); self.event(tx, 'closed')
+        normal = self.session.windows['receiver']
+        normal.switch_business_direction(); self.event(normal, 'closed')
+        tx = self.receiver = self.session.windows['receiver']
+        self.assertEqual(tx.message_input.get('1.0', 'end-1c'), '回信测试')
+        self.assertEqual(len(tx.history.get_children()), 1)
+        self.assertFalse(tx.local_claimed)
+
+    def test_control_frequency_plan_does_not_rewrite_reply_receiver(self):
+        page = self.reverse('sender')
+        self.session.remember_rf_frequency_plan(dict(rx_mhz=901, tx_mhz=1000))
+        self.assertEqual(page.expected_rf.get(), '1000.5')
+        self.assertEqual(page.controller.calls, [])
 
     def test_default_review_does_not_construct_business_controller(self):
         container=tk.Toplevel(self.root)
