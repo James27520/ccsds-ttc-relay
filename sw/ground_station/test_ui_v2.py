@@ -591,6 +591,29 @@ class OnlineControlTests(unittest.TestCase):
         self.control.connect_button.invoke()
         self.assertEqual(self.controller.calls[-1], ('disconnect', {}))
 
+    def test_disconnect_after_success_preserves_completed_reply_as_history(self):
+        request = self.sent()
+        self.result(request)
+        evidence = dict(self.control.last_evidence)
+        self.control.cancel_online('disconnect')
+        self.assertEqual(self.control.last_evidence, evidence)
+        self.control._handle_online_event(dict(type='status', state='disconnected', message='released'))
+        self.assertIn('上次回报', self.control.reply_title.get())
+        self.assertIn('改频成功', self.control.reply_title.get())
+        self.assertNotIn('结果未知', self.control.reply_title.get())
+        self.assertIn('不代表当前状态', self.control.reply_body.get())
+        self.assertIsNone(self.control.online_identity)
+        self.assertFalse(self.control.local_claimed)
+        self.assertTrue(self.control.command_send_button.instate(['disabled']))
+        self.assertEqual(self.controller.calls[-1], ('disconnect', {}))
+
+    def test_disconnect_without_a_request_does_not_invent_an_unknown_transaction(self):
+        self.connected()
+        self.control.cancel_online('disconnect')
+        self.control._handle_online_event(dict(type='status', state='disconnected', message='released'))
+        self.assertEqual(self.control.reply_title.get(), '本地已断开')
+        self.assertIsNone(self.control.last_evidence)
+
     def test_selection_change_cancels_binding_and_wrong_identity_cannot_connect(self):
         self.control.connect_online()
         self.control._handle_online_event(dict(type='connected', source=dict(port='COM_B', model='wrong board')))

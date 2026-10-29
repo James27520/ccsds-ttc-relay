@@ -1,0 +1,397 @@
+{
+  "date": "2026-10-29",
+  "rf_control_passed": true,
+  "post_rf_control_business_status": "pending_physical_rewire",
+  "tested_commit": "b1d731183cadbcbeb51744c7903eb2392b93d765",
+  "firmware_reloaded": false,
+  "command_source": "actual GUI -> COM19 TX1A -> ADDA ADC1/J5, ADC_NORMAL -> Ethernet UDP -> LDSDR",
+  "return_path": "ADDA DAC1/J6 -> COM19 RX1A -> actual GUI",
+  "unchanged_connection": "LDSDR TX1 -> independent receiver RX1A",
+  "control_carriers_hz": {
+    "uplink": 100500000,
+    "downlink": 90500000
+  },
+  "business_centers_mhz": [
+    [
+      1990.5,
+      2180.5
+    ],
+    [
+      1989.5,
+      2179.5
+    ]
+  ],
+  "transactions": [
+    {
+      "command": 1,
+      "passed": true,
+      "requested": {
+        "rx_mhz": 1990,
+        "tx_mhz": 2180,
+        "air_seq": 9
+      },
+      "frame_count": 8,
+      "ack": {
+        "rx_hz": 1990000000,
+        "tx_hz": 2180000000,
+        "udp_seq": 123
+      },
+      "snapshot": {
+        "protocol": "EXPERIMENTAL_ATM1",
+        "ccsds": false,
+        "sequence": 6,
+        "uptime_ms": 55051056,
+        "events": 253,
+        "decoded": 7,
+        "applied": 122,
+        "failures": 1,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "spi_valid": 0,
+        "boot_identity": null,
+        "sequence_scope": "since PS initialization; may repeat after reboot",
+        "decoded_record": {
+          "valid": true,
+          "event": 251,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 9,
+          "rx_mhz": 1990,
+          "tx_mhz": 2180,
+          "command_version": 1
+        },
+        "send_record": {
+          "valid": true,
+          "event": 252,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 9,
+          "rx_mhz": 1990,
+          "tx_mhz": 2180,
+          "command_version": 1,
+          "udp_seq": 123,
+          "count": 1,
+          "rc": 0,
+          "evidence": "local UDP transport acceptance only"
+        },
+        "ack_record": {
+          "valid": true,
+          "event": 253,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 9,
+          "rx_mhz": 1990,
+          "tx_mhz": 2180,
+          "command_version": 1,
+          "udp_seq": 123,
+          "rc": 0,
+          "rx_hz": 1990000000,
+          "tx_hz": 2180000000,
+          "evidence": "matched remote ACK; not independent SPI readback"
+        }
+      },
+      "samples": 262144,
+      "sha256": "0cce6619dd90421c8b65dd9f0cddaeae1fca5dd80071b6a14cc5717cd250e677",
+      "clip_components": 0,
+      "rms_codes": 27.653888700727368,
+      "unique_snapshots": 1,
+      "elapsed_seconds": 66.13794190000044,
+      "independent_spi": {
+        "relay_rx_hz_readback": 1990000000,
+        "relay_tx_hz_readback": 2180000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    {
+      "command": 2,
+      "passed": true,
+      "requested": {
+        "rx_mhz": 1989,
+        "tx_mhz": 2179,
+        "air_seq": 10
+      },
+      "frame_count": 7,
+      "ack": {
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998,
+        "udp_seq": 124
+      },
+      "snapshot": {
+        "protocol": "EXPERIMENTAL_ATM1",
+        "ccsds": false,
+        "sequence": 7,
+        "uptime_ms": 55348697,
+        "events": 256,
+        "decoded": 8,
+        "applied": 123,
+        "failures": 1,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "spi_valid": 0,
+        "boot_identity": null,
+        "sequence_scope": "since PS initialization; may repeat after reboot",
+        "decoded_record": {
+          "valid": true,
+          "event": 254,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 10,
+          "rx_mhz": 1989,
+          "tx_mhz": 2179,
+          "command_version": 1
+        },
+        "send_record": {
+          "valid": true,
+          "event": 255,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 10,
+          "rx_mhz": 1989,
+          "tx_mhz": 2179,
+          "command_version": 1,
+          "udp_seq": 124,
+          "count": 1,
+          "rc": 0,
+          "evidence": "local UDP transport acceptance only"
+        },
+        "ack_record": {
+          "valid": true,
+          "event": 256,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 10,
+          "rx_mhz": 1989,
+          "tx_mhz": 2179,
+          "command_version": 1,
+          "udp_seq": 124,
+          "rc": 0,
+          "rx_hz": 1989000000,
+          "tx_hz": 2178999998,
+          "evidence": "matched remote ACK; not independent SPI readback"
+        }
+      },
+      "samples": 262144,
+      "sha256": "ad4e684eb1db437940dc1ad220a09fa29155a551e55020ff0319d0bf8a020ccf",
+      "clip_components": 0,
+      "rms_codes": 28.463253156357936,
+      "unique_snapshots": 1,
+      "elapsed_seconds": 63.39086319999478,
+      "independent_spi": {
+        "relay_rx_hz_readback": 1989000000,
+        "relay_tx_hz_readback": 2178999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    }
+  ],
+  "all_decoded_fields_identical": true,
+  "subsequent_snapshot_freshness_checked": true,
+  "counter_changes": {
+    "decoded": [
+      6,
+      8
+    ],
+    "applied": [
+      121,
+      123
+    ],
+    "events": [
+      250,
+      256
+    ],
+    "failures": [
+      1,
+      1
+    ]
+  },
+  "relay_clip_count": [
+    55363018,
+    55363018
+  ],
+  "bench_service_note": "Each RF request ran within a finite 600 s service window. Service/network were stopped and restarted between requests to renew the window; PS was not rebooted. Bench commands did not set frequency.",
+  "quiet_audit": {
+    "passed": true,
+    "endpoints": [
+      {
+        "role": "gateway_RX2",
+        "identity": {
+          "port": "COM19",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "6",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=6",
+          "linux_boot_id": "9068ea50-9aba-4b71-95d6-d491ace21f35",
+          "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+          "iio_serial": "",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "100000000",
+          "tx_attenuation": "-89.000000 dB",
+          "tx2_attenuation": "-89.000000 dB",
+          "rx_lo_hz": "90000000",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "terminal_TX1",
+        "identity": {
+          "port": "COM17",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "000000000069B",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+          "linux_boot_id": "a7ce120b-55ab-47d7-8f5f-223fa4d0595a",
+          "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+          "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "1989000000",
+          "tx_attenuation": "-89.000000 dB",
+          "tx2_attenuation": "-89.000000 dB",
+          "rx_lo_hz": "1000749998",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ],
+    "adda": {
+      "telemetry": {
+        "uptime_ms": 55542965,
+        "events": 256,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 8,
+        "applied": 123,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 254,
+        "d_origin": 1,
+        "d_air_seq": 10,
+        "d_rx_mhz": 1989,
+        "d_tx_mhz": 2179,
+        "s_valid": 1,
+        "s_event": 255,
+        "s_origin": 1,
+        "s_air_seq": 10,
+        "s_rx_mhz": 1989,
+        "s_tx_mhz": 2179,
+        "s_udp_seq": 124,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 256,
+        "a_origin": 1,
+        "a_air_seq": 10,
+        "a_rx_mhz": 1989,
+        "a_tx_mhz": 2179,
+        "a_udp_seq": 124,
+        "a_rc": 0,
+        "a_rx_hz": 1989000000,
+        "a_tx_hz": 2178999998,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 8,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=1 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=10 udp_seq=124 reply_seq=7 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "1678929915",
+        "out": "1678929897",
+        "clip": "55363018",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1989000000,
+        "relay_tx_hz_readback": 2178999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    }
+  },
+  "gui_observation": {
+    "control": "Both actual RF results displayed success with 8 and 7 CRC-valid frames.",
+    "sender_plan": "Propagation covered by UI regression and result-handler review; separate sender window could not be fully captured during this run."
+  },
+  "display_fix": {
+    "problem": "Idle disconnect after a completed command incorrectly displayed an unknown/cancelled result.",
+    "change": "Retain the completed evidence as previous reply; active cancellation still displays unknown outcome.",
+    "tests": 79,
+    "hardware_access_in_tests": false,
+    "source_sha256": "5a07a7e7c0cdbb46dc2f51c841162b21f514b67bfbe21a95f4e61f9540ec9b58",
+    "activation": "Requires GUI restart; measured RF transactions ran the pre-fix UI."
+  },
+  "evidence_sha256": {
+    "audit_default.json": "defbac46b2a07e26e41070fe80c80fa9694076379e7cfcf729c8fb1b58051b04",
+    "audit_default.jsonl": "ec5935ca62b83f321c5b14070b3e2e953ac5703fd08683f45a1cd529c2c077d4",
+    "audit_shift.json": "2306230f43c61158bf915b834fd0e234802f8b975302122d5916dfaecc9b5b25",
+    "audit_shift.jsonl": "9a9a04cfa67d9470c1086442f07f336b28d09c928ebdaa60dcba2f324ca2a0e4",
+    "bench_service.py": "612844f6375e787d07343b56d1966d7ea18cb0d3463398783da8b36b3d494623",
+    "final_audit.json": "f864a0507ad2a0e16617afb67c55e284e5cd1ddac78c382259ca4ecaaa8e5303",
+    "final_audit.py": "5d153e50396c0fab384f72685359acbdbb82d21260033b9a6073e8bfba7f90aa",
+    "freeze_evidence.py": "7bb91fc69a86509045006f669864600747e80c8adabf2dba30d93ed2b2d4274b",
+    "initial_audit.json": "2211591e1bf5ce9e74d500d7e7e4658900904ce50fa80f21129e8e7dfd42910f",
+    "initial_audit.py": "5d153e50396c0fab384f72685359acbdbb82d21260033b9a6073e8bfba7f90aa",
+    "pause_between.json": "016fbc3ee158c226af10f47652040ad286d29bfa40b30b4165d86b9709169cd8",
+    "pause_between.jsonl": "36e67133aa4aa8daf8eb64cb6e8668c5207623e89de72996cc717d60c32c5025",
+    "redecode.json": "c0c7b337af0a89e560cfeb7115e0597928adb918bebcce0578c1eaaae8a0c67d",
+    "redecode.py": "1f2d117aa4cbf01b391974ac19ba10016af4f0905326f832a4e2cfced15adddb",
+    "restart_default.json": "94040e3d12e6546e4850c6b42e4668b15e86ce015afc44c925fee8a248aaa104",
+    "restart_default.jsonl": "f95a121892c61c2461d647b504e92ee9bd641bd86f73d320094f91bf566cb0e2",
+    "start.json": "64056f859c999cbab5c6f43ddd640b21ca88b932fa901261c856c208c219cf8c",
+    "start.jsonl": "a58ce08884a46426016be71c6d4f260b49ee9fcdfa9fbe6c623d01f7db7ebfcd",
+    "stop.json": "58335549b851bc26cc403337be8db114f7a87084e967c777d2458a185b00d00e",
+    "stop.jsonl": "a61c015bef11c305c0e85f6f5427fa3488f96e77c0d4775ed461a58a2148419a",
+    "ui_tests.txt": "6b2d3e25442f085359771c28ff433ea2c55b630e0bde413c2cfb6631aff54289"
+  },
+  "session_evidence_sha256": {
+    "command_0001\\reply.bin": "0cce6619dd90421c8b65dd9f0cddaeae1fca5dd80071b6a14cc5717cd250e677",
+    "command_0001\\reply.json": "79fa906650ec884422082444b2bb59320034c82e3191d74425ab45d5059ac683",
+    "command_0001\\result.json": "f445e8593aefaf4947e679f034c128fd1f4a462b149922cc5d714cc65a334c94",
+    "command_0002\\reply.bin": "ad4e684eb1db437940dc1ad220a09fa29155a551e55020ff0319d0bf8a020ccf",
+    "command_0002\\reply.json": "1328a838ef2919a01a58e1d3c4b8bcc4e74be9bb76e366bfac8d8a17dd7f0644",
+    "command_0002\\result.json": "8ebb8e7ba4dfa1c294ff26dfdf994370d73531dc8174fff3ef40b0cc5ecc241c",
+    "events.jsonl": "c75a97ebe4a80a873df4ea67dd3e9227509c2d91527fc3740d62ff3ac5d09a91"
+  },
+  "limitations": [
+    "Two commands and two short reply IQ captures, not long-duration reliability or BER testing.",
+    "Frequency ACK was matched to independent SPI diagnostics outside the GUI; the GUI itself uses only its local SDR.",
+    "Post-RF-control business delivery requires the requested SMA swap; six-link concurrent operation is unverified.",
+    "Experimental CCSDS-related command waveform and ATM1 return; not NR NTN conformance."
+  ]
+}

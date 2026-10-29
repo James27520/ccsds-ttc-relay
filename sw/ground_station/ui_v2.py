@@ -269,6 +269,7 @@ class StationReview:
         self.connecting_port = None
         self.accept_connected = False
         self.cancel_pending = self.closing = False
+        self.cancel_had_request = False
         self.closed = False
         self.active_request = None
         self.active_plan = None
@@ -1049,13 +1050,18 @@ class StationReview:
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
             return
         self.cancel_pending = True
+        self.cancel_had_request = self.active_request is not None
         self.accept_connected = False
         self.online_identity = None
         self.active_request = None
         self.draft = None
-        self._reset_reply()
-        self.reply_title.set('正在取消并释放设备')
-        self.reply_body.set('等待设备停止与断开回执；本次结果尚未确认。')
+        if self.cancel_had_request:
+            self._reset_reply()
+            self.reply_title.set('正在取消并释放设备')
+            self.reply_body.set('等待设备停止与断开回执；本次结果尚未确认。')
+        else:
+            self._clear_relay_snapshot()
+            self.request_note.set('正在断开本地设备；已完成的事务记录保留。')
         self.online_state = 'stopping'
         self.connection_status.set('●  正在断开')
         self.update_details()
@@ -1167,10 +1173,18 @@ class StationReview:
                 self.accept_connected = self.cancel_pending = False
                 self.online_state = 'disconnected'
                 self.connection_status.set('●  未连接')
-                if was_cancelled:
+                if was_cancelled and self.cancel_had_request:
                     self._reset_reply()
                     self.reply_title.set('已取消并断开 · 结果未知')
                     self.reply_body.set('本次操作已停止；再次发送前请重新连接。')
+                elif was_cancelled:
+                    if self.last_evidence:
+                        self.reply_title.set('上次回报 · '+self.reply_title.get())
+                        self.reply_body.set(self.reply_body.get()+'\n本地已断开；以上为已完成事务的记录，不代表当前状态。')
+                    else:
+                        self._reset_reply()
+                        self.reply_title.set('本地已断开')
+                    self.request_note.set('本地设备已释放；再次发送前请重新连接。')
                 elif had_request:
                     self._reset_reply()
                     self.reply_title.set('连接已断开 · 结果未知')
