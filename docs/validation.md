@@ -1,5 +1,7 @@
 # 验证记录与未完成项
 
+新增[反向业务与第二通道验证](reverse-link-validation.md)：直连端点和经LDSDR RX2/TX2的转发分别通过。第二路转发实收两条新文本、6个CRC正确帧；四个负例无有效帧，含源仍在发射时远端停止。6份原始采样独立重解码一致，接收无削顶、7阶段PL削顶增量0；收尾四板停发/静音。详见[端点摘要](validation/2026-10-29-reverse-endpoint.json)及[第二路转发摘要](validation/2026-10-29-reverse-relay.json)。本轮使用UART_NETTEST/UDP启停，不是ADC遥控或双向并发，GUI反向操作待接入。
+
 记录更新至：2026-10-29。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
 
 2026-10-29最新结果：[自主测控及V2改频GUI](telecontrol-autonomous-validation.md)、[V2文本业务GUI](business-v2-validation.md)。V2业务窗口只连接各自本地SDR，外部三板链已恢复两条控制器文本和一条GUI文本；原始IQ复核共53个CRC有效帧。30秒限时停发、停发负例及本地设备交接通过；转发模式和电平仍需预先准备，第二台电脑迁移和六线并发未验。机器可读数据见[业务摘要](validation/2026-10-29-business-v2.json)。

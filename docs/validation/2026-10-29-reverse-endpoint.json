@@ -1,0 +1,185 @@
+{
+  "date": "2026-10-29",
+  "passed": true,
+  "scope": "direct terminal TX1A to gateway RX2A endpoint check",
+  "wiring": "COM17 terminal TX1A -> COM19 gateway RX2A",
+  "relay_used": false,
+  "firmware_reloaded": false,
+  "flash_sd_written": false,
+  "samples_per_capture_per_channel": 32768,
+  "sample_rate_hz": 2500000,
+  "raw_bytes_per_four_scan_capture": 262144,
+  "captures": 4,
+  "selected_tx_attenuation_db": 65,
+  "receiver_settings": {
+    "rx_lo_hz_requested": 901750000,
+    "rx_lo_hz_readback": 901750000,
+    "rx_gain_db_readback": [
+      30,
+      30
+    ],
+    "sample_rate_hz": 2500000,
+    "bandwidth_hz": 3000000,
+    "samples_per_channel": 32768,
+    "scan_order": [
+      "I1",
+      "Q1",
+      "I2",
+      "Q2"
+    ],
+    "scan_type": "le:S12/16>>0",
+    "rf_port_select": "A_BALANCED"
+  },
+  "transmissions": [
+    {
+      "label": "level_65",
+      "text": "反向端点验证",
+      "message_id": "e229cafe:0000",
+      "attenuation_db": 65,
+      "tx_lo_readback": 900999998,
+      "tx_atten_readback": "-65.000000 dB",
+      "time": 1793264785.2999918
+    },
+    {
+      "label": "fresh_text",
+      "text": "终端返回 ACK 29",
+      "message_id": "e229cafe:0010",
+      "attenuation_db": 65,
+      "tx_lo_readback": 900999998,
+      "tx_atten_readback": "-65.000000 dB",
+      "time": 1793264822.1187432
+    }
+  ],
+  "valid_frames_by_rx_channel": {
+    "1": 0,
+    "2": 6
+  },
+  "rx2_over_rx1_rms_db": 8.635633859201366,
+  "receiver_clipped_components": 0,
+  "relay_clip_delta": 0,
+  "negative_labels": [
+    "quiet_before",
+    "quiet_after"
+  ],
+  "raw_iq_redecode_verified": true,
+  "final_quiet_audit": true,
+  "rows": [
+    {
+      "label": "quiet_before",
+      "sha256": "4aaa7ba17d1a3f6c63698dd1fa69c98e0c1355470cb69bfe0f130151699a0412",
+      "channels": [
+        {
+          "channel": 1,
+          "frames": 0,
+          "rms_codes": 1.8133669128300745,
+          "clip_components": 0,
+          "carrier_hz": null
+        },
+        {
+          "channel": 2,
+          "frames": 0,
+          "rms_codes": 2.1048925173902884,
+          "clip_components": 0,
+          "carrier_hz": null
+        }
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1"
+    },
+    {
+      "label": "level_65",
+      "sha256": "a6c1ff8e1aa450a50884aa6091cad29d682037d8e0a463c67f7c67635f8bf6d8",
+      "channels": [
+        {
+          "channel": 1,
+          "frames": 0,
+          "rms_codes": 1.8136698137641745,
+          "clip_components": 0,
+          "carrier_hz": null
+        },
+        {
+          "channel": 2,
+          "frames": 3,
+          "rms_codes": 4.901623141759077,
+          "clip_components": 0,
+          "carrier_hz": 901499873.9255872
+        }
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0"
+    },
+    {
+      "label": "fresh_text",
+      "sha256": "bff8a6d5964092c1113d26041e30fe2707bfe4efb29a79721d3e18596c22a6fb",
+      "channels": [
+        {
+          "channel": 1,
+          "frames": 0,
+          "rms_codes": 1.8289511354487782,
+          "clip_components": 0,
+          "carrier_hz": null
+        },
+        {
+          "channel": 2,
+          "frames": 3,
+          "rms_codes": 4.897387621740608,
+          "clip_components": 0,
+          "carrier_hz": 901499879.0394548
+        }
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0"
+    },
+    {
+      "label": "quiet_after",
+      "sha256": "cfc3a72ef44a1492d6a128e98cdd3383984bf6ca0bf35a35e000d7562ae2bbd5",
+      "channels": [
+        {
+          "channel": 1,
+          "frames": 0,
+          "rms_codes": 1.8202873522941028,
+          "clip_components": 0,
+          "carrier_hz": null
+        },
+        {
+          "channel": 2,
+          "frames": 0,
+          "rms_codes": 2.102077945617889,
+          "clip_components": 0,
+          "carrier_hz": null
+        }
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1"
+    }
+  ],
+  "limitations": [
+    "Temporary direct cable, not the six-cable final topology.",
+    "No LDSDR channel 2 RF path tested in this round.",
+    "Discrete capture windows, not continuous BER or packet delivery statistics.",
+    "RX1 comparison is not a calibrated crosstalk or RF isolation measurement."
+  ],
+  "base_commit": "7e0f6c5d71a241707dc92f68ae428b0a82aabfc8",
+  "first_trial": {
+    "passed": false,
+    "attenuation_db": 70,
+    "error": "AssertionError(('RX2 not sufficiently distinct from RX1', 4.959486588153974))",
+    "rx2_crc_frames": 3,
+    "counted_as_pass": false,
+    "cleanup_errors": []
+  },
+  "software_tests": {
+    "count": 13,
+    "passed": true
+  },
+  "source_sha256": {
+    "source/sw/tools/rf_channel_probe.py": "9abb5f7296a7e2f6e1b1bcc669283661e08e55663d93e3a58ba23f874e42aaea",
+    "source/sw/tools/test_rf_channel_probe.py": "1ac3e03a1bd4403a5c4e259277fe9556d4a0714f10c04e7a2b42b8b8c7f1b1e6"
+  },
+  "evidence": {
+    "archive": "D:\\RelayTools\\releases\\reverse_endpoint_20261029.zip",
+    "bytes": 859350,
+    "sha256": "48561ed8e9106cbce3c34b2ccc386a45e75d6929a598ed132415cd125f0e7ce0",
+    "manifest_sha256": "071d1b43167b52a5b2ad6c9ef005b35de1bdd881e3969974fca32ea7e711278f"
+  }
+}
