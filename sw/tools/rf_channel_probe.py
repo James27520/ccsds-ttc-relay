@@ -45,6 +45,8 @@ def decode_iq_channels(raw, expected_offset_hz=-250000):
 class ChannelProbeReceiver(SessionRxConsole):
     """Current-boot binding with only two explicitly allowed RX LO points."""
 
+    RX_LO_POINTS = (901750000, 1000750000)
+
     def _safe_idle(self):
         self.verify_binding()
         self.require_idle()
@@ -87,7 +89,7 @@ class ChannelProbeReceiver(SessionRxConsole):
         allowed = {
             self.phy+'/in_voltage_sampling_frequency': {'2500000'},
             self.phy+'/in_voltage_rf_bandwidth': {'3000000'},
-            self.phy+'/out_altvoltage0_RX_LO_frequency': {'901750000', '1000750000'},
+            self.phy+'/out_altvoltage0_RX_LO_frequency': {str(x) for x in self.RX_LO_POINTS},
         }
         for channel in (0, 1):
             prefix = self.phy+f'/in_voltage{channel}'
@@ -100,8 +102,8 @@ class ChannelProbeReceiver(SessionRxConsole):
         return Console.write(self, path, value, tolerance)
 
     def configure(self, lo_hz, gain_db=30):
-        if type(lo_hz) is not int or lo_hz not in (901750000, 1000750000):
-            raise ValueError('Probe RX LO must be 901750000 or 1000750000 Hz')
+        if type(lo_hz) is not int or lo_hz not in self.RX_LO_POINTS:
+            raise ValueError('Probe RX LO is outside its explicit frequency points')
         if type(gain_db) is not int or gain_db not in (0, 20, 30):
             raise ValueError('Probe RX gain must be 0, 20 or 30 dB')
         self.settings = None

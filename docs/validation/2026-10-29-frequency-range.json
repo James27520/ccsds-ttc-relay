@@ -1,0 +1,3172 @@
+{
+  "date": "2026-10-29",
+  "completed": true,
+  "passed": false,
+  "main_decode_and_negative_run_passed": true,
+  "upper_band_quality_passed": false,
+  "conclusion": "2450.5 and 2179.5 MHz output tests passed; 2900.5 MHz decodes text but fails the stricter CRC quality check",
+  "control_source": "UART_NETTEST -> UDP",
+  "wiring": "COM17 TX1A -> LDSDR RX2; LDSDR TX2 -> COM19 RX2A",
+  "firmware_reloaded": false,
+  "gui_frequency_range_changed": false,
+  "base_commit": "9d5635e57897d05fdbfad4e85a3f7da0f14d836d",
+  "runtime": {
+    "python": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:37:03) [MSC v.1929 64 bit (AMD64)]",
+    "numpy": "2.4.1",
+    "pyserial": "3.5"
+  },
+  "points": [
+    {
+      "name": "baseline",
+      "input_center_hz": 901500000,
+      "output_center_hz": 1000500000,
+      "passed": true,
+      "relay_readback": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 1000000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "source_readback": 900999998,
+      "receiver_settings": {
+        "rx_lo_hz_requested": 1000750000,
+        "rx_lo_hz_readback": 1000749998,
+        "rx_gain_db_readback": [
+          30,
+          30
+        ],
+        "sample_rate_hz": 2500000,
+        "bandwidth_hz": 3000000,
+        "samples_per_channel": 32768,
+        "scan_order": [
+          "I1",
+          "Q1",
+          "I2",
+          "Q2"
+        ],
+        "scan_type": "le:S12/16>>0",
+        "rf_port_select": "A_BALANCED"
+      },
+      "selected_attenuation_db": 60
+    },
+    {
+      "name": "output_2450",
+      "input_center_hz": 901500000,
+      "output_center_hz": 2450500000,
+      "passed": true,
+      "relay_readback": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 2450000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "source_readback": 900999998,
+      "receiver_settings": {
+        "rx_lo_hz_requested": 2450750000,
+        "rx_lo_hz_readback": 2450750000,
+        "rx_gain_db_readback": [
+          30,
+          30
+        ],
+        "sample_rate_hz": 2500000,
+        "bandwidth_hz": 3000000,
+        "samples_per_channel": 32768,
+        "scan_order": [
+          "I1",
+          "Q1",
+          "I2",
+          "Q2"
+        ],
+        "scan_type": "le:S12/16>>0",
+        "rf_port_select": "A_BALANCED"
+      },
+      "selected_attenuation_db": 60
+    },
+    {
+      "name": "s_band",
+      "input_center_hz": 1989500000,
+      "output_center_hz": 2179500000,
+      "passed": true,
+      "relay_readback": {
+        "relay_rx_hz_readback": 1989000000,
+        "relay_tx_hz_readback": 2178999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "source_readback": 1989000000,
+      "receiver_settings": {
+        "rx_lo_hz_requested": 2179750000,
+        "rx_lo_hz_readback": 2179750000,
+        "rx_gain_db_readback": [
+          30,
+          30
+        ],
+        "sample_rate_hz": 2500000,
+        "bandwidth_hz": 3000000,
+        "samples_per_channel": 32768,
+        "scan_order": [
+          "I1",
+          "Q1",
+          "I2",
+          "Q2"
+        ],
+        "scan_type": "le:S12/16>>0",
+        "rf_port_select": "A_BALANCED"
+      },
+      "selected_attenuation_db": 60
+    },
+    {
+      "name": "upper_board_band",
+      "input_center_hz": 2450500000,
+      "output_center_hz": 2900500000,
+      "passed": true,
+      "relay_readback": {
+        "relay_rx_hz_readback": 2450000000,
+        "relay_tx_hz_readback": 2900000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      },
+      "source_readback": 2450000000,
+      "receiver_settings": {
+        "rx_lo_hz_requested": 2900750000,
+        "rx_lo_hz_readback": 2900749998,
+        "rx_gain_db_readback": [
+          30,
+          30
+        ],
+        "sample_rate_hz": 2500000,
+        "bandwidth_hz": 3000000,
+        "samples_per_channel": 32768,
+        "scan_order": [
+          "I1",
+          "Q1",
+          "I2",
+          "Q2"
+        ],
+        "scan_type": "le:S12/16>>0",
+        "rf_port_select": "A_BALANCED"
+      },
+      "selected_attenuation_db": 55
+    }
+  ],
+  "captures": [
+    {
+      "label": "baseline_quiet_before",
+      "point": "baseline",
+      "raw_sha256": "9014d9d586cafb9136a02fffe1173ee7b0bd50481caafe044b68139705817a9f",
+      "rx_lo_hz": 1000749998,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.7904266087740792,
+        2.1421926285496595
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "baseline_text1_att60",
+      "point": "baseline",
+      "raw_sha256": "ce1eda5410891059cdd7ffd713d1e4ff316c27daf47e44319dce494fe7a4047b",
+      "rx_lo_hz": 1000749998,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:0001",
+          "session_id": "59aec04e",
+          "sequence": 1,
+          "text": "高频测试 0 A",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 7536,
+          "carrier_offset_hz": -250139.71871839822,
+          "crc16": 53252,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0001",
+          "session_id": "59aec04e",
+          "sequence": 1,
+          "text": "高频测试 0 A",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 15136,
+          "carrier_offset_hz": -250139.71871839822,
+          "crc16": 53252,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0001",
+          "session_id": "59aec04e",
+          "sequence": 1,
+          "text": "高频测试 0 A",
+          "payload_bytes": 16,
+          "frame_index": 2,
+          "first_symbol_sample": 22736,
+          "carrier_offset_hz": -250139.71871839822,
+          "crc16": 53252,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 1000499858.2812816,
+      "rms_codes": [
+        1.8048650480844475,
+        2.6988484505404107
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "output_2450_quiet_before",
+      "point": "output_2450",
+      "raw_sha256": "fed353d76d762d7178ea338c6e21195d21ac63772cf87324d3939ba8e364e27f",
+      "rx_lo_hz": 2450750000,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.3285385385593826,
+        1.5495459106773426
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "output_2450_text1_att60",
+      "point": "output_2450",
+      "raw_sha256": "26fc8cbdc0b512ed574282b205a0775951f731d27893d67a57bcda4134c83844",
+      "rx_lo_hz": 2450750000,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:0002",
+          "session_id": "59aec04e",
+          "sequence": 2,
+          "text": "高频测试 1 A",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 5646,
+          "carrier_offset_hz": -250593.1615701299,
+          "crc16": 59206,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0002",
+          "session_id": "59aec04e",
+          "sequence": 2,
+          "text": "高频测试 1 A",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 13246,
+          "carrier_offset_hz": -250593.1615701299,
+          "crc16": 59206,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0002",
+          "session_id": "59aec04e",
+          "sequence": 2,
+          "text": "高频测试 1 A",
+          "payload_bytes": 16,
+          "frame_index": 2,
+          "first_symbol_sample": 20846,
+          "carrier_offset_hz": -250593.1615701299,
+          "crc16": 59206,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2450499406.83843,
+      "rms_codes": [
+        1.3224603461682698,
+        1.9565750778225328
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "output_2450_text2",
+      "point": "output_2450",
+      "raw_sha256": "53ad466626475ac36ae097dcf507ce5e594b7184016b962ee648c04088a58a88",
+      "rx_lo_hz": 2450750000,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:0003",
+          "session_id": "59aec04e",
+          "sequence": 3,
+          "text": "链路确认 1 B",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 6251,
+          "carrier_offset_hz": -250574.47002491198,
+          "crc16": 58709,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0003",
+          "session_id": "59aec04e",
+          "sequence": 3,
+          "text": "链路确认 1 B",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 13851,
+          "carrier_offset_hz": -250574.47002491198,
+          "crc16": 58709,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0003",
+          "session_id": "59aec04e",
+          "sequence": 3,
+          "text": "链路确认 1 B",
+          "payload_bytes": 16,
+          "frame_index": 2,
+          "first_symbol_sample": 21451,
+          "carrier_offset_hz": -250574.47002491198,
+          "crc16": 58709,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2450499425.529975,
+      "rms_codes": [
+        1.3191447313565048,
+        1.9605172607471477
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "output_2450_source_off_relay_on",
+      "point": "output_2450",
+      "raw_sha256": "fa3841aae56a9e2bdb018aa0ee3f63b8825c45f20eb966a1a2377d6a43dccefc",
+      "rx_lo_hz": 2450750000,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.326515568957824,
+        1.82813334666898
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "output_2450_relay_off_source_on",
+      "point": "output_2450",
+      "raw_sha256": "24189a13e86b867a0af8ef6b36f4ada962c64ae9706e8e31e367c4dfe23ec578",
+      "rx_lo_hz": 2450750000,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        1
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.3230601956260342,
+        1.5352009774018596
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "s_band_quiet_before",
+      "point": "s_band",
+      "raw_sha256": "a50fa57bd04993da2da2a56eff50baeb95acdfb3b7a4abfb85686ecad7d26462",
+      "rx_lo_hz": 2179750000,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.3378093611268946,
+        1.5653782084681245
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "s_band_text1_att60",
+      "point": "s_band",
+      "raw_sha256": "4520bebac2d6cb3572f081845e8af5b779a86e38b1f00e402e620b2d23b60c76",
+      "rx_lo_hz": 2179750000,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:0005",
+          "session_id": "59aec04e",
+          "sequence": 5,
+          "text": "高频测试 2 A",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 5187,
+          "carrier_offset_hz": -250308.0891964511,
+          "crc16": 20163,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0005",
+          "session_id": "59aec04e",
+          "sequence": 5,
+          "text": "高频测试 2 A",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 12787,
+          "carrier_offset_hz": -250308.0891964511,
+          "crc16": 20163,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0005",
+          "session_id": "59aec04e",
+          "sequence": 5,
+          "text": "高频测试 2 A",
+          "payload_bytes": 16,
+          "frame_index": 2,
+          "first_symbol_sample": 20387,
+          "carrier_offset_hz": -250308.0891964511,
+          "crc16": 20163,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2179499691.9108033,
+      "rms_codes": [
+        1.3193644895365344,
+        1.874438392455024
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "s_band_text2",
+      "point": "s_band",
+      "raw_sha256": "656bf1e4b1b41edcee95b97e4e821c411c6f2d3af3ff92db193f0fd80beaeec4",
+      "rx_lo_hz": 2179750000,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        1,
+        0
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:0006",
+          "session_id": "59aec04e",
+          "sequence": 6,
+          "text": "链路确认 2 B",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 3393,
+          "carrier_offset_hz": -250294.5119474737,
+          "crc16": 48275,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0006",
+          "session_id": "59aec04e",
+          "sequence": 6,
+          "text": "链路确认 2 B",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 10993,
+          "carrier_offset_hz": -250294.5119474737,
+          "crc16": 48275,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:0006",
+          "session_id": "59aec04e",
+          "sequence": 6,
+          "text": "链路确认 2 B",
+          "payload_bytes": 16,
+          "frame_index": 2,
+          "first_symbol_sample": 18593,
+          "carrier_offset_hz": -250294.5119474737,
+          "crc16": 48275,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2179499705.4880524,
+      "rms_codes": [
+        1.3105919911198527,
+        1.8904312917294825
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "s_band_source_off_relay_on",
+      "point": "s_band",
+      "raw_sha256": "23a9de73d94e612106c6d23b147f220982f0999421c31fc8b95de658d0db3db7",
+      "rx_lo_hz": 2179750000,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.312767364881103,
+        1.7997090422395365
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "s_band_relay_off_source_on",
+      "point": "s_band",
+      "raw_sha256": "843d1bb228849140ccf0ff1610b4072450e7ff780526d336a652ceeeae5a8250",
+      "rx_lo_hz": 2179750000,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.3263200050739545,
+        1.5505303244726867
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "upper_board_band_quiet_before",
+      "point": "upper_board_band",
+      "raw_sha256": "0e53f07ac38dc0ad39bab5e2e8793b1de09652e71d9c4d17ec6eb9800eccf81b",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        1
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.311976737211592,
+        1.536035649839588
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "upper_board_band_text1_att60",
+      "point": "upper_board_band",
+      "raw_sha256": "c93f30bb3cfd9c794dc7d3add88feb97baf8154d37d75cba94ee7b060ae56cd6",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.296757336529757,
+        1.6662525934197747
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "upper_board_band_text1_att55",
+      "point": "upper_board_band",
+      "raw_sha256": "d72320bb7bd3e3c14349ffa3ac7602869a28fcd399ee3ffedf8c9d767a6622e1",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        1
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        2
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:0009",
+          "session_id": "59aec04e",
+          "sequence": 9,
+          "text": "高频测试 3 A",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 11966,
+          "carrier_offset_hz": -250443.73834042033,
+          "crc16": 30779,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2900499554.2616596,
+      "rms_codes": [
+        1.3198617018875027,
+        1.6792150498354135
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "upper_board_band_text2",
+      "point": "upper_board_band",
+      "raw_sha256": "fab8b072bb8941d979bcaacd851d9c8d76bbc4a3f5d3d5d4a56efbffa25bd956",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        2
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        2
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:000a",
+          "session_id": "59aec04e",
+          "sequence": 10,
+          "text": "链路确认 3 B",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 3036,
+          "carrier_offset_hz": -250445.43552412145,
+          "crc16": 29206,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:000a",
+          "session_id": "59aec04e",
+          "sequence": 10,
+          "text": "链路确认 3 B",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 18236,
+          "carrier_offset_hz": -250445.43552412145,
+          "crc16": 29206,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2900499552.564476,
+      "rms_codes": [
+        1.3046290218930534,
+        1.6855547961140644
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "upper_board_band_source_off_relay_on",
+      "point": "upper_board_band",
+      "raw_sha256": "7c9033703ee38ddc73eb7a4279d9a0028bf910c7db14bc49d7215d007a7e02fe",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.3358803898611675,
+        1.6505189021893614
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "upper_board_band_relay_off_source_on",
+      "point": "upper_board_band",
+      "raw_sha256": "8fc90f49d237ed61c36cd663257fc05d8034e416679103f735d89de06115a190",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.3012562477335603,
+        1.5217739314489191
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "baseline_after",
+      "point": "baseline",
+      "raw_sha256": "0f8ab650586f0abbcbd627ca4edc9b84ae6fc84cdb65b5ce4bd52090a5ebb275",
+      "rx_lo_hz": 1000749998,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        0
+      ],
+      "messages": [
+        {
+          "message_id": "59aec04e:000c",
+          "session_id": "59aec04e",
+          "sequence": 12,
+          "text": "回到原频率确认",
+          "payload_bytes": 21,
+          "frame_index": 0,
+          "first_symbol_sample": 398,
+          "carrier_offset_hz": -250147.00454027657,
+          "crc16": 50217,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:000c",
+          "session_id": "59aec04e",
+          "sequence": 12,
+          "text": "回到原频率确认",
+          "payload_bytes": 21,
+          "frame_index": 1,
+          "first_symbol_sample": 8998,
+          "carrier_offset_hz": -250147.00454027657,
+          "crc16": 50217,
+          "crc_valid": true
+        },
+        {
+          "message_id": "59aec04e:000c",
+          "session_id": "59aec04e",
+          "sequence": 12,
+          "text": "回到原频率确认",
+          "payload_bytes": 21,
+          "frame_index": 2,
+          "first_symbol_sample": 17598,
+          "carrier_offset_hz": -250147.00454027657,
+          "crc16": 50217,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 1000499850.9954597,
+      "rms_codes": [
+        1.8638994323058313,
+        2.595843469917341
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "level50/upper_board_band_quiet_before",
+      "point": "upper_board_band",
+      "raw_sha256": "e0847890f7604b988e63b68b4544955e7891cb251fb7315ab3e3c03fbf6996c3",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        0
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        1
+      ],
+      "messages": [],
+      "estimated_output_center_hz": null,
+      "rms_codes": [
+        1.241794356025284,
+        1.5365819159338692
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "1",
+      "source_powerdown_after": "1",
+      "sample_window_ms": 13.107199999999999
+    },
+    {
+      "label": "level50/upper_board_band_text1_att50",
+      "point": "upper_board_band",
+      "raw_sha256": "445ceeac03a9584f0fbe9e8030a1ed78c0028aaaecca85a06578f821a35c2889",
+      "rx_lo_hz": 2900749998,
+      "frames": [
+        0,
+        3
+      ],
+      "crc_rejected_complete_candidates": [
+        0,
+        1
+      ],
+      "messages": [
+        {
+          "message_id": "fbd523b6:0001",
+          "session_id": "fbd523b6",
+          "sequence": 1,
+          "text": "高频测试 3 A",
+          "payload_bytes": 16,
+          "frame_index": 0,
+          "first_symbol_sample": 2572,
+          "carrier_offset_hz": -250453.2811506195,
+          "crc16": 28546,
+          "crc_valid": true
+        },
+        {
+          "message_id": "fbd523b6:0001",
+          "session_id": "fbd523b6",
+          "sequence": 1,
+          "text": "高频测试 3 A",
+          "payload_bytes": 16,
+          "frame_index": 1,
+          "first_symbol_sample": 10172,
+          "carrier_offset_hz": -250453.2811506195,
+          "crc16": 28546,
+          "crc_valid": true
+        },
+        {
+          "message_id": "fbd523b6:0001",
+          "session_id": "fbd523b6",
+          "sequence": 1,
+          "text": "高频测试 3 A",
+          "payload_bytes": 16,
+          "frame_index": 2,
+          "first_symbol_sample": 17772,
+          "carrier_offset_hz": -250453.2811506195,
+          "crc16": 28546,
+          "crc_valid": true
+        }
+      ],
+      "estimated_output_center_hz": 2900499544.718849,
+      "rms_codes": [
+        1.2754848381167159,
+        1.8015733412509882
+      ],
+      "clipped_components": [
+        0,
+        0
+      ],
+      "source_powerdown_before": "0",
+      "source_powerdown_after": "0",
+      "sample_window_ms": 13.107199999999999
+    }
+  ],
+  "transmissions": [
+    {
+      "label": "baseline_text1_att60",
+      "text": "高频测试 0 A",
+      "message_id": "59aec04e:0001",
+      "attenuation_db": 60,
+      "tx_lo_readback": 900999998,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269228.9740531
+    },
+    {
+      "label": "output_2450_text1_att60",
+      "text": "高频测试 1 A",
+      "message_id": "59aec04e:0002",
+      "attenuation_db": 60,
+      "tx_lo_readback": 900999998,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269331.1086576
+    },
+    {
+      "label": "output_2450_text2",
+      "text": "链路确认 1 B",
+      "message_id": "59aec04e:0003",
+      "attenuation_db": 60,
+      "tx_lo_readback": 900999998,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269370.782943
+    },
+    {
+      "label": "output_2450_negative_tx",
+      "text": "停转后不应收到",
+      "message_id": "59aec04e:0004",
+      "attenuation_db": 60,
+      "tx_lo_readback": 900999998,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269432.24134
+    },
+    {
+      "label": "s_band_text1_att60",
+      "text": "高频测试 2 A",
+      "message_id": "59aec04e:0005",
+      "attenuation_db": 60,
+      "tx_lo_readback": 1989000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269534.1197262
+    },
+    {
+      "label": "s_band_text2",
+      "text": "链路确认 2 B",
+      "message_id": "59aec04e:0006",
+      "attenuation_db": 60,
+      "tx_lo_readback": 1989000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269574.0183115
+    },
+    {
+      "label": "s_band_negative_tx",
+      "text": "停转后不应收到",
+      "message_id": "59aec04e:0007",
+      "attenuation_db": 60,
+      "tx_lo_readback": 1989000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269636.0219655
+    },
+    {
+      "label": "upper_board_band_text1_att60",
+      "text": "高频测试 3 A",
+      "message_id": "59aec04e:0008",
+      "attenuation_db": 60,
+      "tx_lo_readback": 2450000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269738.1714401
+    },
+    {
+      "label": "upper_board_band_text1_att55",
+      "text": "高频测试 3 A",
+      "message_id": "59aec04e:0009",
+      "attenuation_db": 55,
+      "tx_lo_readback": 2450000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269777.844931
+    },
+    {
+      "label": "upper_board_band_text2",
+      "text": "链路确认 3 B",
+      "message_id": "59aec04e:000a",
+      "attenuation_db": 55,
+      "tx_lo_readback": 2450000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269817.5199788
+    },
+    {
+      "label": "upper_board_band_negative_tx",
+      "text": "停转后不应收到",
+      "message_id": "59aec04e:000b",
+      "attenuation_db": 55,
+      "tx_lo_readback": 2450000000,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269879.0601578
+    },
+    {
+      "label": "baseline_after",
+      "text": "回到原频率确认",
+      "message_id": "59aec04e:000c",
+      "attenuation_db": 60,
+      "tx_lo_readback": 900999998,
+      "staged_atten_readback": "-89.000000 dB",
+      "time": 1793269960.5675795
+    }
+  ],
+  "operations": [
+    {
+      "time": 1793269164.9107955,
+      "operation": "tune",
+      "point": "baseline",
+      "lines": [
+        "COMMAND source=UART_NETTEST rx=901 tx=1000 air_seq=101 rc=0",
+        "UDP_SEND_ATTEMPT source=UART_NETTEST rx=901 tx=1000 air_seq=101 rc=0",
+        "CLI_RESULT rc=0",
+        "ACK so"
+      ],
+      "telemetry": {
+        "uptime_ms": 47204650,
+        "events": 66,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 29,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 65,
+        "s_origin": 4,
+        "s_air_seq": 101,
+        "s_rx_mhz": 901,
+        "s_tx_mhz": 1000,
+        "s_udp_seq": 30,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 66,
+        "a_origin": 4,
+        "a_air_seq": 101,
+        "a_rx_mhz": 901,
+        "a_tx_mhz": 1000,
+        "a_udp_seq": 30,
+        "a_rc": 0,
+        "a_rx_hz": 900999998,
+        "a_tx_hz": 1000000000,
+        "spi_valid": 0
+      },
+      "spi": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 1000000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    {
+      "time": 1793269229.1440055,
+      "point": "baseline",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 102,
+        "udp_seq": 31,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 47519197,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793269261.4308875,
+      "point": "baseline",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 103,
+        "udp_seq": 32,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47551477,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793269267.0489733,
+      "operation": "tune",
+      "point": "output_2450",
+      "lines": [
+        "COMMAND source=UART_NETTEST rx=901 tx=2450 air_seq=104 rc=0",
+        "UDP_SEND_ATTEMPT source=UART_NETTEST rx=901 tx=2450 air_seq=104 rc=0",
+        "CLI_RESULT rc=0",
+        "ACK s"
+      ],
+      "telemetry": {
+        "uptime_ms": 47306790,
+        "events": 72,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 32,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 71,
+        "s_origin": 4,
+        "s_air_seq": 104,
+        "s_rx_mhz": 901,
+        "s_tx_mhz": 2450,
+        "s_udp_seq": 33,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 72,
+        "a_origin": 4,
+        "a_air_seq": 104,
+        "a_rx_mhz": 901,
+        "a_tx_mhz": 2450,
+        "a_udp_seq": 33,
+        "a_rc": 0,
+        "a_rx_hz": 900999998,
+        "a_tx_hz": 2450000000,
+        "spi_valid": 0
+      },
+      "spi": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 2450000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    {
+      "time": 1793269331.285007,
+      "point": "output_2450",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 105,
+        "udp_seq": 34,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 47621322,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269363.5714145,
+      "point": "output_2450",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 106,
+        "udp_seq": 35,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47653620,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269370.9472735,
+      "point": "output_2450",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 107,
+        "udp_seq": 36,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119998,
+        "uptime_ms": 47660996,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269403.2341995,
+      "point": "output_2450",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 108,
+        "udp_seq": 37,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47693280,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269404.0661445,
+      "point": "output_2450",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 109,
+        "udp_seq": 38,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119998,
+        "uptime_ms": 47694114,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269424.9935622,
+      "point": "output_2450",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 110,
+        "udp_seq": 39,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47715041,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269432.4172199,
+      "point": "output_2450",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 111,
+        "udp_seq": 40,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 47722464,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269439.7929473,
+      "point": "output_2450",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 112,
+        "udp_seq": 41,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47729829,
+        "rx_hz": 900999998,
+        "tx_hz": 2450000000
+      }
+    },
+    {
+      "time": 1793269469.8975003,
+      "operation": "tune",
+      "point": "s_band",
+      "lines": [
+        "COMMAND source=UART_NETTEST rx=1989 tx=2179 air_seq=113 rc=0",
+        "UDP_SEND_ATTEMPT source=UART_NETTEST rx=1989 tx=2179 air_seq=113 rc=0",
+        "CLI_RESULT rc=0"
+      ],
+      "telemetry": {
+        "uptime_ms": 47509631,
+        "events": 90,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 41,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 89,
+        "s_origin": 4,
+        "s_air_seq": 113,
+        "s_rx_mhz": 1989,
+        "s_tx_mhz": 2179,
+        "s_udp_seq": 42,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 90,
+        "a_origin": 4,
+        "a_air_seq": 113,
+        "a_rx_mhz": 1989,
+        "a_tx_mhz": 2179,
+        "a_udp_seq": 42,
+        "a_rc": 0,
+        "a_rx_hz": 1989000000,
+        "a_tx_hz": 2178999998,
+        "spi_valid": 0
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1989000000,
+        "relay_tx_hz_readback": 2178999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    {
+      "time": 1793269534.301884,
+      "point": "s_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 114,
+        "udp_seq": 43,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119998,
+        "uptime_ms": 47824341,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269566.7006388,
+      "point": "s_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 115,
+        "udp_seq": 44,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47856744,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269574.236303,
+      "point": "s_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 116,
+        "udp_seq": 45,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 47864276,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269606.7472496,
+      "point": "s_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 117,
+        "udp_seq": 46,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47896775,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269607.611155,
+      "point": "s_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 118,
+        "udp_seq": 47,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 47897646,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269628.6824558,
+      "point": "s_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 119,
+        "udp_seq": 48,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47918710,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269636.2183752,
+      "point": "s_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 120,
+        "udp_seq": 49,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 47926253,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269643.609862,
+      "point": "s_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 121,
+        "udp_seq": 50,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 47933640,
+        "rx_hz": 1989000000,
+        "tx_hz": 2178999998
+      }
+    },
+    {
+      "time": 1793269673.7102203,
+      "operation": "tune",
+      "point": "upper_board_band",
+      "lines": [
+        "COMMAND source=UART_NETTEST rx=2450 tx=2900 air_seq=122 rc=0",
+        "UDP_SEND_ATTEMPT source=UART_NETTEST rx=2450 tx=2900 air_seq=122 rc=0",
+        "CLI_RESULT rc=0"
+      ],
+      "telemetry": {
+        "uptime_ms": 47713428,
+        "events": 108,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 50,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 107,
+        "s_origin": 4,
+        "s_air_seq": 122,
+        "s_rx_mhz": 2450,
+        "s_tx_mhz": 2900,
+        "s_udp_seq": 51,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 108,
+        "a_origin": 4,
+        "a_air_seq": 122,
+        "a_rx_mhz": 2450,
+        "a_tx_mhz": 2900,
+        "a_udp_seq": 51,
+        "a_rc": 0,
+        "a_rx_hz": 2450000000,
+        "a_tx_hz": 2900000000,
+        "spi_valid": 0
+      },
+      "spi": {
+        "relay_rx_hz_readback": 2450000000,
+        "relay_tx_hz_readback": 2900000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    {
+      "time": 1793269738.3588972,
+      "point": "upper_board_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 123,
+        "udp_seq": 52,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 48028390,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269770.6297479,
+      "point": "upper_board_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 124,
+        "udp_seq": 53,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 48060667,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269778.0052836,
+      "point": "upper_board_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 125,
+        "udp_seq": 54,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 48068046,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269810.3081744,
+      "point": "upper_board_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 126,
+        "udp_seq": 55,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 48100345,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269817.7160509,
+      "point": "upper_board_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 127,
+        "udp_seq": 56,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119998,
+        "uptime_ms": 48107747,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269850.0033088,
+      "point": "upper_board_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 128,
+        "udp_seq": 57,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 48140038,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269850.8509054,
+      "point": "upper_board_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 129,
+        "udp_seq": 58,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119998,
+        "uptime_ms": 48140890,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269871.8101158,
+      "point": "upper_board_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 130,
+        "udp_seq": 59,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 48161845,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269879.234244,
+      "point": "upper_board_band",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 131,
+        "udp_seq": 60,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 48169274,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269886.5935526,
+      "point": "upper_board_band",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 132,
+        "udp_seq": 61,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 48176631,
+        "rx_hz": 2450000000,
+        "tx_hz": 2900000000
+      }
+    },
+    {
+      "time": 1793269916.7289188,
+      "operation": "tune",
+      "point": "baseline",
+      "lines": [
+        "COMMAND source=UART_NETTEST rx=901 tx=1000 air_seq=133 rc=0",
+        "UDP_SEND_ATTEMPT source=UART_NETTEST rx=901 tx=1000 air_seq=133 rc=0",
+        "CLI_RESULT rc=0"
+      ],
+      "telemetry": {
+        "uptime_ms": 47956427,
+        "events": 130,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 61,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 129,
+        "s_origin": 4,
+        "s_air_seq": 133,
+        "s_rx_mhz": 901,
+        "s_tx_mhz": 1000,
+        "s_udp_seq": 62,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 130,
+        "a_origin": 4,
+        "a_air_seq": 133,
+        "a_rx_mhz": 901,
+        "a_tx_mhz": 1000,
+        "a_udp_seq": 62,
+        "a_rc": 0,
+        "a_rx_hz": 900999998,
+        "a_tx_hz": 1000000000,
+        "spi_valid": 0
+      },
+      "spi": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 1000000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    {
+      "time": 1793269960.7351108,
+      "point": "baseline",
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 134,
+        "udp_seq": 63,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 48250771,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793269993.021946,
+      "point": "baseline",
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 135,
+        "udp_seq": 64,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 48283056,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793270008.4553857,
+      "operation": "tune",
+      "point": "baseline",
+      "lines": [
+        "COMMAND source=UART_NETTEST rx=901 tx=1000 air_seq=136 rc=0",
+        "UDP_SEND_ATTEMPT source=UART_NETTEST rx=901 tx=1000 air_seq=136 rc=0",
+        "CLI_RESULT rc=0",
+        "ACK so"
+      ],
+      "telemetry": {
+        "uptime_ms": 48048165,
+        "events": 136,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 64,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 135,
+        "s_origin": 4,
+        "s_air_seq": 136,
+        "s_rx_mhz": 901,
+        "s_tx_mhz": 1000,
+        "s_udp_seq": 65,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 136,
+        "a_origin": 4,
+        "a_air_seq": 136,
+        "a_rx_mhz": 901,
+        "a_tx_mhz": 1000,
+        "a_udp_seq": 65,
+        "a_rc": 0,
+        "a_rx_hz": 900999998,
+        "a_tx_hz": 1000000000,
+        "spi_valid": 0
+      },
+      "spi": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 1000000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    }
+  ],
+  "phases": [
+    {
+      "name": "initial_quiet",
+      "time": 1793269160.0047183,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "3051225083",
+        "out": "3051225065",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007
+    },
+    {
+      "name": "baseline_configured",
+      "time": 1793269202.3175623,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "56225787",
+        "out": "56225769",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "baseline_text1_att60_enabled",
+      "time": 1793269230.484583,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "921493499",
+        "out": "921493481",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "baseline_text1_att60_captured",
+      "time": 1793269261.2596998,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1866657787",
+        "out": "1866657769",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "output_2450_configured",
+      "time": 1793269304.4488971,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "2450",
+        "fs": "30720000",
+        "in": "3193733115",
+        "out": "3193733097",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "output_2450_text1_att60_enabled",
+      "time": 1793269332.6134698,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "2450",
+        "fs": "30720000",
+        "in": "4059095035",
+        "out": "4059095017",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "output_2450_text1_att60_captured",
+      "time": 1793269363.4090655,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "2450",
+        "fs": "30720000",
+        "in": "709586939",
+        "out": "709586921",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "output_2450_text2_enabled",
+      "time": 1793269372.2710803,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "2450",
+        "fs": "30720000",
+        "in": "982405115",
+        "out": "982405097",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "output_2450_text2_captured",
+      "time": 1793269403.0577698,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "2450",
+        "fs": "30720000",
+        "in": "1927880699",
+        "out": "1927880681",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "output_2450_negative_finished",
+      "time": 1793269464.8692038,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "2450",
+        "fs": "30720000",
+        "in": "3826687995",
+        "out": "3826687977",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "s_band_configured",
+      "time": 1793269507.4726927,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "840278011",
+        "out": "840277993",
+        "clip": "55363008",
+        "rc": "0"
+      },
+      "clip": 55363008,
+      "delta": 1
+    },
+    {
+      "name": "s_band_text1_att60_enabled",
+      "time": 1793269535.624582,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "1705414651",
+        "out": "1705414633",
+        "clip": "55363008",
+        "rc": "0"
+      },
+      "clip": 55363008,
+      "delta": 0
+    },
+    {
+      "name": "s_band_text1_att60_captured",
+      "time": 1793269566.5192266,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "2654396411",
+        "out": "2654396393",
+        "clip": "55363008",
+        "rc": "0"
+      },
+      "clip": 55363008,
+      "delta": 0
+    },
+    {
+      "name": "s_band_text2_enabled",
+      "time": 1793269575.581771,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "2932416507",
+        "out": "2932416489",
+        "clip": "55363008",
+        "rc": "0"
+      },
+      "clip": 55363008,
+      "delta": 0
+    },
+    {
+      "name": "s_band_text2_captured",
+      "time": 1793269606.51893,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "3882991611",
+        "out": "3882991593",
+        "clip": "55363008",
+        "rc": "0"
+      },
+      "clip": 55363008,
+      "delta": 0
+    },
+    {
+      "name": "s_band_negative_finished",
+      "time": 1793269668.7378266,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "1499643899",
+        "out": "1499643881",
+        "clip": "55363008",
+        "rc": "0"
+      },
+      "clip": 55363008,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_configured",
+      "time": 1793269711.4627287,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "2811314171",
+        "out": "2811314153",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 1
+    },
+    {
+      "name": "upper_board_band_text1_att60_enabled",
+      "time": 1793269739.6861672,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "3678638075",
+        "out": "3678638057",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_text1_att60_captured",
+      "time": 1793269770.4558482,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "329297915",
+        "out": "329297897",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_text1_att55_enabled",
+      "time": 1793269779.3243725,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "601780219",
+        "out": "601780201",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_text1_att55_captured",
+      "time": 1793269810.1359954,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "1547558907",
+        "out": "1547558889",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_text2_enabled",
+      "time": 1793269819.0439413,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "1821515771",
+        "out": "1821515753",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_text2_captured",
+      "time": 1793269849.8274596,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "2767359995",
+        "out": "2767359977",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "upper_board_band_negative_finished",
+      "time": 1793269911.6767027,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "2450",
+        "txlo": "2900",
+        "fs": "30720000",
+        "in": "372236283",
+        "out": "372236265",
+        "clip": "55363009",
+        "rc": "0"
+      },
+      "clip": 55363009,
+      "delta": 0
+    },
+    {
+      "name": "baseline_after_enabled",
+      "time": 1793269962.0539904,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1920118779",
+        "out": "1920118761",
+        "clip": "55363010",
+        "rc": "0"
+      },
+      "clip": 55363010,
+      "delta": 1
+    },
+    {
+      "name": "baseline_after_captured",
+      "time": 1793269992.8517277,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "2866151419",
+        "out": "2866151401",
+        "clip": "55363010",
+        "rc": "0"
+      },
+      "clip": 55363010,
+      "delta": 0
+    },
+    {
+      "name": "final_quiet",
+      "time": 1793270045.8189542,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "197988347",
+        "out": "197988329",
+        "clip": "55363010",
+        "rc": "0"
+      },
+      "clip": 55363010,
+      "delta": 0
+    }
+  ],
+  "upper_band_level_check": {
+    "passed": false,
+    "criterion": "At 50 dB, both positive snapshots must have valid text and no CRC-rejected complete frames",
+    "error": "AssertionError('CRC rejected frames remain at 50 dB')",
+    "points": [
+      {
+        "name": "upper_board_band",
+        "input_center_hz": 2450500000,
+        "output_center_hz": 2900500000,
+        "passed": false,
+        "relay_readback": {
+          "relay_rx_hz_readback": 2450000000,
+          "relay_tx_hz_readback": 2900000000,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        },
+        "source_readback": 2450000000,
+        "receiver_settings": {
+          "rx_lo_hz_requested": 2900750000,
+          "rx_lo_hz_readback": 2900749998,
+          "rx_gain_db_readback": [
+            30,
+            30
+          ],
+          "sample_rate_hz": 2500000,
+          "bandwidth_hz": 3000000,
+          "samples_per_channel": 32768,
+          "scan_order": [
+            "I1",
+            "Q1",
+            "I2",
+            "Q2"
+          ],
+          "scan_type": "le:S12/16>>0",
+          "rf_port_select": "A_BALANCED"
+        }
+      }
+    ],
+    "transmissions": [
+      {
+        "label": "upper_board_band_text1_att50",
+        "text": "高频测试 3 A",
+        "message_id": "fbd523b6:0001",
+        "attenuation_db": 50,
+        "tx_lo_readback": 2450000000,
+        "staged_atten_readback": "-89.000000 dB",
+        "time": 1793270239.6706717
+      }
+    ],
+    "operations": [
+      {
+        "time": 1793270175.402549,
+        "operation": "tune",
+        "point": "upper_board_band",
+        "lines": [
+          "COMMAND source=UART_NETTEST rx=2450 tx=2900 air_seq=161 rc=0",
+          "UDP_SEND_ATTEMPT source=UART_NETTEST rx=2450 tx=2900 air_seq=161 rc=0",
+          "CLI_RESULT rc=0"
+        ],
+        "telemetry": {
+          "uptime_ms": 48215107,
+          "events": 138,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 6,
+          "applied": 65,
+          "failures": 1,
+          "d_valid": 1,
+          "d_event": 40,
+          "d_origin": 1,
+          "d_air_seq": 8,
+          "d_rx_mhz": 901,
+          "d_tx_mhz": 1000,
+          "s_valid": 1,
+          "s_event": 137,
+          "s_origin": 4,
+          "s_air_seq": 161,
+          "s_rx_mhz": 2450,
+          "s_tx_mhz": 2900,
+          "s_udp_seq": 66,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 138,
+          "a_origin": 4,
+          "a_air_seq": 161,
+          "a_rx_mhz": 2450,
+          "a_tx_mhz": 2900,
+          "a_udp_seq": 66,
+          "a_rc": 0,
+          "a_rx_hz": 2450000000,
+          "a_tx_hz": 2900000000,
+          "spi_valid": 0
+        },
+        "spi": {
+          "relay_rx_hz_readback": 2450000000,
+          "relay_tx_hz_readback": 2900000000,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        }
+      },
+      {
+        "time": 1793270239.8327227,
+        "point": "upper_board_band",
+        "operation": "enable",
+        "ack": {
+          "operation": 33,
+          "air_seq": 162,
+          "udp_seq": 67,
+          "rc": 0,
+          "flags": 7,
+          "mode": 1,
+          "rx1_gain": 30,
+          "rx2_gain": 30,
+          "tx1_mdB": 50000,
+          "tx2_mdB": 50000,
+          "remaining_ms": 119998,
+          "uptime_ms": 48529865,
+          "rx_hz": 2450000000,
+          "tx_hz": 2900000000
+        }
+      },
+      {
+        "time": 1793270286.2294123,
+        "operation": "tune",
+        "point": "baseline",
+        "lines": [
+          "COMMAND source=UART_NETTEST rx=901 tx=1000 air_seq=163 rc=0",
+          "UDP_SEND_ATTEMPT source=UART_NETTEST rx=901 tx=1000 air_seq=163 rc=0",
+          "CLI_RESULT rc=0"
+        ],
+        "telemetry": {
+          "uptime_ms": 48325950,
+          "events": 142,
+          "network": 1,
+          "armed": 0,
+          "pending": 0,
+          "decoded": 6,
+          "applied": 67,
+          "failures": 1,
+          "d_valid": 1,
+          "d_event": 40,
+          "d_origin": 1,
+          "d_air_seq": 8,
+          "d_rx_mhz": 901,
+          "d_tx_mhz": 1000,
+          "s_valid": 1,
+          "s_event": 141,
+          "s_origin": 4,
+          "s_air_seq": 163,
+          "s_rx_mhz": 901,
+          "s_tx_mhz": 1000,
+          "s_udp_seq": 68,
+          "s_count": 1,
+          "s_rc": 0,
+          "a_valid": 1,
+          "a_event": 142,
+          "a_origin": 4,
+          "a_air_seq": 163,
+          "a_rx_mhz": 901,
+          "a_tx_mhz": 1000,
+          "a_udp_seq": 68,
+          "a_rc": 0,
+          "a_rx_hz": 900999998,
+          "a_tx_hz": 1000000000,
+          "spi_valid": 0
+        },
+        "spi": {
+          "relay_rx_hz_readback": 900999998,
+          "relay_tx_hz_readback": 1000000000,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        }
+      }
+    ],
+    "phases": [
+      {
+        "name": "initial_quiet",
+        "time": 1793270170.3481812,
+        "state": {
+          "mode": "2",
+          "ddc": "00000000",
+          "duc": "00000000",
+          "gain": "800",
+          "dc": "0",
+          "rxgain": "0",
+          "txatt": "89",
+          "rxlo": "900",
+          "txlo": "1000",
+          "fs": "30720000",
+          "in": "4023738363",
+          "out": "4023738345",
+          "clip": "55363010",
+          "rc": "0"
+        },
+        "clip": 55363010
+      },
+      {
+        "name": "upper_board_band_configured",
+        "time": 1793270213.0191765,
+        "state": {
+          "mode": "2",
+          "ddc": "00000000",
+          "duc": "00000000",
+          "gain": "800",
+          "dc": "0",
+          "rxgain": "0",
+          "txatt": "89",
+          "rxlo": "2450",
+          "txlo": "2900",
+          "fs": "30720000",
+          "in": "1038954491",
+          "out": "1038954473",
+          "clip": "55363011",
+          "rc": "0"
+        },
+        "clip": 55363011,
+        "delta": 1
+      },
+      {
+        "name": "upper_board_band_text1_att50_enabled",
+        "time": 1793270241.159557,
+        "state": {
+          "mode": "1",
+          "ddc": "00000000",
+          "duc": "00000000",
+          "gain": "800",
+          "dc": "0",
+          "rxgain": "30",
+          "txatt": "50",
+          "rxlo": "2450",
+          "txlo": "2900",
+          "fs": "30720000",
+          "in": "1904050171",
+          "out": "1904050153",
+          "clip": "55363011",
+          "rc": "0"
+        },
+        "clip": 55363011,
+        "delta": 0
+      },
+      {
+        "name": "final_quiet",
+        "time": 1793270323.8137405,
+        "state": {
+          "mode": "2",
+          "ddc": "00000000",
+          "duc": "00000000",
+          "gain": "800",
+          "dc": "0",
+          "rxgain": "0",
+          "txatt": "89",
+          "rxlo": "900",
+          "txlo": "1000",
+          "fs": "30720000",
+          "in": "143855611",
+          "out": "143855593",
+          "clip": "55363012",
+          "rc": "0"
+        },
+        "clip": 55363012,
+        "delta": 1
+      }
+    ],
+    "initial_audit_source": "Main run final_audit.json, copied before any follow-up hardware operation"
+  },
+  "total_frames": 24,
+  "raw_iq_redecode_verified": true,
+  "final_quiet_audit": true,
+  "receiver_clipped_components": 0,
+  "relay_clip_start": 55363007,
+  "relay_clip_end": 55363012,
+  "relay_clip_delta": 5,
+  "relay_clip_changes": [
+    {
+      "run": "main",
+      "time": 1793269469.8973916,
+      "mode": 2,
+      "count": 55363008,
+      "delta": 1
+    },
+    {
+      "run": "main",
+      "time": 1793269673.710112,
+      "mode": 2,
+      "count": 55363009,
+      "delta": 1
+    },
+    {
+      "run": "main",
+      "time": 1793269916.7287998,
+      "mode": 2,
+      "count": 55363010,
+      "delta": 1
+    },
+    {
+      "run": "level50/",
+      "time": 1793270175.4022844,
+      "mode": 2,
+      "count": 55363011,
+      "delta": 1
+    },
+    {
+      "run": "level50/",
+      "time": 1793270286.2292745,
+      "mode": 2,
+      "count": 55363012,
+      "delta": 1
+    }
+  ],
+  "final_relay": {
+    "status": {
+      "mode": "2",
+      "ddc": "00000000",
+      "duc": "00000000",
+      "gain": "800",
+      "dc": "0",
+      "rxgain": "0",
+      "txatt": "89",
+      "rxlo": "900",
+      "txlo": "1000",
+      "fs": "30720000",
+      "in": "2444275707",
+      "out": "2444275689",
+      "clip": "55363012",
+      "rc": "0"
+    },
+    "spi": {
+      "relay_rx_hz_readback": 900999998,
+      "relay_tx_hz_readback": 1000000000,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    }
+  },
+  "final_endpoints": [
+    {
+      "role": "gateway_RX2",
+      "identity": {
+        "port": "COM19",
+        "usb_vid": 1027,
+        "usb_pid": 24592,
+        "usb_serial": "6",
+        "usb_location": "",
+        "hwid": "USB VID:PID=0403:6010 SER=6",
+        "linux_boot_id": "9068ea50-9aba-4b71-95d6-d491ace21f35",
+        "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+        "iio_serial": "",
+        "identity_scope": "current process, Linux boot and USB session; RX only",
+        "physical_role": "user-selected wired receiver; not permanently authenticated"
+      },
+      "state": {
+        "tx_powerdown": "1",
+        "tx_lo_hz": "900999998",
+        "tx_attenuation": "-89.000000 dB",
+        "tx2_attenuation": "-89.000000 dB",
+        "rx_lo_hz": "1000749998",
+        "tx_buffer": "0",
+        "rx_buffer": "0"
+      }
+    },
+    {
+      "role": "terminal_TX1",
+      "identity": {
+        "port": "COM17",
+        "usb_vid": 1027,
+        "usb_pid": 24592,
+        "usb_serial": "000000000069B",
+        "usb_location": "",
+        "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+        "linux_boot_id": "a7ce120b-55ab-47d7-8f5f-223fa4d0595a",
+        "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+        "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+        "identity_scope": "current process, Linux boot and USB session; RX only",
+        "physical_role": "user-selected wired receiver; not permanently authenticated"
+      },
+      "state": {
+        "tx_powerdown": "1",
+        "tx_lo_hz": "900999998",
+        "tx_attenuation": "-89.000000 dB",
+        "tx2_attenuation": "-89.000000 dB",
+        "rx_lo_hz": "1000749998",
+        "tx_buffer": "0",
+        "rx_buffer": "0"
+      }
+    }
+  ],
+  "final_adda": {
+    "telemetry": {
+      "uptime_ms": 48437535,
+      "events": 142,
+      "network": 0,
+      "armed": 0,
+      "pending": 0,
+      "decoded": 6,
+      "applied": 67,
+      "failures": 1,
+      "d_valid": 1,
+      "d_event": 40,
+      "d_origin": 1,
+      "d_air_seq": 8,
+      "d_rx_mhz": 901,
+      "d_tx_mhz": 1000,
+      "s_valid": 1,
+      "s_event": 141,
+      "s_origin": 4,
+      "s_air_seq": 163,
+      "s_rx_mhz": 901,
+      "s_tx_mhz": 1000,
+      "s_udp_seq": 68,
+      "s_count": 1,
+      "s_rc": 0,
+      "a_valid": 1,
+      "a_event": 142,
+      "a_origin": 4,
+      "a_air_seq": 163,
+      "a_rx_mhz": 901,
+      "a_tx_mhz": 1000,
+      "a_udp_seq": 68,
+      "a_rc": 0,
+      "a_rx_hz": 900999998,
+      "a_tx_hz": 1000000000,
+      "spi_valid": 0
+    },
+    "dac": {
+      "enabled": 1,
+      "seq": 6,
+      "pending": 0,
+      "stopping": 0,
+      "status": 40,
+      "diag": 0,
+      "dac_verified": 1,
+      "dac_finished": 1,
+      "dac_diagnostic": 271188240
+    },
+    "service": [
+      "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=2 completed=2 failed=0 air_seq=8 udp_seq=18 reply_seq=5 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=2",
+      "CLI_RESULT rc=0"
+    ]
+  },
+  "offline_tests": 19,
+  "limits": [
+    "Discrete coax operating points, not a certified continuous frequency range",
+    "Experimental BPSK text, not an NR NTN/6G or full CCSDS conformance test",
+    "13.1072 ms snapshots, not continuous BER, packet delivery rate or calibrated power/EVM",
+    "Control via UART_NETTEST/UDP; no ADC telecommand input or simultaneous bidirectional test",
+    "GUI commissioned frequency profiles unchanged"
+  ],
+  "source_sha256": {
+    "source/sw/ground_station/app.py": "b83d64fc53d1a2831cf79e22c4272218313aa360c8ad430d9770a64746e35d89",
+    "source/sw/ground_station/business_live.py": "3b704b00f033468d73cfdd32151ff222e2965fdac8776b102c71027df9678308",
+    "source/sw/ground_station/controller.py": "4d072b3fd547e78cb25f70f47a1f5e7bf2851a1dcd430af955ee57a70ba33433",
+    "source/sw/ground_station/device_lease.py": "f1d94dbaf73e6a1eb82eb28c53d53474aa9f5e8e22f9972626e05cca88d3122c",
+    "source/sw/ground_station/protocol.py": "f17a8e41c844b2dfd62068dd59230180d056ce73f34c7906f1d1a8233657d842",
+    "source/sw/ground_station/relay.py": "33a9194e18c852641296db8ee88d4711ad4890dae839c99674c70b92daba8a03",
+    "source/sw/ground_station/rf_live.py": "5ebd2c138dda0a7deeb91560d41df8edb31486e857fbd118731693d26050eae3",
+    "source/sw/ground_station/rf_session.py": "3e4d872286da7ab127ae1fc3664541484bbded1c16feb15f8d97160ed94787ac",
+    "source/sw/ground_station/rf_telemetry_window.py": "b18d35ce25fdddca4a2330965a60468f35d2be2c83467ab6e861dc8f9998c7c8",
+    "source/sw/ground_station/tc_evidence.py": "12070b9055fd4e0e1f6f58a656b6514c4fde5634ffd07200807a8fded0b33144",
+    "source/sw/ground_station/tc_hardware.py": "6aad8eb6d355f10a9c1db8c4ee1a26f90dda818b9977f8aaab8be53cb2232531",
+    "source/sw/ground_station/tc_live.py": "b208970707eff8f6861bc7050f1f0e4746fae853b1b3b06256c40b3f7c0e598e",
+    "source/sw/ground_station/tc_roundtrip.py": "c9558a33e75301c58f9ec45157985db9570f4c67bafd8a53994b2f055a4f04f0",
+    "source/sw/ground_station/tc_sequence.py": "2f88381318978d8d400fe7a84d7eb3c154b97015e9c7cf07e064df756f7efb2a",
+    "source/sw/ground_station/telemetry.py": "a22618198b1ad362b6ffecb7eb6098df847450ff62bc57bddc235077f6d6ddad",
+    "source/sw/ground_station/telemetry_window.py": "becff7423ff15ddc2489cae034f97daa45178bff64d9e91df2225184a77de5cb",
+    "source/sw/ground_station/test_app.py": "ab3c24ce640dde0c692e9c8cd76354c7c79e31dab177ae31416523431c8e8840",
+    "source/sw/ground_station/test_business_live.py": "7b492ea3320ca7abbb5969ea5cda9e722c7fa570fb96ef02df42ba39144be47c",
+    "source/sw/ground_station/test_controller.py": "c6104854f39f2294cb53fc2a2276d2ecda1cbb4f8021a32ef3d97bc20c78d080",
+    "source/sw/ground_station/test_protocol.py": "53d8396abb3641b4330064874cb7a659dc93761470aaa92a4a7b683c32098d93",
+    "source/sw/ground_station/test_relay.py": "6f615b3d55c2ad3bfda070e3adccd1ad418190128d2d5e2bf2911c0680bd0741",
+    "source/sw/ground_station/test_remote_relay.py": "186d0da0d325d781c0773dca26f42ed7fd5ddb50aad943984235230f5f56bb84",
+    "source/sw/ground_station/test_rf_live.py": "bd9ba26521eaf5c33aab806792a016f2a28ef9c049a57189cd7429f4b13e3f72",
+    "source/sw/ground_station/test_rf_session.py": "51d42b6643576f33f4d30bdaa7c5fc6b3f653368d31d9b713cf6bd25ce6874d7",
+    "source/sw/ground_station/test_rf_telemetry_window.py": "031f292316591b7e225c71057151f7585ef2d70488145fcfe25be5b0def40f00",
+    "source/sw/ground_station/test_tc_evidence.py": "93eef148707cd90ddbab6963e37973a4c71a12931f0cefe85f405dd30ba5b5bf",
+    "source/sw/ground_station/test_tc_live.py": "7a864b4884cab39b61022c63ec2720001d3086f9f69cbf674e8fc6920dc70276",
+    "source/sw/ground_station/test_tc_roundtrip.py": "62fca88316105be2319ae45f6ff762fe3c9924b828714f14d10647c9c2cb0afd",
+    "source/sw/ground_station/test_tc_sequence.py": "f50d19e8bfbe4a90318ba51b2fa780716a7b96ca57176991760bee1a44f7b47e",
+    "source/sw/ground_station/test_telemetry.py": "a01dc31224e966b905f22ecd9cff28e82444d686de1bd764bd3c9372cfbd9990",
+    "source/sw/ground_station/test_telemetry_window.py": "eec258f4eae9dfabfd0950c9ff6454911190d9bf51bab5759509b262b63d77ea",
+    "source/sw/ground_station/test_transport.py": "3fc782a63b73322577039495da65d133d98e4f64ecef2625f8004204fd235a49",
+    "source/sw/ground_station/test_ui_v2.py": "bca1261465e7bbd4fe53eb3e4f478471fbab48746a1e85f2852723b2b663b3b6",
+    "source/sw/ground_station/test_ui_v2_business.py": "4a892b8ee6d894c68b2444d6bfa4ba995e0f27710826a2c8b5c97bb281a1e83f",
+    "source/sw/ground_station/transport.py": "b6414dba90315e4c5b9be3f329d29c5c704f43926fd40b0804f3873164cceddc",
+    "source/sw/ground_station/ui_v2.py": "129e72ce306c69b9a2b3b0a48d5c5b0d191e2980e38d2cd4f8da285412842d87",
+    "source/sw/ground_station/ui_v2_model.py": "e09cf3b1e5b06397a6f209b7a6d284568f0bfa3aa2a8683f99e6298a509b9e29",
+    "source/sw/ground_station/_tk_test_support.py": "5080379c3b2039827ff76ee33566c4a84730c7ab4f866aaea7ce80fa61adbe36",
+    "source/sw/ground_station/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source/sw/ground_station/__main__.py": "df31115060a120a08d109affc18642a9a8737a8361f489c30bfc59eeb1f88712",
+    "source/sw/tools/rf_channel_probe.py": "b8a21fc63b157560e7f92dc609789af8c989baffd00baf62fad72e55bedbe459",
+    "source/sw/tools/rf_frequency_probe.py": "3266d7209681a2f443f98eb028a34207a7f3661d3a52f3ecd000d5472c20506d",
+    "source/sw/tools/test_rf_frequency_probe.py": "1309dadf7935a9195e99bff69c5a5ab6adadf83fdcf5885b046b6fe3b5514737",
+    "source/sw/tools/test_rf_channel_probe.py": "1ac3e03a1bd4403a5c4e259277fe9556d4a0714f10c04e7a2b42b8b8c7f1b1e6",
+    "source/sw/tools/rf_text_link.py": "50241d8f7ee3a5961e2e0c867c91cc7523b91c2ea955bb938639c2503f01fc38",
+    "source/sw/ccsds/ccsds_tm_tx.py": "02768cd2fee17f9431f0a76bd445131485347aa9014ca635b32e825b37a40c9b"
+  },
+  "evidence": {
+    "archive": "D:\\RelayTools\\releases\\frequency_probe_20261029.zip",
+    "bytes": 2581705,
+    "sha256": "26ea1aa5435070a508b7434539a54160cdf7e975dc8f6af72c6d3039ece1ad35",
+    "manifest_sha256": "35078b37910c2745124cd16c7392931620a74a5aba95972780761d26da225914"
+  }
+}

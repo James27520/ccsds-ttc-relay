@@ -1,6 +1,8 @@
 # 验证记录与未完成项
 
-新增[反向业务与第二通道验证](reverse-link-validation.md)：直连端点和经LDSDR RX2/TX2的转发分别通过。第二路转发实收两条新文本、6个CRC正确帧；四个负例无有效帧，含源仍在发射时远端停止。6份原始采样独立重解码一致，接收无削顶、7阶段PL削顶增量0；收尾四板停发/静音。详见[端点摘要](validation/2026-10-29-reverse-endpoint.json)及[第二路转发摘要](validation/2026-10-29-reverse-relay.json)。本轮使用UART_NETTEST/UDP启停，不是ADC遥控或双向并发，GUI反向操作待接入。
+新增[高频有线转发验证](frequency-range-validation.md)：901.5→2450.5 MHz与1989.5→2179.5 MHz各通过两段文本及停发对照；2900.5 MHz虽能解码，追加50 dB源衰减测试仍有CRC拒绝，质量检查失败。两轮21份IQ独立重解码一致，累计24个CRC正确帧；11个负例无有效文本。接收无削顶，LO调谐/恢复阶段PL计数+5，稳定收发未增；最终恢复原频率并静音。详见[含失败记录的摘要](validation/2026-10-29-frequency-range.json)。GUI频率白名单未扩展。
+
+新增[反向业务与第二通道验证](reverse-link-validation.md)：直连端点和经LDSDR RX2/TX2的转发分别通过。第二路转发实收两条新文本、6个CRC正确帧；四个负例无有效帧，含源仍在发射时远端停止。6份原始采样独立重解码一致，接收无削顶、7阶段PL削顶增量0；收尾四板停发/静音。详见[端点摘要](validation/2026-10-29-reverse-endpoint.json)及[第二路转发摘要](validation/2026-10-29-reverse-relay.json)。随后GUI反向操作已接入并完成36个CRC正确帧实收，见[GUI摘要](validation/2026-10-29-reverse-gui.json)。使用UART_NETTEST/UDP启停，不是ADC遥控或双向并发。
 
 记录更新至：2026-10-29。当前对象为 Z7ADDALite 遥控板（`xc7z020clg484-2`，AD9643）；PL 采集、PS C 解调及 UDP 控制路线的源码、约束、GUI、测试与重建入口已归档到 [board/z7addalite](../board/z7addalite/README.md)。需要加载固件的步骤采用临时JTAG加载；发送板沿用现有Pluto Linux，波形放在RAM。未改写SD或Flash启动介质。
 

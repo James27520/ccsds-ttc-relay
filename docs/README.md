@@ -21,6 +21,8 @@
 | [远端启停与状态协议](remote-relay-control.md) | 显式开启/停止/查询、板端租期、双路电平和ATM2 |
 | [远端控制验证](remote-relay-validation.md) | 新固件RAM加载、板间UDP超时静音、削顶隔离；新操作射频闭环待验 |
 | [验证与待办](validation.md) | 已测结果、测试边界及未完成项 |
+| [反向业务与第二通道](reverse-link-validation.md) | 第二路文本转发、三窗口回信与当前六线限制 |
+| [高频有线转发](frequency-range-validation.md) | 2179.5/2450.5 MHz通过，2900.5 MHz接收裕量不足；原始IQ及失败记录 |
 | [业务转发联调](rf-forward-bringup.md) | 第一条有线单音链、RX I/Q修正、改频和关闭信号对照 |
 | [业务RF单音摘要](validation/2026-10-28-rf-forward.json) | 单音实测数值、固件和原始证据包 SHA-256 |
 | [调制文本与UDP改频](rf-payload-validation.md) | 三段BPSK文本、CRC负例、网口控制后的实际频移与内容恢复 |
