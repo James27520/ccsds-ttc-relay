@@ -105,6 +105,30 @@ class TextLinkTests(unittest.TestCase):
         frames,stats=link._frames(bits,100,25,False)
         self.assertEqual(frames,[]);self.assertGreater(stats["incomplete_candidates"],0)
 
+    def test_shifted_preamble_rejection_is_kept_and_identified(self):
+        # Perfect decisions, no channel noise: the two leading bits produce a
+        # false AAAA header at bit 0, and the real frame begins at bit 2.
+        frame=link.build_frame("x"*33)
+        bits=np.concatenate((np.array([1,0],dtype=np.uint8),
+                             np.tile(np.unpackbits(np.frombuffer(frame,dtype=np.uint8)),4)))
+        frames,stats=link._frames(bits,100,25,False)
+        self.assertEqual(len(frames),4)
+        self.assertTrue(all(f['text']=="x"*33 for f in frames))
+        self.assertGreater(stats['crc_rejected_frames'],0)
+        self.assertEqual(stats['overlapping_preamble_rejections'],1)
+        self.assertEqual(stats['crc_rejected_candidates'][0],
+                         dict(bit_offset=0,frame_bits=1128,overlaps_valid_preamble=True))
+
+    def test_real_corrupt_frame_is_not_hidden_as_overlap(self):
+        bad=link.build_frame('bad frame',corrupt_crc=True)
+        good=link.build_frame('good frame')
+        bits=np.unpackbits(np.frombuffer(bad+good,dtype=np.uint8))
+        frames,stats=link._frames(bits,100,25,False)
+        self.assertEqual([f['text'] for f in frames],['good frame'])
+        self.assertEqual(stats['crc_rejected_frames'],1)
+        self.assertEqual(stats['overlapping_preamble_rejections'],0)
+        self.assertFalse(stats['crc_rejected_candidates'][0]['overlaps_valid_preamble'])
+
     def test_noise_tone_zero_never_become_text(self):
         rng=np.random.default_rng(17)
         cases=[np.zeros((8192,2),dtype="<i2"),np.rint(rng.normal(0,100,(8192,2))).astype("<i2")]

@@ -19,6 +19,7 @@ from .rf_live import Cancelled
 from .tc_hardware import CommandSource
 from .transport import Console
 from .ui_v2_model import business_frequency_plan
+from .rf_profiles import BUSINESS_TX_LO_HZ, BUSINESS_RX_LO_HZ, DEMO_TX_CENTERS, DEMO_RX_CENTERS
 
 
 def _verify_runtime_binding(c):
@@ -48,7 +49,7 @@ class BusinessSource(CommandSource):
         if not self.owned or self._closed:
             raise RuntimeError('业务发送会话未取得控制')
         allowed = {
-            'out_altvoltage1_TX_LO_frequency': {'900000000', '901000000'},
+            'out_altvoltage1_TX_LO_frequency': {str(x) for x in BUSINESS_TX_LO_HZ},
             'out_altvoltage1_TX_LO_powerdown': {'1'},
             'out_voltage_sampling_frequency': {'2500000'},
             'out_voltage_rf_bandwidth': {'3000000'},
@@ -65,8 +66,8 @@ class BusinessSource(CommandSource):
 
     def apply_frequency(self, lo_hz, check_cancel):
         """Explicit local tuning while muted; never starts a DMA or TX guard."""
-        if type(lo_hz) is not int or lo_hz not in (900000000, 901000000):
-            raise ValueError('业务本振仅支持900/901 MHz')
+        if type(lo_hz) is not int or lo_hz not in BUSINESS_TX_LO_HZ:
+            raise ValueError('业务本振超出已开放方案')
         self.verify_binding()
         self.require_idle()
         if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
@@ -116,7 +117,7 @@ class BusinessReceiver(SessionRxConsole):
             self.phy+'/in_voltage1_gain_control_mode': {'manual'},
             self.phy+'/in_voltage1_hardwaregain': {'30'},
             self.phy+'/in_voltage1_rf_port_select': {'A_BALANCED'},
-            self.phy+'/out_altvoltage0_RX_LO_frequency': {'1000750000', '1001750000'},
+            self.phy+'/out_altvoltage0_RX_LO_frequency': {str(x) for x in BUSINESS_RX_LO_HZ},
             self.phy+'/out_altvoltage1_TX_LO_powerdown': {'1'},
             self.phy+'/out_voltage0_hardwaregain': {'-89'},
             self.phy+'/out_voltage1_hardwaregain': {'-89'},
@@ -193,8 +194,9 @@ class BusinessController(StationController):
         self.configured = False
         if self.direction == 'reverse':
             key, default = ('tx_rf_mhz', 901.5) if self.role == 'sender' else ('expected_rf_mhz', 1000.5)
-            if self._finite(values.get(key, default)) != default:
-                raise ValueError('回信当前工作点：发送901.5 MHz、接收1000.5 MHz')
+            allowed = (default,) + tuple(map(float, DEMO_TX_CENTERS if self.role == 'sender' else DEMO_RX_CENTERS))
+            if self._finite(values.get(key, default)) not in allowed:
+                raise ValueError('回信频率超出已开放方案')
         if self.role == 'sender':
             attenuation = self._finite(values.get('tx_atten_db', 60 if self.direction == 'reverse' else 50))
             if attenuation != int(attenuation) or not 50 <= attenuation <= 89 or set(values)-{'tx_atten_db', 'tx_rf_mhz'}:
@@ -208,7 +210,7 @@ class BusinessController(StationController):
         else:
             rf = self._finite(values.get('expected_rf_mhz', 1000.5))
             if set(values)-{'expected_rf_mhz'}:
-                raise ValueError('本地接收目标只开放1000.5/1001.5 MHz')
+                raise ValueError('本地接收仅允许中心频率参数')
             plan = business_frequency_plan('receiver', rf)
             self._verify_rx_channel()
             channel = self.rx_channel-1

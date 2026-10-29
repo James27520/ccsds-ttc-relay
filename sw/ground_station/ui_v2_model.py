@@ -9,17 +9,17 @@ import json
 import math
 from pathlib import Path
 
+from .rf_profiles import BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS
+
 
 MIN_CENTER_MHZ = Decimal('70.5')
 MAX_CENTER_MHZ = Decimal('6000.5')
-BUSINESS_TX_CENTERS = ('900.5', '901.5')
-BUSINESS_RX_CENTERS = ('1000.5', '1001.5')
 CONTROL_OPERATIONS = {'设置频率': 'frequency', '开启转发': 'enable',
                       '停止转发': 'stop', '查询状态': 'status'}
 
 
 def business_frequency_plan(role, center_mhz):
-    """The two authorized local profiles, separate from any remote board state."""
+    """Explicit local profiles, separate from any remote board state."""
     choices = {'sender': BUSINESS_TX_CENTERS, 'receiver': BUSINESS_RX_CENTERS}
     if role not in choices:
         raise ValueError('业务角色须为 sender / receiver')

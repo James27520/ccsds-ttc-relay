@@ -250,7 +250,7 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(b.powerdown, '1')
         self.assertNotIn('start', b.calls)
         self.c.submit('configure', tx_rf_mhz=900.5)
-        self.assertIn('回信当前工作点', self.wait('status', 'error')['message'])
+        self.assertIn('回信频率超出', self.wait('status', 'error')['message'])
         self.assertNotIn('start', b.calls)
 
     def test_both_sender_centers_apply_while_muted_and_send_uses_applied_lo(self):

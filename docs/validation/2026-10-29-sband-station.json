@@ -1,0 +1,891 @@
+{
+  "date": "2026-10-29",
+  "stage1_passed": true,
+  "stage2_status": "pending_physical_rewire",
+  "stage2_note": "ADDA ADC1/J5 and DAC1/J6 disconnected; no high-frequency ADC_NORMAL/DAC transaction performed in this record.",
+  "frequency_pairs_mhz": [
+    [
+      1989.5,
+      2179.5
+    ],
+    [
+      1990.5,
+      2180.5
+    ]
+  ],
+  "tests": {
+    "ground_station": 298,
+    "frequency_and_channel_probe": 19,
+    "text_link": 11,
+    "total": 328
+  },
+  "bench": {
+    "control_source": "UART_NETTEST",
+    "wiring": "COM17 TX1A -> LDSDR RX2; LDSDR TX2 -> COM19 RX2A",
+    "firmware_reloaded": false,
+    "points": [
+      {
+        "name": "baseline",
+        "input_center_hz": 901500000,
+        "output_center_hz": 1000500000,
+        "passed": true,
+        "relay_readback": {
+          "relay_rx_hz_readback": 900999998,
+          "relay_tx_hz_readback": 1000000000,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        },
+        "source_readback": 900999998,
+        "receiver_settings": {
+          "rx_lo_hz_requested": 1000750000,
+          "rx_lo_hz_readback": 1000749998,
+          "rx_gain_db_readback": [
+            30,
+            30
+          ],
+          "sample_rate_hz": 2500000,
+          "bandwidth_hz": 3000000,
+          "samples_per_channel": 32768,
+          "scan_order": [
+            "I1",
+            "Q1",
+            "I2",
+            "Q2"
+          ],
+          "scan_type": "le:S12/16>>0",
+          "rf_port_select": "A_BALANCED"
+        },
+        "selected_attenuation_db": 55
+      },
+      {
+        "name": "s_band",
+        "input_center_hz": 1989500000,
+        "output_center_hz": 2179500000,
+        "passed": true,
+        "relay_readback": {
+          "relay_rx_hz_readback": 1989000000,
+          "relay_tx_hz_readback": 2178999998,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        },
+        "source_readback": 1989000000,
+        "receiver_settings": {
+          "rx_lo_hz_requested": 2179750000,
+          "rx_lo_hz_readback": 2179750000,
+          "rx_gain_db_readback": [
+            30,
+            30
+          ],
+          "sample_rate_hz": 2500000,
+          "bandwidth_hz": 3000000,
+          "samples_per_channel": 32768,
+          "scan_order": [
+            "I1",
+            "Q1",
+            "I2",
+            "Q2"
+          ],
+          "scan_type": "le:S12/16>>0",
+          "rf_port_select": "A_BALANCED"
+        },
+        "selected_attenuation_db": 55
+      },
+      {
+        "name": "s_band_shift",
+        "input_center_hz": 1990500000,
+        "output_center_hz": 2180500000,
+        "passed": true,
+        "relay_readback": {
+          "relay_rx_hz_readback": 1990000000,
+          "relay_tx_hz_readback": 2180000000,
+          "relay_tx_atten_db_readback": 89,
+          "relay_rx_gain_db_readback": 0
+        },
+        "source_readback": 1990000000,
+        "receiver_settings": {
+          "rx_lo_hz_requested": 2180750000,
+          "rx_lo_hz_readback": 2180749998,
+          "rx_gain_db_readback": [
+            30,
+            30
+          ],
+          "sample_rate_hz": 2500000,
+          "bandwidth_hz": 3000000,
+          "samples_per_channel": 32768,
+          "scan_order": [
+            "I1",
+            "Q1",
+            "I2",
+            "Q2"
+          ],
+          "scan_type": "le:S12/16>>0",
+          "rf_port_select": "A_BALANCED"
+        },
+        "selected_attenuation_db": 55
+      }
+    ],
+    "captures": [
+      {
+        "label": "baseline_quiet_before",
+        "point": "baseline",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.7447255895448144,
+          1.9087777809864352
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "6e6313e7fe6e60e07f1df029aa58ea53dd511b35d112fb1366e6941a8cee8a30",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "baseline_text1_att55",
+        "point": "baseline",
+        "valid_frames": [
+          0,
+          4
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.756379624331148,
+          3.0432771225327557
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "3d5269ea004d5182595c914e0a1bba2b0b81b7e204374473cb7e094d50772877",
+        "carrier_hz": [
+          null,
+          1000499840.3123385
+        ]
+      },
+      {
+        "label": "s_band_quiet_before",
+        "point": "s_band",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.2975454780384867,
+          1.5234475159927154
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "df1a2395234c5369ced1d0a92cb7f6e4d5d01e93e3472b0c87cc948d566a1b1b",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "s_band_text1_att55",
+        "point": "s_band",
+        "valid_frames": [
+          0,
+          3
+        ],
+        "crc_rejected": [
+          1,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.2981098225220102,
+          2.0296417912482116
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "12ca9c50e59cdf29545ff53c776e4ba90941ebb17058f37f3fab6d69e40deee3",
+        "carrier_hz": [
+          null,
+          2179499684.0302234
+        ]
+      },
+      {
+        "label": "s_band_text2",
+        "point": "s_band",
+        "valid_frames": [
+          0,
+          3
+        ],
+        "crc_rejected": [
+          0,
+          1
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          1
+        ],
+        "rms_codes": [
+          1.2993317280252665,
+          2.0283633334538465
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "aa03282e2f87c87240c51919ed8dc7843d9a654b0e282da7235d851858c995a5",
+        "carrier_hz": [
+          null,
+          2179499684.4645295
+        ]
+      },
+      {
+        "label": "s_band_source_off_relay_on",
+        "point": "s_band",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          1,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.2920065811981667,
+          1.8161248101856533
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "3fcb442f75493d74f5ef3e01ba13d6e2edafb03e8d0edc81ca07e5832cf8371a",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "s_band_relay_off_source_on",
+        "point": "s_band",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.2960275845829825,
+          1.521051817924853
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "add1b70b50daf0834c14b78d98a9b72f10bbb60200a6335606b37ed44f234c47",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "s_band_shift_quiet_before",
+        "point": "s_band_shift",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.3016431547639122,
+          1.5323158758426327
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "cb57fceb61d4273d57a65294fb12bb01fbb57182c067f3a6dbe7faf2dab761cd",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "s_band_shift_text1_att55",
+        "point": "s_band_shift",
+        "valid_frames": [
+          0,
+          4
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.2850553246845056,
+          2.058575219318874
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "f712bf8b34ac1fad5e332d846bd5ed88278c3454b2d2f52d55460d44529a8051",
+        "carrier_hz": [
+          null,
+          2180499671.4440107
+        ]
+      },
+      {
+        "label": "s_band_shift_text2",
+        "point": "s_band_shift",
+        "valid_frames": [
+          0,
+          4
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.290363926378911,
+          2.0779561139081175
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "9cd739c604bf96d675bb5f4d6107ea2e7a02dff3bf35f85162c6e358211d63f3",
+        "carrier_hz": [
+          null,
+          2180499683.4444523
+        ]
+      },
+      {
+        "label": "s_band_shift_source_off_relay_on",
+        "point": "s_band_shift",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          0,
+          1
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.322425731167208,
+          1.838487258696841
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "dc1582a62a688d0134564c50b0bf90a2c47b423879c43b7f0f3dab67f6995760",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "s_band_shift_relay_off_source_on",
+        "point": "s_band_shift",
+        "valid_frames": [
+          0,
+          0
+        ],
+        "crc_rejected": [
+          0,
+          2
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.2947318511592467,
+          1.5187729068488565
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "ed33f172460accd1ee1766c35ba7c5b0deab90e97998f8be25412914d7719ea4",
+        "carrier_hz": [
+          null,
+          null
+        ]
+      },
+      {
+        "label": "baseline_after",
+        "point": "baseline",
+        "valid_frames": [
+          0,
+          3
+        ],
+        "crc_rejected": [
+          0,
+          0
+        ],
+        "overlapping_preamble_rejections": [
+          0,
+          0
+        ],
+        "rms_codes": [
+          1.7997599123737311,
+          2.5209086593428967
+        ],
+        "clip_components": [
+          0,
+          0
+        ],
+        "raw_sha256": "f72afec3bb114d03c5b9bcaf20a5362172f006663455b9e54d415b700f46f7d3",
+        "carrier_hz": [
+          null,
+          1000499843.3862821
+        ]
+      }
+    ],
+    "raw_replay": {
+      "passed": true,
+      "captures": [
+        {
+          "label": "baseline_quiet_before",
+          "raw_sha256": "6e6313e7fe6e60e07f1df029aa58ea53dd511b35d112fb1366e6941a8cee8a30",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "baseline_text1_att55",
+          "raw_sha256": "3d5269ea004d5182595c914e0a1bba2b0b81b7e204374473cb7e094d50772877",
+          "frames": [
+            0,
+            4
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_quiet_before",
+          "raw_sha256": "df1a2395234c5369ced1d0a92cb7f6e4d5d01e93e3472b0c87cc948d566a1b1b",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_text1_att55",
+          "raw_sha256": "12ca9c50e59cdf29545ff53c776e4ba90941ebb17058f37f3fab6d69e40deee3",
+          "frames": [
+            0,
+            3
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_text2",
+          "raw_sha256": "aa03282e2f87c87240c51919ed8dc7843d9a654b0e282da7235d851858c995a5",
+          "frames": [
+            0,
+            3
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_source_off_relay_on",
+          "raw_sha256": "3fcb442f75493d74f5ef3e01ba13d6e2edafb03e8d0edc81ca07e5832cf8371a",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_relay_off_source_on",
+          "raw_sha256": "add1b70b50daf0834c14b78d98a9b72f10bbb60200a6335606b37ed44f234c47",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_shift_quiet_before",
+          "raw_sha256": "cb57fceb61d4273d57a65294fb12bb01fbb57182c067f3a6dbe7faf2dab761cd",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_shift_text1_att55",
+          "raw_sha256": "f712bf8b34ac1fad5e332d846bd5ed88278c3454b2d2f52d55460d44529a8051",
+          "frames": [
+            0,
+            4
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_shift_text2",
+          "raw_sha256": "9cd739c604bf96d675bb5f4d6107ea2e7a02dff3bf35f85162c6e358211d63f3",
+          "frames": [
+            0,
+            4
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_shift_source_off_relay_on",
+          "raw_sha256": "dc1582a62a688d0134564c50b0bf90a2c47b423879c43b7f0f3dab67f6995760",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "s_band_shift_relay_off_source_on",
+          "raw_sha256": "ed33f172460accd1ee1766c35ba7c5b0deab90e97998f8be25412914d7719ea4",
+          "frames": [
+            0,
+            0
+          ],
+          "matched_online": true
+        },
+        {
+          "label": "baseline_after",
+          "raw_sha256": "f72afec3bb114d03c5b9bcaf20a5362172f006663455b9e54d415b700f46f7d3",
+          "frames": [
+            0,
+            3
+          ],
+          "matched_online": true
+        }
+      ],
+      "total_frames": 21
+    },
+    "clip_phases": [
+      {
+        "name": "initial_quiet",
+        "clip": 55363015,
+        "delta": null
+      },
+      {
+        "name": "baseline_configured",
+        "clip": 55363015,
+        "delta": 0
+      },
+      {
+        "name": "baseline_text1_att55_enabled",
+        "clip": 55363015,
+        "delta": 0
+      },
+      {
+        "name": "baseline_text1_att55_captured",
+        "clip": 55363015,
+        "delta": 0
+      },
+      {
+        "name": "s_band_configured",
+        "clip": 55363016,
+        "delta": 1
+      },
+      {
+        "name": "s_band_text1_att55_enabled",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_text1_att55_captured",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_text2_enabled",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_text2_captured",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_negative_finished",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_shift_configured",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_shift_text1_att55_enabled",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_shift_text1_att55_captured",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_shift_text2_enabled",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_shift_text2_captured",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "s_band_shift_negative_finished",
+        "clip": 55363016,
+        "delta": 0
+      },
+      {
+        "name": "baseline_after_enabled",
+        "clip": 55363017,
+        "delta": 1
+      },
+      {
+        "name": "baseline_after_captured",
+        "clip": 55363017,
+        "delta": 0
+      },
+      {
+        "name": "final_quiet",
+        "clip": 55363017,
+        "delta": 0
+      }
+    ],
+    "acceptance": "all complete cyclic frames CRC-valid; no unexplained rejected candidates; overlapping preamble candidates retained"
+  },
+  "gui": {
+    "passed": true,
+    "source": "20261029_192506_sender_8ce86642",
+    "receiver": "20261029_192352_receiver_bf1a2dfc",
+    "direction": "reverse",
+    "text": "高频GUI 回信29",
+    "message_id": "8ce86642:0000",
+    "input_center_hz": 1989500000,
+    "output_center_hz": 2179500000,
+    "tx_atten_db": 55,
+    "control_source": "UART_NETTEST",
+    "total_frames": 22,
+    "positive_windows": 7,
+    "post_stop_windows": 10,
+    "raw_rejections": 2,
+    "carrier_hz_range": [
+      2179499667.417754,
+      2179499687.531485
+    ],
+    "all_raw_replays_identical": true,
+    "relay_clip_counts": [
+      "55363018"
+    ],
+    "source_stop_time": 1793273674.9421527,
+    "capture_count": 27
+  },
+  "quiet_audit_passed": true,
+  "final_quiet": {
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1989",
+        "txlo": "2178",
+        "fs": "30720000",
+        "in": "3311419387",
+        "out": "3311419369",
+        "clip": "55363018",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1989000000,
+        "relay_tx_hz_readback": 2178999998,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    "adda": {
+      "telemetry": {
+        "uptime_ms": 51821231,
+        "events": 250,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 121,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 249,
+        "s_origin": 4,
+        "s_air_seq": 242,
+        "s_rx_mhz": 1989,
+        "s_tx_mhz": 2179,
+        "s_udp_seq": 122,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 250,
+        "a_origin": 4,
+        "a_air_seq": 242,
+        "a_rx_mhz": 1989,
+        "a_tx_mhz": 2179,
+        "a_udp_seq": 122,
+        "a_rc": 0,
+        "a_rx_hz": 1989000000,
+        "a_tx_hz": 2178999998,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 6,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=2 completed=2 failed=0 air_seq=8 udp_seq=18 reply_seq=5 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=2",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "endpoints": [
+      {
+        "role": "gateway_RX2",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "900999998",
+          "tx_attenuation": "-89.000000 dB",
+          "tx2_attenuation": "-89.000000 dB",
+          "rx_lo_hz": "2179750000",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "terminal_TX1",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "1989000000",
+          "tx_attenuation": "-89.000000 dB",
+          "tx2_attenuation": "-89.000000 dB",
+          "rx_lo_hz": "1000749998",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ]
+  },
+  "evidence_files": {
+    "initial_audit.json": "59540d266ad7e2e02d8c94cc5bba10bf4cfe759f1a30eec34752f9d80b51dfe3",
+    "final_audit.json": "ffa047a09d0cd4ed7dfea8492ee9b411611937ad47a22db44158e32e3cb0a7ec",
+    "earlier_replay.json": "a73c594d58082af8fa778aa638a58370fceb014b37e43a48aa0677c30b307df8",
+    "candidate_audit.json": "babd1056446b3bdf755d60e80cf0364ad05dd7e4ca77775363d9670db3f18a85",
+    "preset_acceptance/result.json": "261aa121dd39f34f8b77a1b150ab9c6a357fc8a6893715382519ea8ee2f6910b",
+    "preset_acceptance/redecode.json": "a9eb50eaeb71fc80605cc8b69a425e47a89eb9d6c4865db5f74185ac8f28f63e",
+    "gui_business/verification.json": "811cfd09c3a2de4224543efadf24a4200d8d6f95bc92e22fab2ec37c97a2f377",
+    "gui_business/relay_result.json": "2ea2b82aa6716c35397444177f188d0ec23e3e356b1291e9fe1a6ac3d3773ddd"
+  },
+  "source_sha256": {
+    "sw/ground_station/rf_profiles.py": "01ffe455f227460f8c13603956da4eb88f96171f4a09f464aba062ff0087fe56",
+    "sw/ground_station/ui_v2.py": "329cd702d3077e34dc7f027a3bcde9b981b11f00730a48bda3067f89e245bd24",
+    "sw/ground_station/ui_v2_model.py": "695891bc4b85cb052a7df9b2367a26af787b5a53a5fc72edb7a3da64912abc08",
+    "sw/ground_station/tc_hardware.py": "9d26273723ec6d39a3ea281fb88d5748f2a27c5fe7c3b45de62effca33faea85",
+    "sw/ground_station/business_live.py": "fb91572b2bd44fbbf584eb720975998902638d33cc3a7c884b38011eb36b1c6c",
+    "sw/ground_station/controller.py": "6ec8900245953e2858af1ac0874069c4486051ac4efc838820fc2643c8fb71fd",
+    "sw/tools/rf_text_link.py": "5d92535c5771aa1e5ea62e70d482c7633dba69deef055ac59ec46445a892acde",
+    "sw/tools/rf_frequency_probe.py": "a59dee455f655f3bfe20dc63168a97d8ed6c192e80dba7cf6f5a5e3d7016c766"
+  },
+  "limitations": [
+    "Discrete coaxial snapshots, not uninterrupted reception or BER measurement.",
+    "Business framing is experimental BPSK; n256-related frequency placement does not establish NR NTN conformance.",
+    "Retune/preparation clip increments remain; steady positive sampling increments were zero.",
+    "Post-RF-telecontrol high-frequency business and six-link concurrent operation still pending."
+  ],
+  "raw_archive": {
+    "path": "D:\\RelayTools\\releases\\sband_station_20261029.zip",
+    "bytes": 4644285,
+    "sha256": "4520437c75103a22fc95fcc895b9aadb23d917881595cdd71fa1c02d37a18054"
+  }
+}

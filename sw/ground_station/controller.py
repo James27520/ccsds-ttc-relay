@@ -393,6 +393,7 @@ class StationController:
             return
         self.event('rx', messages=messages, valid_frames=len(messages),
                    crc_rejected=report['crc_rejected_frames'], rms_codes=report['rms_codes'],
+                   overlapping_preamble_rejections=report.get('overlapping_preamble_rejections', 0),
                    carrier_hz=carrier, spectrum=points, capture_seconds=time.monotonic()-begin,
                    received_at=time.time(), capture_file=str(self.log_dir/(stem+'.bin')))
 

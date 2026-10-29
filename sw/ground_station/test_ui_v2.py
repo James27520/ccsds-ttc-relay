@@ -164,7 +164,7 @@ class ReviewWindowTests(unittest.TestCase):
     def test_parameter_change_invalidates_prepared_request(self):
         control = self.session.show('control')
         control.generate_command()
-        self.assertEqual(control.draft['request']['tx_mhz'], 1001)
+        self.assertEqual(control.draft['request']['tx_mhz'], 2179)
         control.output_frequency.set('1000.5')
         self.assertIsNone(control.draft)
         self.assertIn('重新生成', control.request_note.get())
@@ -361,7 +361,7 @@ class OnlineControlTests(unittest.TestCase):
         self.assertIn('查询回报', self.control.reply_title.get())
         self.assertIn('实际本振 RX 901 / TX 1000 MHz', self.control.reply_body.get())
         self.assertEqual(self.session.sender_plan_origin, '本地计划')
-        self.assertEqual(self.session.sender_center_plan, '900.5')
+        self.assertEqual(self.session.sender_center_plan, '1989.5')
         self.assertIsNone(self.control.active_request)
 
     def test_remote_negative_ack_is_rejection_with_snapshot_not_success(self):
@@ -492,15 +492,21 @@ class OnlineControlTests(unittest.TestCase):
 
     def test_only_measured_integer_lo_plans_can_be_sent(self):
         self.connected()
-        for rx in ('900.5', '901.5'):
-            for tx in ('1000.5', '1001.5'):
-                self.control.input_frequency.set(rx)
-                self.control.output_frequency.set(tx)
-                self.control.generate_command()
-                self.assertIsNotNone(self.control.draft['body_hex'])
-                self.assertFalse(self.control.command_send_button.instate(['disabled']))
+        for rx, tx in (('1989.5', '2179.5'), ('1990.5', '2180.5')):
+            self.control.input_frequency.set(rx)
+            self.control.output_frequency.set(tx)
+            self.control.generate_command()
+            self.assertIsNotNone(self.control.draft['body_hex'])
+            self.assertFalse(self.control.command_send_button.instate(['disabled']))
         for rx in ('1234.5', '900.6', '900.567891'):
             self.control.input_frequency.set(rx)
+            self.control.generate_command()
+            self.assertIsNone(self.control.draft['body_hex'])
+            self.assertTrue(self.control.command_send_button.instate(['disabled']))
+            self.control.send_online()
+        for rx, tx in (('1989.5', '2180.5'), ('1990.5', '2179.5')):
+            self.control.input_frequency.set(rx)
+            self.control.output_frequency.set(tx)
             self.control.generate_command()
             self.assertIsNone(self.control.draft['body_hex'])
             self.assertTrue(self.control.command_send_button.instate(['disabled']))

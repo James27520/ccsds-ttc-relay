@@ -82,6 +82,7 @@ def _frames(bits, first_sample, sps, inverted):
                             incomplete_candidates=0, complete_evaluated_frames=0,
                             crc_rejected_frames=0, crc_evaluated_candidate_bits=0)
     next_bit = 0
+    rejected = []
     for start in matches:
         start = int(start)
         if start < next_bit:
@@ -100,7 +101,9 @@ def _frames(bits, first_sample, sps, inverted):
         stats["complete_evaluated_frames"] += 1
         stats["crc_evaluated_candidate_bits"] += total
         if crc16(payload) != received_crc:
-            stats["crc_rejected_frames"] += 1; continue
+            stats["crc_rejected_frames"] += 1
+            rejected.append(dict(bit_offset=start, frame_bits=total))
+            continue
         try:
             text = payload.decode("utf-8")
         except UnicodeDecodeError:
@@ -111,6 +114,15 @@ def _frames(bits, first_sample, sps, inverted):
                            sample_end_exclusive=first_sample+(start+total)*sps,
                            inverted=bool(inverted)))
         next_bit = start+total
+    # AAAA has shifted matches two bits apart. Keep the raw rejection count,
+    # but expose candidates whose preamble overlaps a later CRC-valid header.
+    # This is a framing diagnostic, not a recovered frame or a BER estimate.
+    for candidate in rejected:
+        candidate["overlaps_valid_preamble"] = any(
+            candidate["bit_offset"] < frame["bit_offset"] < candidate["bit_offset"]+16
+            for frame in frames)
+    stats["crc_rejected_candidates"] = rejected
+    stats["overlapping_preamble_rejections"] = sum(c["overlaps_valid_preamble"] for c in rejected)
     return frames, stats
 
 

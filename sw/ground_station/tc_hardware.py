@@ -11,14 +11,15 @@ import uuid
 
 from .transport import Console
 from .rf_session import SessionRxConsole, SessionAdda
+from .rf_profiles import CONTROL_RELAY_PAIRS
 from sw.tools.telecontrol_waveform import command_iq, make_manifest, OPERATIONS
 
 
 def request_values(rx_mhz, tx_mhz, air_seq, operation='frequency'):
-    if (type(rx_mhz) is not int or rx_mhz not in (900, 901) or
-            type(tx_mhz) is not int or tx_mhz not in (1000, 1001) or
+    if (type(rx_mhz) is not int or type(tx_mhz) is not int or
+            (rx_mhz, tx_mhz) not in CONTROL_RELAY_PAIRS or
             type(air_seq) is not int or not 0 <= air_seq <= 255):
-        raise ValueError('本阶段限定RX 900/901、TX 1000/1001 MHz，序号0..255')
+        raise ValueError('请选择已开放的接收/转发频率组合；序号0..255')
     if operation not in OPERATIONS:
         raise ValueError('未知遥控操作')
     result = dict(rx_mhz=rx_mhz, tx_mhz=tx_mhz, air_seq=air_seq)

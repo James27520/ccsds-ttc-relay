@@ -1,6 +1,8 @@
 # 验证记录与未完成项
 
-新增[高频有线转发验证](frequency-range-validation.md)：901.5→2450.5 MHz与1989.5→2179.5 MHz各通过两段文本及停发对照；2900.5 MHz虽能解码，追加50 dB源衰减测试仍有CRC拒绝，质量检查失败。两轮21份IQ独立重解码一致，累计24个CRC正确帧；11个负例无有效文本。接收无削顶，LO调谐/恢复阶段PL计数+5，稳定收发未增；最终恢复原频率并静音。详见[含失败记录的摘要](validation/2026-10-29-frequency-range.json)。GUI频率白名单未扩展。
+新增[高频预设与三窗口验证](sband-station-validation.md)：三窗口采用1989.5→2179.5、1990.5→2180.5 MHz两组计划；正式台架复测含低频基线共21帧，实际GUI新文本22帧，停发对照与原始IQ重解一致。328项主机测试通过。修正CRC统计解读并增加重叠帧头候选诊断，原始计数保留。本轮仍由UART_NETTEST/UDP准备LDSDR；高频真实ADC指令及DAC回报待换线实测，见[摘要及边界](validation/2026-10-29-sband-station.json)。
+
+此前[高频有线转发验证](frequency-range-validation.md)：901.5→2450.5 MHz与1989.5→2179.5 MHz各通过两段文本及停发对照；2900.5 MHz虽能解码，追加50 dB源衰减测试仍有CRC拒绝，未通过当轮质量检查。两轮21份IQ独立重解码一致，累计24个CRC正确帧；11个负例无有效文本。接收无削顶，LO调谐/恢复阶段PL计数+5，稳定收发未增；最终恢复原频率并静音。详见[含失败记录的摘要](validation/2026-10-29-frequency-range.json)。当轮未扩展GUI；当前开放范围以上述三窗口记录为准。
 
 新增[反向业务与第二通道验证](reverse-link-validation.md)：直连端点和经LDSDR RX2/TX2的转发分别通过。第二路转发实收两条新文本、6个CRC正确帧；四个负例无有效帧，含源仍在发射时远端停止。6份原始采样独立重解码一致，接收无削顶、7阶段PL削顶增量0；收尾四板停发/静音。详见[端点摘要](validation/2026-10-29-reverse-endpoint.json)及[第二路转发摘要](validation/2026-10-29-reverse-relay.json)。随后GUI反向操作已接入并完成36个CRC正确帧实收，见[GUI摘要](validation/2026-10-29-reverse-gui.json)。使用UART_NETTEST/UDP启停，不是ADC遥控或双向并发。
 

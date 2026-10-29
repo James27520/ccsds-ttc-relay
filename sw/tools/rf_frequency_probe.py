@@ -43,6 +43,7 @@ POINTS = (
     FrequencyPoint('output_2450', 901, 2450),
     FrequencyPoint('s_band', 1989, 2179),
     FrequencyPoint('upper_board_band', 2450, 2900),
+    FrequencyPoint('s_band_shift', 1990, 2180),
 )
 
 

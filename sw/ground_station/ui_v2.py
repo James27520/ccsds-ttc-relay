@@ -18,8 +18,9 @@ from tkinter import filedialog, ttk
 
 from .ui_v2_model import (command_request, device_choices, format_mhz, frequency_plan,
                          load_device_aliases, load_historical_transaction, simulated_reply, text_bytes,
-                         business_frequency_plan, BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS,
+                         business_frequency_plan,
                          CONTROL_OPERATIONS, relay_snapshot_view)
+from .rf_profiles import DEMO_TX_CENTERS, DEMO_RX_CENTERS, DEMO_HINT, is_demo_request
 
 
 BG = '#F4F6F8'
@@ -82,7 +83,7 @@ class ReviewSession:
         self.devices = {}
         self.aliases = load_device_aliases() if aliases is None else aliases
         self.next_sequence = 0
-        self.sender_center_plan = '900.5'
+        self.sender_center_plan = DEMO_TX_CENTERS[0]
         self.sender_plan_origin = '本地计划'
         self.online_control = online_control
         self.online_business = online_business
@@ -368,13 +369,13 @@ class StationReview:
             row = tk.Frame(self.details, bg=PAPER)
             row.pack(fill='x', pady=(8, 0))
             label(row, '发射衰减  dB', size=9).pack(side='left', padx=(0, 10))
-            self.attenuation = tk.StringVar(self.window, '60' if self.direction == 'reverse' else '50')
+            self.attenuation = tk.StringVar(self.window, '55')
             self.attenuation_spin = ttk.Spinbox(row, from_=50, to=89, width=6, textvariable=self.attenuation,
                         state='readonly', style='V2.TSpinbox')
             self.attenuation_spin.pack(side='left')
             self.attenuation_note = tk.StringVar(self.window, '  计划值 · 数值越大，信号越弱；未应用到设备。')
             label(row, variable=self.attenuation_note, color=MUTED, size=9).pack(side='left')
-            label(self.details, '业务中心以本地本振回读 + 0.5 MHz 显示；不代表远端接收。' if self.business_online else '本振 900 MHz + 基带偏移 0.5 MHz = 业务中心 900.5 MHz。',
+            label(self.details, '业务中心以本地本振回读 + 0.5 MHz 显示；不代表远端接收。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
         elif self.flow_role == 'receiver':
             label(self.details, ('回信使用 RX2A；' if self.direction == 'reverse' else '')+'本地接收本振=中心+0.25 MHz，增益30 dB；频谱仅来自本地接收采样。',
@@ -608,7 +609,7 @@ class StationReview:
         self.received_meta.set('尚无本次 CRC 有效消息；历史记录保留在下方。')
         self.capture_note.set('正在采集')
         self.carrier_frequency.set('—')
-        self.frame_stats.set('本次有效帧 — / CRC 失败 —')
+        self.frame_stats.set('本次有效帧 — / CRC候选拒绝 —')
         self.spectrum.set_spectrum(None)
         self._business_submit('receive')
         self.session.update_online_controls()
@@ -644,7 +645,7 @@ class StationReview:
         else:
             self.carrier_frequency.set('—')
             self.receiver_plan_note.set('MHz · 本地先验尚未应用，远端状态未知')
-            self.frame_stats.set('有效帧 — / CRC 失败 —')
+            self.frame_stats.set('有效帧 — / CRC候选拒绝 —')
             self.spectrum.set_spectrum(None)
 
     def _business_released(self, message, state='disconnected'):
@@ -824,11 +825,13 @@ class StationReview:
         self.carrier_frequency.set(f'{carrier/1e6:.6f}' if valid and self._finite_business(carrier) else '—')
         rms = event.get('rms_codes')
         rms_text = f'{rms:.2f}'.rstrip('0').rstrip('.') if self._finite_business(rms) else '—'
-        self.frame_stats.set(f'有效帧 {event.get("valid_frames", "—")} / CRC 失败 {event.get("crc_rejected", "—")} / '
+        self.frame_stats.set(f'有效帧 {event.get("valid_frames", "—")} / CRC候选拒绝 {event.get("crc_rejected", "—")} / '
                              f'RMS {rms_text}')
         self.capture_note.set(f'最后采集 {timestamp}')
         self.spectrum.set_spectrum(event.get('spectrum'))
-        self.business_capture_info = f'最后接收 IQ：{event.get("capture_file", "未提供")} / {timestamp}；本次流程 {event.get("capture_seconds", "未知")} s'
+        self.business_capture_info = (f'最后接收 IQ：{event.get("capture_file", "未提供")} / {timestamp}；'
+            f'本次流程 {event.get("capture_seconds", "未知")} s；'
+            f'帧头重叠候选 {event.get("overlapping_preamble_rejections", "未知")}，CRC候选拒绝不等同于误码率。')
         self.update_details()
 
     def _start_online(self):
@@ -837,7 +840,7 @@ class StationReview:
         self.preview_button.configure(state='disabled')
         self.preview_combo.configure(state='disabled')
         self.record_button.configure(state='disabled')
-        self.request_note.set('在线仅开放 900.5/901.5 → 1000.5/1001.5 MHz；先连接本地发送板。')
+        self.request_note.set(DEMO_HINT+'；先连接本地发送板。')
         try:
             factory = self.session.controller_factory
             if factory is None:
@@ -939,8 +942,7 @@ class StationReview:
             return
         request = self.draft.get('request')
         if (not self.draft.get('body_hex') or not request or request['air_seq'] != self.session.next_sequence
-                or self.session.next_sequence >= 256 or request['rx_mhz'] not in (900, 901)
-                or request['tx_mhz'] not in (1000, 1001)):
+                or self.session.next_sequence >= 256 or not is_demo_request(request)):
             return
         self.active_request = dict(request)
         self.active_plan = dict(self.draft['plan'])
@@ -1295,7 +1297,7 @@ class StationReview:
         rail.grid(row=0, column=1, sticky='nsew', pady=(0, 14))
         frequency = card(rail, '业务发送频率')
         frequency.edge.pack(fill='x', pady=(0, 14))
-        self.tx_rf = tk.StringVar(self.window, '901.5' if self.direction == 'reverse' else self.session.sender_center_plan)
+        self.tx_rf = tk.StringVar(self.window, DEMO_TX_CENTERS[0] if self.direction == 'reverse' else self.session.sender_center_plan)
         self.plan_status = tk.StringVar(self.window, '待应用 · '+self.business_plan_origin)
         self.sender_frequency = tk.StringVar(self.window, '—' if self.business_online else self.tx_rf.get())
         self.sender_frequency_note = tk.StringVar(self.window, 'MHz / 本地实际中心 · 尚未回读' if self.business_online else 'MHz / 计划信号中心')
@@ -1304,7 +1306,7 @@ class StationReview:
         label(frequency, variable=self.sender_frequency_note, color=MUTED, size=9).pack(anchor='w', pady=(0, 10))
         label(frequency, variable=self.sender_readback, color=MUTED, size=9, wrap=240).pack(anchor='w')
         plan_row = tk.Frame(frequency, bg=PAPER)
-        self.tx_frequency_combo = ttk.Combobox(plan_row, textvariable=self.tx_rf, values=('901.5',) if self.direction == 'reverse' else BUSINESS_TX_CENTERS,
+        self.tx_frequency_combo = ttk.Combobox(plan_row, textvariable=self.tx_rf, values=DEMO_TX_CENTERS,
                                                state='readonly', style='V2.TCombobox', width=8)
         self.business_apply_button = button(plan_row, '应用', self.configure_business, disabled=True)
         if self.business_online:
@@ -1372,12 +1374,12 @@ class StationReview:
         expectation = tk.Frame(signal, bg=PAPER)
         expectation.pack(fill='x')
         label(expectation, '接收目标', size=9).pack(side='left')
-        self.expected_rf = tk.StringVar(self.window, '1000.5')
+        self.expected_rf = tk.StringVar(self.window, DEMO_RX_CENTERS[0])
         self.plan_status = tk.StringVar(self.window, '待应用 · 本地计划')
         self.business_apply_button = button(expectation, '应用', self.configure_business, disabled=True)
         if self.business_online:
             self.business_apply_button.pack(side='left', padx=5)
-        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=('1000.5',) if self.direction == 'reverse' else BUSINESS_RX_CENTERS,
+        self.expected_combo = ttk.Combobox(expectation, textvariable=self.expected_rf, values=DEMO_RX_CENTERS,
                      state='readonly', style='V2.TCombobox', width=8)
         self.expected_combo.pack(side='right')
         self.receiver_plan_note = tk.StringVar(self.window, 'MHz · 本地接收计划，未应用')
@@ -1390,7 +1392,7 @@ class StationReview:
             self.spectrum = tk.Canvas(signal, bg='#F8FAFC', height=100, highlightthickness=0)
             self.spectrum.bind('<Configure>', self._empty_spectrum)
         self.spectrum.pack(fill='both', expand=True)
-        self.frame_stats = tk.StringVar(self.window, '有效帧  —    校验失败  —')
+        self.frame_stats = tk.StringVar(self.window, '有效帧 — / CRC候选拒绝 —')
         label(signal, variable=self.frame_stats, color=MUTED, size=9, wrap=250).pack(anchor='w', pady=(12, 0))
         self.business_note = tk.StringVar(self.window, '本端真实 IQ 接收；先验不会改变远端转发板状态。')
         if self.business_online:
@@ -1425,8 +1427,8 @@ class StationReview:
         label(request, variable=self.operation_note, size=9, color=MUTED, wrap=430).pack(anchor='w')
         fields = tk.Frame(request, bg=PAPER)
         fields.pack(fill='x', pady=(8, 0))
-        self.input_frequency = tk.StringVar(self.window, '900.5')
-        self.output_frequency = tk.StringVar(self.window, '1001.5')
+        self.input_frequency = tk.StringVar(self.window, DEMO_TX_CENTERS[0])
+        self.output_frequency = tk.StringVar(self.window, DEMO_RX_CENTERS[0])
         self.frequency_entries = []
         for title, variable in (('业务输入', self.input_frequency), ('业务输出', self.output_frequency)):
             row = tk.Frame(fields, bg=PAPER)
@@ -1539,9 +1541,9 @@ class StationReview:
         try:
             operation = CONTROL_OPERATIONS[self.operation.get()]
             request = command_request(self.input_frequency.get(), self.output_frequency.get(), sequence, operation)
-            if self.online and (request['rx_mhz'] not in (900, 901) or request['tx_mhz'] not in (1000, 1001)):
+            if self.online and not is_demo_request(request):
                 request = None
-                raise ValueError('在线仅开放业务中心 900.5/901.5 → 1000.5/1001.5 MHz，其他方案暂不发送。')
+                raise ValueError(DEMO_HINT+'；其他组合暂不发送。')
             from sw.tools.telecontrol_waveform import build_body
             body = build_body(request['rx_mhz'], request['tx_mhz'], sequence, operation=operation)
         except ValueError as error:
