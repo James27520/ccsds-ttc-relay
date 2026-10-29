@@ -1,0 +1,806 @@
+{
+  "passed": true,
+  "source": "V2 BusinessSource and BusinessController adapters; not GUI button test",
+  "control_source": "UART_NETTEST",
+  "retuned_relay": false,
+  "firmware_reloaded": false,
+  "captures": 24,
+  "published_captures": 24,
+  "valid_frames": 20,
+  "messages": [
+    {
+      "message_id": "b129cafe:0000",
+      "text": "启停验证 第一段",
+      "frames": 9
+    },
+    {
+      "message_id": "b129cafe:0001",
+      "text": "第二段 relay check",
+      "frames": 11
+    }
+  ],
+  "receiver_settings": {
+    "rx_lo_mhz_requested": 1000.75,
+    "rx_lo_hz_readback": 1000749998,
+    "expected_rf_mhz": 1000.5,
+    "rx_gain_db_requested": 30,
+    "rx_gain_db_readback": 30,
+    "sample_rate_hz": 2500000,
+    "configured": true
+  },
+  "selected_negative_windows": {
+    "quiet_baseline": 2,
+    "remote_stopped_source_still_on": 1,
+    "source_stopped_relay_on": 2
+  },
+  "remote_stop_test_source_confirmed_on": true,
+  "receiver_clip_components": 0,
+  "shutdown_cancellations": [
+    {
+      "time": 1793262862.8622057,
+      "type": "status",
+      "state": "error",
+      "message": "本地操作已取消",
+      "category": "cancelled"
+    }
+  ],
+  "offline_review_note": "First offline check rejected the expected close-time cancellation. It is accepted only after the final remote-stop phase; all other error categories remain rejected.",
+  "relay_clip_min": 55363007,
+  "relay_clip_max": 55363007,
+  "relay_clip_delta": 0,
+  "relay_phases": [
+    {
+      "name": "initial_quiet",
+      "begin": 1793262732.7035131,
+      "end": 1793262733.3583922,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "3195686907",
+        "out": "3195686889",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007
+    },
+    {
+      "name": "before_initial_prepare",
+      "begin": 1793262766.2534318,
+      "end": 1793262766.9098954,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "4226342907",
+        "out": "4226342889",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "after_initial_prepare",
+      "begin": 1793262773.6794581,
+      "end": 1793262774.3474948,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "159502331",
+        "out": "159502313",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "first_remote_enabled",
+      "begin": 1793262775.1874876,
+      "end": 1793262775.8583622,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "205832187",
+        "out": "205832169",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "first_source_started",
+      "begin": 1793262782.3755603,
+      "end": 1793262783.030742,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "426647547",
+        "out": "426647529",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "first_stable",
+      "begin": 1793262792.2510467,
+      "end": 1793262792.9051971,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "730025979",
+        "out": "730025961",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "remote_stop_with_source_on",
+      "begin": 1793262793.7787926,
+      "end": 1793262794.4366393,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "776957947",
+        "out": "776957929",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "first_source_stopped",
+      "begin": 1793262803.1105537,
+      "end": 1793262803.7701476,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1063628795",
+        "out": "1063628777",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "second_remote_enabled",
+      "begin": 1793262804.5978916,
+      "end": 1793262805.2509139,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1109319675",
+        "out": "1109319657",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "after_unchanged_prepare",
+      "begin": 1793262811.7776074,
+      "end": 1793262812.4418359,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1329881083",
+        "out": "1329881065",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "second_source_started",
+      "begin": 1793262818.9729507,
+      "end": 1793262819.6360273,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1550921723",
+        "out": "1550921705",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "second_stable",
+      "begin": 1793262829.4104426,
+      "end": 1793262830.0650141,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1871564795",
+        "out": "1871564777",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "second_source_stopped",
+      "begin": 1793262833.5640461,
+      "end": 1793262834.2251492,
+      "state": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "1999163387",
+        "out": "1999163369",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    },
+    {
+      "name": "final_remote_stopped",
+      "begin": 1793262845.1191173,
+      "end": 1793262845.7715333,
+      "state": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "2354135035",
+        "out": "2354135017",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "clip": 55363007,
+      "delta": 0
+    }
+  ],
+  "operations": [
+    {
+      "time": 1793262774.5251029,
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 61,
+        "udp_seq": 19,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 41064748,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793262793.1004887,
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 62,
+        "udp_seq": 20,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 41083315,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793262803.931817,
+      "operation": "enable",
+      "ack": {
+        "operation": 33,
+        "air_seq": 63,
+        "udp_seq": 21,
+        "rc": 0,
+        "flags": 7,
+        "mode": 1,
+        "rx1_gain": 30,
+        "rx2_gain": 30,
+        "tx1_mdB": 50000,
+        "tx2_mdB": 50000,
+        "remaining_ms": 119999,
+        "uptime_ms": 41094148,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    },
+    {
+      "time": 1793262844.4422982,
+      "operation": "stop",
+      "ack": {
+        "operation": 34,
+        "air_seq": 64,
+        "udp_seq": 22,
+        "rc": 0,
+        "flags": 5,
+        "mode": 2,
+        "rx1_gain": 0,
+        "rx2_gain": 0,
+        "tx1_mdB": 89000,
+        "tx2_mdB": 89000,
+        "remaining_ms": 0,
+        "uptime_ms": 41134654,
+        "rx_hz": 900999998,
+        "tx_hz": 1000000000
+      }
+    }
+  ],
+  "carrier_hz_range": [
+    1000500069.3492235,
+    1000500076.5854412
+  ],
+  "positive_rms_range": [
+    5.10719742874425,
+    5.200256106598862
+  ],
+  "final_quiet_audit": true,
+  "rows": [
+    {
+      "file": "run01/receiver/rx_000001.bin",
+      "sha256": "3d648073dc801a2012382fa0908667e9b28b36d678b8d1c1fa370a9a9c5dfdd7",
+      "frames": 0,
+      "rms": 2.0443612307507877,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000002.bin",
+      "sha256": "d88682d1f838ba29058aea0cfc0045086e51e1142a24941102d220cdb8c48999",
+      "frames": 0,
+      "rms": 2.0733983488202705,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000003.bin",
+      "sha256": "f91c430e8d1df14ad81b3902adc3742b1ea80c5bd2c4765df2fb94febf6cd0b5",
+      "frames": 0,
+      "rms": 2.0487452691182413,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000004.bin",
+      "sha256": "4840fa8e1d81c73b02612708006fa1f16e5c2f66647a31c803a4162064cf0bdb",
+      "frames": 0,
+      "rms": 2.042800692179428,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000005.bin",
+      "sha256": "052517bf5913f321e3f8cbdc801d88af9a3422fd118167fe393aaf3c503f632f",
+      "frames": 0,
+      "rms": 2.0882770120140313,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000006.bin",
+      "sha256": "ede7f4faa9ff21c32ab4231ffb2d91151445bdfe4457fda20d72a059ffada7f2",
+      "frames": 0,
+      "rms": 3.4689347501475507,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000007.bin",
+      "sha256": "944e431abe600cc68525f32ea9542f4120571dc44ef37b5328a9c6a09253bccd",
+      "frames": 0,
+      "rms": 3.4711421931404653,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000008.bin",
+      "sha256": "b18f029844dfb0ac72e2882651a8c719f386c090ea59648017ce9922f11212f4",
+      "frames": 3,
+      "rms": 5.185216929828009,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500074.7754688
+    },
+    {
+      "file": "run01/receiver/rx_000009.bin",
+      "sha256": "44629b36633991f80fe155b7210877befafe8c365b7af91fe20d195e631c09d8",
+      "frames": 3,
+      "rms": 5.200256106598862,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500069.3492235
+    },
+    {
+      "file": "run01/receiver/rx_000010.bin",
+      "sha256": "9641ba2360139bf263e1df5a1e770ed7938cc0dd22573b9e9eee187dce67c477",
+      "frames": 3,
+      "rms": 5.134307597130612,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500075.5659522
+    },
+    {
+      "file": "run01/receiver/rx_000011.bin",
+      "sha256": "332a06e39a01439181c860246c0072dfe2c637d4838bc038e56095514c5e1cec",
+      "frames": 0,
+      "rms": 2.0340875612989846,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000012.bin",
+      "sha256": "5118afb3c4aa242fd051882409be70fb61a6176a72a8dec39874dbda8a75377c",
+      "frames": 0,
+      "rms": 2.0127993153775603,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000013.bin",
+      "sha256": "c7d91b665db9361191a591b14611972f73dbc025ea57bc135876c038d86d814c",
+      "frames": 0,
+      "rms": 3.3923391764224617,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000014.bin",
+      "sha256": "722704a90bd89c4be9272e0f88421bcb2e9507b4986b8888580b24d39140dd8d",
+      "frames": 0,
+      "rms": 3.3818741481471855,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000015.bin",
+      "sha256": "df7393980ef75c3b94f62a706a75208656098305329d15c2bc71b48f18f83f2a",
+      "frames": 0,
+      "rms": 3.3760532572373805,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000016.bin",
+      "sha256": "33584ae8e7644ccfd38cf2eb1d121214b9ba41019d5ca324143e34a642b20068",
+      "frames": 0,
+      "rms": 3.427253015524514,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000017.bin",
+      "sha256": "1846848032cbca26f369bd05760b64018ef8234ee5c0a0e134643a49acbfc227",
+      "frames": 3,
+      "rms": 5.129728787337653,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500076.5854412
+    },
+    {
+      "file": "run01/receiver/rx_000018.bin",
+      "sha256": "1c3705c69a9fcf798d8e214100ff2f2451ccbbf16895cf14b05c82f55244a4fb",
+      "frames": 3,
+      "rms": 5.120123799734668,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500075.3905977
+    },
+    {
+      "file": "run01/receiver/rx_000019.bin",
+      "sha256": "f1173e6568484a00b7828c7f553c036416db33f96e6b4372edd653f50567a156",
+      "frames": 3,
+      "rms": 5.10719742874425,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500070.8501887
+    },
+    {
+      "file": "run01/receiver/rx_000020.bin",
+      "sha256": "084aa5cf804cf1fa1a2037abd914b1fc714aa9fed44c9f047fdb04371ab81429",
+      "frames": 2,
+      "rms": 5.112718707119041,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": 1000500071.1749896
+    },
+    {
+      "file": "run01/receiver/rx_000021.bin",
+      "sha256": "97e533bf3680cb1d1291e2938ef3f229585c069282b39915788d52c168da8c85",
+      "frames": 0,
+      "rms": 3.410180859733652,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000022.bin",
+      "sha256": "05a85ead479bf84b0c5f803a64fa5a63d59f4b2e014e42463348a8f7a5acb153",
+      "frames": 0,
+      "rms": 3.360714667473553,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000023.bin",
+      "sha256": "8a0def9fbaa87082f41330622f937f372acbefa93fde06b133203e28bc765498",
+      "frames": 0,
+      "rms": 3.372539612443418,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    },
+    {
+      "file": "run01/receiver/rx_000024.bin",
+      "sha256": "c66a7b5b5b5c882df8525acb32f3bd1ca333330efe0a139764ebc11fda754c83",
+      "frames": 0,
+      "rms": 2.0041537066996944,
+      "clip_components": 0,
+      "published": true,
+      "carrier_hz": null
+    }
+  ],
+  "limitations": [
+    "Discrete RX windows, not continuous delivery or BER measurement.",
+    "TC input disconnected; controls in this business round are UART_NETTEST/UDP.",
+    "No arbitrary sample-rate/bandwidth switching while relay active.",
+    "No six-link concurrent operation or persistent boot validation."
+  ],
+  "date": "2026-10-29",
+  "base_commit": "8f8e918ee0374cba62e9ee5564bfcc60634db1f3",
+  "preceding_rf_control_validation": "2026-10-29-remote-relay-rf.json",
+  "flash_sd_written": false,
+  "wiring": [
+    "sender TX1A -> LDSDR RX1",
+    "LDSDR TX1 -> independent receiver RX1A",
+    "ADDA DAC1/J6 -> sender RX1A (idle)",
+    "ADDA Ethernet -> LDSDR Ethernet"
+  ],
+  "final_state": {
+    "endpoints": [
+      {
+        "role": "sender",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "900999998",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      },
+      {
+        "role": "receiver",
+        "state": {
+          "tx_powerdown": "1",
+          "tx_lo_hz": "2400000000",
+          "tx_attenuation": "-89.000000 dB",
+          "tx_buffer": "0",
+          "rx_buffer": "0"
+        }
+      }
+    ],
+    "adda": {
+      "telemetry": {
+        "uptime_ms": 40922976,
+        "events": 50,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 6,
+        "applied": 21,
+        "failures": 1,
+        "d_valid": 1,
+        "d_event": 40,
+        "d_origin": 1,
+        "d_air_seq": 8,
+        "d_rx_mhz": 901,
+        "d_tx_mhz": 1000,
+        "s_valid": 1,
+        "s_event": 49,
+        "s_origin": 4,
+        "s_air_seq": 64,
+        "s_rx_mhz": 901,
+        "s_tx_mhz": 1000,
+        "s_udp_seq": 22,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 50,
+        "a_origin": 4,
+        "a_air_seq": 64,
+        "a_rx_mhz": 901,
+        "a_tx_mhz": 1000,
+        "a_udp_seq": 22,
+        "a_rc": 0,
+        "a_rx_hz": 900999998,
+        "a_tx_hz": 1000000000,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 6,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=2 remaining_ms=0 accepted=2 completed=2 failed=0 air_seq=8 udp_seq=18 reply_seq=5 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=2",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "900",
+        "txlo": "1000",
+        "fs": "30720000",
+        "in": "3528630267",
+        "out": "3528630249",
+        "clip": "55363007",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 900999998,
+        "relay_tx_hz_readback": 1000000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    }
+  },
+  "evidence": {
+    "archive": "D:\\RelayTools\\releases\\remote_business_20261029.zip",
+    "bytes": 1037073,
+    "sha256": "939abf4082c515ef44760698982e4f4b54ce4c3a0e565049d264fee8195ff61f",
+    "manifest_sha256": "dd7c485e992d4b7e05fbccfdeb25b3dab56e015a062cdaf7b2c1b03bf0a9be0e"
+  }
+}
