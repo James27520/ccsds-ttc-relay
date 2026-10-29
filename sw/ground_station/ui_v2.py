@@ -896,7 +896,7 @@ class StationReview:
         self._reset_reply()
         self.reply_title.set('指令执行中')
         self.reply_body.set('等待真实上行发送与射频回报；尚未确认执行结果。')
-        self.request_note.set(f'本会话第 {self.session.next_sequence} 条指令 · 正在执行')
+        self.request_note.set('本次指令正在执行，等待射频回报。')
         self.step_labels[0].configure(text='01   指令已提交', fg=TEAL)
         self.online_state = 'sending'
         self.connection_status.set('●  执行中')
@@ -1028,6 +1028,8 @@ class StationReview:
         self._reset_reply()
         self.reply_title.set('等待超时 · 结果未知' if timeout else '操作已取消 · 结果未知' if cancelled else '执行失败')
         self.reply_body.set(str(message))
+        self.request_note.set('本次操作已结束；执行结果未知，重新连接后可查询。' if timeout or cancelled else
+                              '本次操作失败；检查原因后重新连接并生成指令。')
         self.reply_heading.configure(fg=AMBER if timeout or cancelled else '#B64242')
         self._record_online('在线 · 等待超时' if timeout else '在线 · 已取消' if cancelled else '在线 · 失败')
         self.active_request = self.active_plan = None

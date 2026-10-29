@@ -545,11 +545,17 @@ class OnlineControlTests(unittest.TestCase):
 
     def test_timeout_failure_and_cancel_have_distinct_results(self):
         self.sent()
+        self.assertIn('正在执行', self.control.request_note.get())
+        self.assertNotIn('本会话第', self.control.request_note.get())
         for category, title in (('timeout', '等待超时'), ('validation', '执行失败'), ('cancelled', '操作已取消')):
             self.control._handle_online_event(dict(type='status', state='error', message='backend detail', category=category))
             self.assertIn(title, self.control.reply_title.get())
             self.assertIsNone(self.control.online_identity)
             self.assertTrue(self.control.command_send_button.instate(['disabled']))
+            self.assertNotIn('正在执行', self.control.request_note.get())
+            self.assertIn('重新连接', self.control.request_note.get())
+            if category in ('timeout', 'cancelled'):
+                self.assertIn('结果未知', self.control.request_note.get())
 
     def test_stop_releases_source_and_late_events_cannot_restore_success_or_send(self):
         request = self.sent()
