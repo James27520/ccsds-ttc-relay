@@ -1,0 +1,197 @@
+{
+  "date": "2026-10-29",
+  "functional_verification_passed": true,
+  "continuous_acquisition_stability_passed": false,
+  "path": "sender TX1A -> LDSDR RX1/TX1 -> independent receiver RX1A",
+  "business_center_hz": [
+    1989500000,
+    2179500000
+  ],
+  "relay_lo_hz": [
+    1989000000,
+    2178999998
+  ],
+  "prior_real_rf_control": {
+    "origin": "ADC_NORMAL",
+    "air_sequence": 10,
+    "udp_sequence": 124,
+    "frequency_preserved": true,
+    "frequency_rewritten_this_stage": false
+  },
+  "enable_stop_source": "UART_NETTEST -> UDP (finite bench windows; not RF enable/stop)",
+  "frontend": {
+    "sender_attenuation_db": 55,
+    "relay_rx_gain_db": 30,
+    "relay_tx_attenuation_db": 50,
+    "receiver_rx_gain_db": 30,
+    "receiver_rx_lo_hz": 2179750000
+  },
+  "attempts": [
+    {
+      "message_id": "82148171:0000",
+      "text": "遥控后高频文本29",
+      "start": 1793281463.684986,
+      "stop_confirmed": 1793281495.412078,
+      "outcome": "received",
+      "positive_windows": 7,
+      "valid_frames": 20,
+      "conservative_during_windows": 5,
+      "post_stop_empty_windows": 45,
+      "carrier_hz_range": [
+        2179500136.8115115,
+        2179500155.1488934
+      ],
+      "rms_codes_range": [
+        2.943363911119597,
+        3.008923293267149
+      ],
+      "positive_files": [
+        "rx_000014.bin",
+        "rx_000015.bin",
+        "rx_000016.bin",
+        "rx_000017.bin",
+        "rx_000018.bin",
+        "rx_000019.bin",
+        "rx_000020.bin"
+      ]
+    },
+    {
+      "message_id": "82148171:0001",
+      "text": "NTN 闭环复测 29B",
+      "start": 1793281670.6968286,
+      "stop_confirmed": 1793281702.423205,
+      "outcome": "not_received_relay_window_already_closed",
+      "positive_windows": 0,
+      "valid_frames": 0,
+      "conservative_during_windows": 6,
+      "post_stop_empty_windows": 48,
+      "carrier_hz_range": null,
+      "rms_codes_range": null,
+      "positive_files": []
+    },
+    {
+      "message_id": "82148171:0002",
+      "text": "NTN 闭环复测 29B",
+      "start": 1793281890.4602284,
+      "stop_confirmed": 1793281922.170644,
+      "outcome": "received",
+      "positive_windows": 7,
+      "valid_frames": 20,
+      "conservative_during_windows": 6,
+      "post_stop_empty_windows": 61,
+      "carrier_hz_range": [
+        2179500131.1454253,
+        2179500148.016137
+      ],
+      "rms_codes_range": [
+        2.967793842733816,
+        3.000671311608871
+      ],
+      "positive_files": [
+        "rx_000129.bin",
+        "rx_000130.bin",
+        "rx_000131.bin",
+        "rx_000132.bin",
+        "rx_000133.bin",
+        "rx_000134.bin",
+        "rx_000135.bin"
+      ]
+    }
+  ],
+  "captures": 199,
+  "positive_windows": 14,
+  "valid_frames": 40,
+  "crc_rejected": 16,
+  "overlapping_preamble_rejections": 0,
+  "blind_redecode_equal": true,
+  "iq_clip_components": 0,
+  "pl_clip_initial": 55363018,
+  "pl_clip_final": 55363018,
+  "sample_rate_hz": 2500000,
+  "samples_per_snapshot": 32768,
+  "rf_seconds_per_snapshot": 0.0131072,
+  "sampling_note": "Discrete snapshots, not continuous coverage; cyclic repeats are not independent messages or BER trials.",
+  "acquisition_issue": {
+    "successful_transfers_before_failure": 199,
+    "failed_transfer": {
+      "time": 1793282166.661079,
+      "kind": "download",
+      "mode": "fast",
+      "baudrate": 921600,
+      "restored_baudrate": null,
+      "bytes": 131072,
+      "sha256": "fc9f30c9a22b14beedc7201cb63abce4b74efda60b7881d23bdaa3f1f5200e4d",
+      "seconds": 9.991843800002243,
+      "success": false,
+      "error": "高速串口数据不足：57331/131072字节；串口恢复115200未确认：板端响应超时，当前操作未确认完成"
+    },
+    "disposition": "Incomplete download excluded from decode; program disconnected; new read-only session confirmed 115200 communication, identical boot and idle buffers.",
+    "root_cause": "Unconfirmed; serial/USB stability requires separate investigation."
+  },
+  "final_audit_passed": true,
+  "all_tx_muted": true,
+  "source_sessions": [
+    "20261029_201358_sender_82148171",
+    "20261029_214114_receiver_4891324f"
+  ],
+  "limitations": [
+    "Only default plan has post-real-RF-command business verification; second plan has separate bench business and RF command evidence.",
+    "Enable/stop in this phase used the bench UART/UDP path.",
+    "Six-cable concurrent operation and second-PC deployment remain unverified."
+  ],
+  "evidence_archive": {
+    "path": "D:\\RelayTools\\releases\\sband_post_tc_20261029.zip",
+    "bytes": 7286884,
+    "sha256": "f6ebcedc0bbc089c2e600fa8119b0f213d4eeacee63ea03ab672e9bfcb904ec3"
+  },
+  "tested_source_commit": "564f7fdf4b33fb9032237d67368411c2f3b3a8e3",
+  "source_sha256": {
+    "sw/ground_station/app.py": "b83d64fc53d1a2831cf79e22c4272218313aa360c8ad430d9770a64746e35d89",
+    "sw/ground_station/business_live.py": "fb91572b2bd44fbbf584eb720975998902638d33cc3a7c884b38011eb36b1c6c",
+    "sw/ground_station/controller.py": "6ec8900245953e2858af1ac0874069c4486051ac4efc838820fc2643c8fb71fd",
+    "sw/ground_station/device_lease.py": "f1d94dbaf73e6a1eb82eb28c53d53474aa9f5e8e22f9972626e05cca88d3122c",
+    "sw/ground_station/protocol.py": "f17a8e41c844b2dfd62068dd59230180d056ce73f34c7906f1d1a8233657d842",
+    "sw/ground_station/relay.py": "33a9194e18c852641296db8ee88d4711ad4890dae839c99674c70b92daba8a03",
+    "sw/ground_station/rf_live.py": "5ebd2c138dda0a7deeb91560d41df8edb31486e857fbd118731693d26050eae3",
+    "sw/ground_station/rf_profiles.py": "01ffe455f227460f8c13603956da4eb88f96171f4a09f464aba062ff0087fe56",
+    "sw/ground_station/rf_session.py": "3e4d872286da7ab127ae1fc3664541484bbded1c16feb15f8d97160ed94787ac",
+    "sw/ground_station/rf_telemetry_window.py": "b18d35ce25fdddca4a2330965a60468f35d2be2c83467ab6e861dc8f9998c7c8",
+    "sw/ground_station/tc_evidence.py": "12070b9055fd4e0e1f6f58a656b6514c4fde5634ffd07200807a8fded0b33144",
+    "sw/ground_station/tc_hardware.py": "9d26273723ec6d39a3ea281fb88d5748f2a27c5fe7c3b45de62effca33faea85",
+    "sw/ground_station/tc_live.py": "b208970707eff8f6861bc7050f1f0e4746fae853b1b3b06256c40b3f7c0e598e",
+    "sw/ground_station/tc_roundtrip.py": "c9558a33e75301c58f9ec45157985db9570f4c67bafd8a53994b2f055a4f04f0",
+    "sw/ground_station/tc_sequence.py": "2f88381318978d8d400fe7a84d7eb3c154b97015e9c7cf07e064df756f7efb2a",
+    "sw/ground_station/telemetry.py": "a22618198b1ad362b6ffecb7eb6098df847450ff62bc57bddc235077f6d6ddad",
+    "sw/ground_station/telemetry_window.py": "becff7423ff15ddc2489cae034f97daa45178bff64d9e91df2225184a77de5cb",
+    "sw/ground_station/test_app.py": "ab3c24ce640dde0c692e9c8cd76354c7c79e31dab177ae31416523431c8e8840",
+    "sw/ground_station/test_business_live.py": "8321e4e8a2aeec79fd38ac6772cadde4760df7a2a5ce33347f9c9e48229ebbd8",
+    "sw/ground_station/test_controller.py": "c6104854f39f2294cb53fc2a2276d2ecda1cbb4f8021a32ef3d97bc20c78d080",
+    "sw/ground_station/test_protocol.py": "53d8396abb3641b4330064874cb7a659dc93761470aaa92a4a7b683c32098d93",
+    "sw/ground_station/test_relay.py": "6f615b3d55c2ad3bfda070e3adccd1ad418190128d2d5e2bf2911c0680bd0741",
+    "sw/ground_station/test_remote_relay.py": "186d0da0d325d781c0773dca26f42ed7fd5ddb50aad943984235230f5f56bb84",
+    "sw/ground_station/test_rf_live.py": "bd9ba26521eaf5c33aab806792a016f2a28ef9c049a57189cd7429f4b13e3f72",
+    "sw/ground_station/test_rf_session.py": "51d42b6643576f33f4d30bdaa7c5fc6b3f653368d31d9b713cf6bd25ce6874d7",
+    "sw/ground_station/test_rf_telemetry_window.py": "031f292316591b7e225c71057151f7585ef2d70488145fcfe25be5b0def40f00",
+    "sw/ground_station/test_sband_profiles.py": "936af41664034bcdaeb2c82864a6a6a20e56b183fd8cb87681ec79f757440875",
+    "sw/ground_station/test_tc_evidence.py": "93eef148707cd90ddbab6963e37973a4c71a12931f0cefe85f405dd30ba5b5bf",
+    "sw/ground_station/test_tc_live.py": "7a864b4884cab39b61022c63ec2720001d3086f9f69cbf674e8fc6920dc70276",
+    "sw/ground_station/test_tc_roundtrip.py": "62fca88316105be2319ae45f6ff762fe3c9924b828714f14d10647c9c2cb0afd",
+    "sw/ground_station/test_tc_sequence.py": "f50d19e8bfbe4a90318ba51b2fa780716a7b96ca57176991760bee1a44f7b47e",
+    "sw/ground_station/test_telemetry.py": "a01dc31224e966b905f22ecd9cff28e82444d686de1bd764bd3c9372cfbd9990",
+    "sw/ground_station/test_telemetry_window.py": "eec258f4eae9dfabfd0950c9ff6454911190d9bf51bab5759509b262b63d77ea",
+    "sw/ground_station/test_transport.py": "3fc782a63b73322577039495da65d133d98e4f64ecef2625f8004204fd235a49",
+    "sw/ground_station/test_ui_v2.py": "c817391a81183f93db1fe3a63e425e115dfcbed8177f9c316c76842ad9c30fef",
+    "sw/ground_station/test_ui_v2_business.py": "9b2eb0938c6f72df70d14cb52c78c7ae900d79979b385c531e788a79066a34ff",
+    "sw/ground_station/transport.py": "b6414dba90315e4c5b9be3f329d29c5c704f43926fd40b0804f3873164cceddc",
+    "sw/ground_station/ui_v2.py": "5a07a7e7c0cdbb46dc2f51c841162b21f514b67bfbe21a95f4e61f9540ec9b58",
+    "sw/ground_station/ui_v2_model.py": "695891bc4b85cb052a7df9b2367a26af787b5a53a5fc72edb7a3da64912abc08",
+    "sw/ground_station/_tk_test_support.py": "5080379c3b2039827ff76ee33566c4a84730c7ab4f866aaea7ce80fa61adbe36",
+    "sw/ground_station/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sw/ground_station/__main__.py": "df31115060a120a08d109affc18642a9a8737a8361f489c30bfc59eeb1f88712",
+    "sw/tools/rf_text_link.py": "5d92535c5771aa1e5ea62e70d482c7633dba69deef055ac59ec46445a892acde",
+    "sw/ccsds/ccsds_tm_tx.py": "02768cd2fee17f9431f0a76bd445131485347aa9014ca635b32e825b37a40c9b",
+    "board/ldsdr/remote_control/relay_remote_control.h": "8a7e075b839f4acee17c39e775d586f9c33461269de4d11ff7a6401fd556b203"
+  },
+  "capture_audit_sha256": "3329c24e0b6ca8dde4624a5d48d7b056445844a0c3b49f0733528f555112630c",
+  "evidence_manifest_sha256": "b48051cf4b1105709085c0e7385b9166e4ed8059561146067f787e709f6ae3b6"
+}
