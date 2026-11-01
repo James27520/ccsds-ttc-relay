@@ -221,7 +221,9 @@ class CommandSource(SessionRxConsole):
                  f'enabled=1; echo enabled > {self.remote}/guard_state\n'
                  'fi\nsleep .05\ndone\n').encode('ascii')
         check_cancel()
-        Console.upload(self, self.remote+'/guard.sh', guard, lambda _fraction: check_cancel())
+        # Small scripts are cheaper through bounded hex commands than two tty
+        # speed changes. Waveforms still use the verified binary fast transfer.
+        Console.upload(self, self.remote+'/guard.sh', guard, lambda _fraction: check_cancel(), mode='legacy')
         self.prepared = True
 
     def start(self):

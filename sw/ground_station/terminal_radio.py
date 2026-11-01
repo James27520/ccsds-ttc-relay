@@ -6,6 +6,7 @@ All TC retunes still require idle DMA. Nothing here opens a satellite-side port.
 """
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -28,6 +29,39 @@ class ReceiveUnavailable(RuntimeError):
 
 class TerminalRadio(AutonomousRadio):
     tx_channel = 1
+
+    def verify_binding(self):
+        # Constructor performs the full model/IIO identification. Within that
+        # connection, verify USB, Linux boot and device mapping on every use.
+        # A reboot/reconnect invalidates the session; no cached RF state is used.
+        _verify_runtime_binding(self)
+        return True
+
+    def mute(self):
+        if not self.owned or self._closed:
+            raise RuntimeError('发送会话未取得控制')
+        self.verify_binding()
+        # Attempt every shutdown write, even if one fails. Read back the LO,
+        # both attenuators and all DDS scales in the same bounded transaction.
+        script = (f'p={self.phy}; t={self.tx}; bad=0; '
+                  'echo 1 > $p/out_altvoltage1_TX_LO_powerdown || bad=1; '
+                  'for n in 0 1; do echo -89 > $p/out_voltage${n}_hardwaregain || bad=1; done; '
+                  'for f in $t/out_altvoltage*_scale; do echo 0 > "$f" || bad=1; done; '
+                  'cat $p/out_altvoltage1_TX_LO_powerdown $p/out_voltage0_hardwaregain '
+                  '$p/out_voltage1_hardwaregain $t/out_altvoltage*_scale; test "$bad" = 0')
+        values = self.run(script).splitlines()
+        # The supported dual-TX DDS core has eight scale attributes. A partial
+        # sysfs set must not count as a confirmed shutdown.
+        if len(values) != 11 or values[0] != '1':
+            raise RuntimeError('停发读回不完整')
+        for i, value in enumerate(values[1:]):
+            expected = -89 if i < 2 else 0
+            if not re.fullmatch(r'[+-]?[0-9]+(?:\.[0-9]+)?(?: dB)?' if i < 2 else
+                                r'[+-]?[0-9]+(?:\.[0-9]+)?', value):
+                raise RuntimeError('停发电平读回无效')
+            number = float(value.split()[0])
+            if not math.isfinite(number) or number != expected:
+                raise RuntimeError('停发电平未确认')
 
     def __init__(self, *args, **kwargs):
         self.stream = None
@@ -80,9 +114,12 @@ class TerminalRadio(AutonomousRadio):
                   (self.phy+'/in_voltage_sampling_frequency', '2500000'),
                   (self.phy+'/out_voltage_sampling_frequency', '2500000')]
         checks += [(self.debug+'/'+key, '0') for key in ('bist_prbs', 'bist_tone', 'loopback')]
-        for path, expected in checks:
-            if self.read(path) != expected:
-                raise RuntimeError('并行业务收发前提变化：'+path.rsplit('/', 1)[1])
+        prefixes = {self.phy: '$p', self.tx: '$t', self.debug: '$d'}
+        paths = [next(alias+path[len(prefix):] for prefix, alias in prefixes.items()
+                      if path.startswith(prefix+'/')) for path, _ in checks]
+        actual = self.run(f'p={self.phy}; t={self.tx}; d={self.debug}; cat '+' '.join(paths)).splitlines()
+        if actual != [value for _, value in checks]:
+            raise RuntimeError('并行业务收发前提变化')
 
     def configure_business(self, tx_center, rx_center, rx_channel):
         if self.stream:
@@ -154,7 +191,19 @@ class TerminalRadio(AutonomousRadio):
         directory = '/tmp/terminal_rx_'+uuid.uuid4().hex[:12]
         self.run('mkdir '+directory)
         self.stream = directory  # Retain ownership path even on partial startup.
-        Console.upload(self, directory+'/decode', raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        cached = getattr(self, '_receiver_program', None)
+        if cached and cached[0] == digest:
+            source = cached[1]
+            if self.run('sha256sum '+source).split()[0] != digest:
+                raise RuntimeError('已部署的接收程序摘要变化')
+            self.run(f'cp {source} {directory}/decode')
+            if self.run('sha256sum '+directory+'/decode').split()[0] != digest:
+                raise RuntimeError('接收程序复用校验失败')
+            self.record(kind='receiver_program_reused', sha256=digest)
+        else:
+            Console.upload(self, directory+'/decode', raw)
+            self._receiver_program = (digest, directory+'/decode')
         self.run(f'chmod 700 {directory}/decode; mkfifo {directory}/iq')
         # Three separately pinned processes. The lease never enables a TX.
         self._launch_owned('decoder', f'exec {directory}/decode {directory}/rx --live < {directory}/iq')
@@ -176,7 +225,8 @@ class TerminalRadio(AutonomousRadio):
             time.sleep(.05)
         self.stream_owner = self.read(directory+'/reader.owned').split()
         self.verify_stream()
-        Console.upload(self, directory+'/snapshot.sh', snapshot_script(self))
+        Console.upload(self, directory+'/snapshot.sh', snapshot_script(self), mode='legacy')
+        self._snapshot_ready_for = directory
         self.record(kind='continuous_receiver_started', directory=directory,
                     reader=self.stream_owner, binary_sha256=hashlib.sha256(raw).hexdigest())
 
@@ -232,6 +282,18 @@ class TerminalRadio(AutonomousRadio):
     def verify_stream(self):
         if not self.stream:
             raise RuntimeError('未持有业务接收进程')
+        if getattr(self, '_snapshot_ready_for', None) == self.stream:
+            before = _usb_identity(self.info['port'])
+            if any(before[k] != self._fingerprint[k] for k in _USB_KEYS):
+                raise RuntimeError('本地设备USB身份变化')
+            result = self.run(f'sh {self.stream}/snapshot.sh check')
+            if _usb_identity(self.info['port']) != before:
+                raise RuntimeError('本地设备USB身份变化')
+            if result.startswith('RXERROR unavailable '):
+                self._receive_unavailable('本会话接收已停止：'+result.split()[-1])
+            if result != 'RXCHECK1':
+                raise RuntimeError('本地接收身份或配置变化：'+result)
+            return
         _verify_runtime_binding(self)
         missing = []
         for name in ('reader', 'decoder', 'guard'):
@@ -310,7 +372,7 @@ class TerminalRadio(AutonomousRadio):
         return status, messages
 
     def verify_transmit(self):
-        # Full IIO identification is performed at prepare/start. Repeating it
+        # Full IIO identification is performed when connecting. Repeating it
         # every poll consumed the single-core board's DSP scheduling margin.
         _verify_runtime_binding(self)
         values = self.run('cat '+' '.join((self.remote+'/guard_state',

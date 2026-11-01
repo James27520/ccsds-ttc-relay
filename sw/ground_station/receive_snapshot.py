@@ -38,6 +38,7 @@ def snapshot_script(radio):
     for n, value in enumerate(mask):
         body += [f'readv {q(radio.rx+f"/scan_elements/in_voltage{n}_en")}; test "$v" = {value} || fail identity mask']
     body += [f'readv {q(radio.rx+"/buffer/enable")}; test "$v" = 1 || fail unavailable dma',
+             'if test "$1" = check; then echo RXCHECK1; exit 0; fi',
              # Read and validate everything before the first success marker;
              # late RX exits must not produce a partially successful response.
              'readv /sys/devices/system/cpu/online; cpu_online=$v',

@@ -37,7 +37,7 @@ class _Transaction:
         self.log_dir = owner.log_dir/'control'
         self.log_dir.mkdir(exist_ok=True)
         self.interrupt = owner.interrupt
-        self.transmit_seconds = 8
+        self.transmit_seconds = 4
         self.quiet_seconds = 30
         self.not_before = time.monotonic()+30
         self.sequence_pool = SequencePool()
@@ -167,6 +167,7 @@ class TerminalController:
                     job = dict(request_id=request_id, text=text, state='queued')
                     self.jobs[request_id] = job
                 self.send_order.append(request_id)
+                job['queued_at_monotonic'] = time.monotonic()
                 self._queue_state(job, 'queued')
                 return request_id
         if action == 'cancel_pending':
@@ -346,6 +347,7 @@ class TerminalController:
                 raise ReceiveSuspended('接收重复异常，请先手动恢复')
 
     def _send(self, text, request_id=None):
+        started = time.monotonic()
         if not self.radio or not self.rx_active or self.tc_active:
             raise RuntimeError('终端尚未就绪')
         self._ensure_receive_ready()
@@ -361,8 +363,13 @@ class TerminalController:
                 self.jobs[request_id]['message_id'] = message_id
         self.check_cancel()
         self.status('busy', '准备发送文本；板端接收持续运行')
+        prepare_started = time.monotonic()
         manifest = self.radio.prepare_message(text, self.session, seq, 55, self.check_cancel,
                                               tx_rf_mhz=self.tx_center)
+        prepared = time.monotonic()
+        # Poll between complete console transactions, never while a binary tty
+        # transfer owns the wire. RX continues independently on the board.
+        self._poll()
         self.check_cancel()
         self.radio.start()
         self.check_cancel()
@@ -374,10 +381,17 @@ class TerminalController:
         self.event('tx', message_id=message_id, request_id=request_id, text=text,
                    payload_bytes=len(text.encode('utf-8')),
                    receiver_process=getattr(self.radio, 'stream_owner', None))
+        with self.job_lock:
+            queued = self.jobs.get(request_id, {}).get('queued_at_monotonic', started)
+        self.record(kind='text_send_timing', request_id=request_id, message_id=message_id,
+                    queue_seconds=max(0, started-queued), prepare_seconds=prepared-prepare_started,
+                    start_verify_seconds=time.monotonic()-prepared,
+                    total_seconds=time.monotonic()-started)
         self.record(kind='tx_manifest', manifest=manifest)
         self.status('transmitting', '正在发送，同时接收；本次发送最多30秒')
 
     def _telecontrol(self, requested, wiring_confirmed=False):
+        transaction_started = time.monotonic()
         if self.role != 'sender' or not self.radio:
             raise RuntimeError('测控需要已连接的终端1')
         self._ensure_receive_ready()
@@ -410,7 +424,10 @@ class TerminalController:
             # Urgent close/disconnect owns the next transition. Cancellation is
             # handled by the urgent branch before RX is restored.
             if not self.interrupt.is_set():
+                restore_started = time.monotonic()
                 self._resume_receive()
+                self.record(kind='tc_business_restored', restore_seconds=time.monotonic()-restore_started,
+                            total_seconds=time.monotonic()-transaction_started)
                 # Local reconfiguration can consume the remaining remote lease.
                 reason = self._tc_queue_block_reason()
                 if reason: self._retry_pending(reason)

@@ -136,6 +136,7 @@ class Console:
         raise TimeoutError('板端尚未进入可用的 Linux 命令行；请等待启动完成后重新连接')
 
     def run(self, command, timeout=8):
+        started = time.monotonic()
         if not getattr(self, '_console_synchronized', True):
             raise RuntimeError('串口恢复未确认，禁止继续发送命令；请关闭并重新连接')
         if not math.isfinite(timeout) or timeout <= 0:
@@ -168,7 +169,7 @@ class Console:
         output_bytes = data[begin.end():match.start()] if begin and match else data
         output = output_bytes.decode('utf-8', 'replace').strip()
         rc = int(match[1]) if match and begin else None
-        self.record(kind='console', command=command[:160], rc=rc,
+        self.record(kind='console', command=command[:160], rc=rc, seconds=time.monotonic()-started,
                     output=output[:2000], output_chars=len(output))
         if rc is None:
             if re.search(r'(?:^|[\r\n])Pluto>[ \t]*(?:[\r\n]|$)', output):

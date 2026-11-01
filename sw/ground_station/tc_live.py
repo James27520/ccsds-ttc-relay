@@ -17,7 +17,7 @@ import uuid
 from .tc_hardware import CommandSource, request_values
 from .device_lease import PortLease
 from .transport import Console
-from .rf_live import Cancelled, FS, SAMPLES
+from .rf_live import Cancelled, FS
 from .tc_evidence import _integer, _json_finite
 from sw.tools.telemetry_downlink import decode_capture_windows, parse_frame
 from sw.tools.telecontrol_protocol import wire_fields
@@ -103,6 +103,7 @@ def assess_rf_reply(requested, report, previous=None):
 class AutonomousRadio(CommandSource):
     """Fixed TC transmitter plus bounded local RX, sharing one console owner."""
     tx_channel = 2  # Six-wire TC uplink; TX1A remains wired to LDSDR RX1.
+    capture_samples = 131072  # 52 ms covers a complete 50 ms ATM2 burst period.
 
     def __init__(self, *args, **kwargs):
         self.capture_directory = None
@@ -169,8 +170,9 @@ class AutonomousRadio(CommandSource):
         self.capture_directory = directory
         check_cancel()
         started = time.time()
+        samples = self.capture_samples
         try:
-            launch = (f'(iio_readdev -u local: -T 1500 -b 65536 -s {SAMPLES} '
+            launch = (f'(iio_readdev -u local: -T 1500 -b 65536 -s {samples} '
                       f'cf-ad9361-lpc voltage0 voltage1 > {directory}/capture.bin 2> {directory}/err & '
                       'p=$!; printf "%s %s\\n" "$p" "$(awk \'{print $22}\' /proc/$p/stat)" '
                       f'> {directory}/owned; wait "$p"; echo $? > {directory}/rc) & '
@@ -180,12 +182,14 @@ class AutonomousRadio(CommandSource):
             if result.strip() != '0':
                 raise RuntimeError('下行采集未正常完成：'+result[-200:])
             finished = time.time()
+            finished_monotonic = time.monotonic()
             self.finish_capture()
             check_cancel()
-            raw = self.download(directory+'/capture.bin', SAMPLES*4)
+            raw = self.download(directory+'/capture.bin', samples*4)
             check_cancel()
             return raw, dict(started_at=started, finished_at=finished,
-                             sample_rate_hz=FS, samples=SAMPLES, receiver_lo_hz=self.rx_lo)
+                             finished_monotonic=finished_monotonic,
+                             sample_rate_hz=FS, samples=samples, receiver_lo_hz=self.rx_lo)
         finally:
             self.finish_capture()
 
@@ -193,7 +197,7 @@ class AutonomousRadio(CommandSource):
 class TelecontrolController:
     """One serialized worker owns only the PC1 SDR; UI calls are nonblocking."""
     def __init__(self, emit, log_dir=None, *, radio_factory=AutonomousRadio,
-                 decoder=decode_capture_windows, transmit_seconds=8,
+                 decoder=decode_capture_windows, transmit_seconds=4,
                  quiet_seconds=30, sequence_pool=None):
         from .tc_sequence import SequencePool
         self.emit, self.radio_factory, self.decoder = emit, radio_factory, decoder
@@ -278,50 +282,77 @@ class TelecontrolController:
         directory.mkdir(exist_ok=False)
         report = dict(passed=False, requested=requested, source=self.radio.info)
         started = time.monotonic()
+        report['timings_seconds'] = {}
+        def stage(name, operation):
+            mark = time.monotonic()
+            self.record(kind='tc_stage_started', stage=name)
+            try:
+                return operation()
+            finally:
+                seconds = time.monotonic()-mark
+                report['timings_seconds'][name] = seconds
+                self.record(kind='tc_stage_finished', stage=name, seconds=seconds)
         try:
             self._check_cancel()
             self.status('sending', '正在准备并发送遥控指令')
-            report['waveform'] = self.radio.prepare(requested, wiring_confirmed=True)
+            report['waveform'] = stage('prepare_uplink', lambda: self.radio.prepare(requested, wiring_confirmed=True))
             self._check_cancel()
-            self.radio.configure_receive(self._check_cancel)
+            stage('configure_return', lambda: self.radio.configure_receive(self._check_cancel))
             self._check_cancel()
             delay = max(0, self.not_before-time.monotonic())
             if delay:
                 self.status('sending', f'等待旧回报窗口结束，约 {delay:.0f} 秒')
-                if self.interrupt.wait(delay):
+                if stage('previous_reply_wait', lambda: self.interrupt.wait(delay)):
                     self._check_cancel()
             self.record(kind='tc_quiet_window_complete', minimum_seconds=self.quiet_seconds)
-            self.radio.start()
+            stage('start_uplink', self.radio.start)
             report['uplink_started_at'] = time.time()
             try:
-                if self.interrupt.wait(self.transmit_seconds):
+                if stage('uplink_hold', lambda: self.interrupt.wait(self.transmit_seconds)):
                     self._check_cancel()
             finally:
-                self.radio.stop()
+                # Faster host operations no longer outlast the remote reply
+                # window incidentally. Reserve it explicitly, even on failure.
+                try:
+                    stage('stop_uplink', self.radio.stop)
+                finally:
+                    self.not_before = time.monotonic()+self.quiet_seconds
             report['uplink_stopped_at'] = time.time()
             self._check_cancel()
             self.status('receiving', '正在接收遥控板自动返回的射频回报')
-            raw, timing = self.radio.capture_reply(self._check_cancel)
+            raw, timing = stage('capture_and_download', lambda: self.radio.capture_reply(self._check_cancel))
             report['acquisition'] = timing
             iq_path = directory/'reply.bin'
             iq_path.write_bytes(raw)
-            decoded = self.decoder(raw, sample_rate_hz=FS, symbol_rate=100000,
-                                   expected_offset_hz=90500000-self.radio.rx_lo)
+            decoded = stage('decode_return', lambda: self.decoder(raw, sample_rate_hz=FS, symbol_rate=100000,
+                                   expected_offset_hz=90500000-self.radio.rx_lo))
             decoded.update(iq_path=str(iq_path), sha256=hashlib.sha256(raw).hexdigest())
             report_path = directory/'reply.json'
             report_path.write_text(json.dumps(decoded, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
             if decoded['clip_components'] or decoded['rms_codes'] > 1000:
                 raise RuntimeError('下行采样削顶或幅度超出已验证范围')
             self._check_cancel()
-            assessed = assess_rf_reply(requested, decoded, self.previous)
+            assessed = stage('validate_return', lambda: assess_rf_reply(requested, decoded, self.previous))
+            # A CRC/sequence-matched capture proves ACK preceded this instant.
+            # ADDA's fixed 3 s delay + 20 s reply must end before another uplink.
+            capture_end = timing.get('finished_monotonic')
+            if type(capture_end) in (int, float) and math.isfinite(capture_end):
+                self.not_before = capture_end+min(23, self.quiet_seconds)
             report.update(assessed, iq_path=str(iq_path), report_path=str(report_path),
                           elapsed_seconds=time.monotonic()-started)
             if 'relay' in assessed:
                 # The ACK's lease clock predates receipt. Subtract the entire
                 # operation duration, a conservative lower bound without clock sync.
+                # Expiry notices instead use an upper bound: the matched ACK
+                # predates capture_end. Only subtract time definitely spent
+                # after that capture, so the UI cannot announce expiry early.
+                capture_age = (max(0, time.monotonic()-capture_end)
+                    if type(capture_end) in (int, float) and math.isfinite(capture_end) else 0)
                 report['relay'] = dict(assessed['relay'],
                     remaining_lower_bound_ms=max(0, assessed['relay']['remaining_ms']-
                                                  math.ceil(report['elapsed_seconds']*1000)),
+                    remaining_upper_bound_ms=max(0, assessed['relay']['remaining_ms']-
+                                                 math.floor(capture_age*1000)),
                     snapshot_received_at=time.time())
             self.previous = assessed['snapshot']
         except Exception as exc:

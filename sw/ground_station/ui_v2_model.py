@@ -99,7 +99,12 @@ def command_request(input_mhz, output_mhz, sequence, operation='frequency', *, e
 
 
 def relay_snapshot_view(relay, now):
-    """Format actual ACK fields; elapsed wall time can only reduce the estimate."""
+    """Present a checked snapshot without exposing a remaining-time display.
+
+    ``now`` may be a wall-clock anchor advanced only by monotonic elapsed time.
+    Only an elapsed upper bound can imply expiry; a lower bound cannot.
+    A local expiry estimate never confirms the board's current mute state.
+    """
     def number(value):
         return type(value) in (int, float) and math.isfinite(value)
     received = relay.get('snapshot_received_at')
@@ -108,27 +113,42 @@ def relay_snapshot_view(relay, now):
     lines = [f'状态快照 · 接收 {timestamp}（非持续监控）']
     valid = relay.get('valid') is True
     gains, atten = relay.get('rx_gain_db'), relay.get('tx_attenuation_mdb')
-    if valid and type(relay.get('mode')) is int and all(
+    fields_valid = valid and type(relay.get('mode')) is int and all(
             isinstance(values, (list, tuple)) and len(values) == 2 and
-            all(type(v) is int for v in values) for values in (gains, atten)):
+            all(type(v) is int for v in values) for values in (gains, atten))
+    if fields_valid:
         lines += [f'实际 mode {relay["mode"]} · RX 增益 {gains[0]} / {gains[1]} dB',
                   f'TX 衰减 {atten[0]/1000:g} / {atten[1]/1000:g} dB']
     else:
         lines.append('模式 / 电平回读无效，实际值未知')
-    lower = relay.get('remaining_lower_bound_ms')
-    remaining = (max(0, lower-max(0, now-received)*1000)
-                 if number(lower) and lower >= 0 and number(received) else 0)
-    expired = not valid or relay.get('lease_active') is not True or remaining <= 0
+    # Older results lack an explicit upper bound. Counting their actual ACK
+    # remaining_ms from snapshot receipt can warn late, but never early. A supplied
+    # malformed upper bound remains unknown instead of masking bad evidence.
+    upper = relay.get('remaining_upper_bound_ms', relay.get('remaining_ms'))
+    remaining = (max(0, upper-max(0, now-received)*1000)
+                 if type(upper) is int and upper >= 0 and number(received) and number(now) else None)
+    expired = (fields_valid and relay.get('lease_active') is True and
+               remaining is not None and remaining <= 0)
+    confirmed_muted = (fields_valid and relay.get('mode') == 2 and gains == [0, 0] and
+                       atten == [89000, 89000] and relay.get('lease_active') is False and
+                       type(relay.get('remaining_ms')) is int and relay['remaining_ms'] == 0 and not relay.get('mute_fault'))
+    state, message = 'unknown', '转发板当前状态未知，待查询'
+    refresh_after_ms = None
     if relay.get('mute_fault'):
         lines.append('静音故障锁存 · 需处理后重新查询')
-        expired = True
-    if relay.get('lease_active') is True:
-        lines.append(f'保守剩余 {math.floor(remaining/1000)} 秒' if not expired else '快照租期已过期或无法估计 · 待查询')
-    else:
-        lines.append('快照未报告有效租期 · 当前状态待查询')
+        message = '静音故障回报，当前状态待查询'
+    elif confirmed_muted:
+        state, message = 'muted', '测控回报确认静音（状态快照，非持续监控）'
+    elif expired:
+        state, message = 'expired', '转发有效期已过，当前状态待查询'
+    elif fields_valid and relay.get('lease_active') is True and remaining is not None:
+        state, message = 'snapshot', '测控回报已收到（状态快照，非持续监控）'
+        refresh_after_ms = max(1, math.ceil(remaining))
+    lines.append(message)
     if relay.get('lease_expired'):
         lines.append('板端报告曾到期')
-    return dict(body='\n'.join(lines), expired=expired)
+    return dict(body='\n'.join(lines), expired=expired, state=state,
+                message=message, refresh_after_ms=refresh_after_ms)
 
 
 def device_choices(ports, aliases):

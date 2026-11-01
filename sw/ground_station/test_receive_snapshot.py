@@ -135,7 +135,7 @@ class ReceiveSnapshotTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get('POSIX_TEST_SHELL') or shutil.which('sh'), 'POSIX shell required')
 class SnapshotShellTests(unittest.TestCase):
     """Execute the real generated shell against private synthetic proc/sys files."""
-    def run_snapshot(self, between_reads=''):
+    def run_snapshot(self, between_reads='', *, check=False, overrides=None):
         radio = SimpleNamespace(stream='session', phy='phy', tx='tx', rx='rx', rx_channel=1,
             _fingerprint=dict(linux_boot_id='boot'), stream_owners=dict(reader=['101','201'],
             decoder=['102','202'],guard=['103','203']))
@@ -150,6 +150,7 @@ class SnapshotShellTests(unittest.TestCase):
         for name, (pid, ticks) in radio.stream_owners.items():
             files[f'session/{name}.owned'] = f'{pid} {ticks}'
             files[f'proc/{pid}/stat'] = f'{pid} (process with spaces) S '+('0 '*18)+ticks+' 0'
+        files.update(overrides or {})
         script = snapshot_script(radio).decode().replace('/proc/', 'proc/').replace('/sys/devices/', 'sys/devices/')
         script = script.replace('readv proc/loadavg;', between_reads+'\nreadv proc/loadavg;')
         with tempfile.TemporaryDirectory() as folder:
@@ -160,7 +161,7 @@ class SnapshotShellTests(unittest.TestCase):
                 path.write_text(content+'\n', encoding='ascii', newline='\n')
             (root/'snapshot.sh').write_text(script, encoding='ascii', newline='\n')
             shell = os.environ.get('POSIX_TEST_SHELL') or shutil.which('sh')
-            result = subprocess.run([shell, 'snapshot.sh'], cwd=root, text=True,
+            result = subprocess.run([shell, 'snapshot.sh']+(['check'] if check else []), cwd=root, text=True,
                                     capture_output=True, timeout=5)
             self.assertEqual(result.returncode, 0, result.stderr)
             return result.stdout.strip()
@@ -170,6 +171,17 @@ class SnapshotShellTests(unittest.TestCase):
         self.assertTrue(result.startswith('RXSNAP1\n'))
         self.assertIn('RXMETRICS\n0-1\n', result)
         self.assertNotIn('RXERROR', result)
+
+    def test_check_only_has_same_identity_mask_and_dma_guards(self):
+        self.assertEqual(self.run_snapshot(check=True), 'RXCHECK1')
+        for overrides, expected in [
+                ({'proc/sys/kernel/random/boot_id': 'other'}, 'RXERROR identity mapping'),
+                ({'rx/scan_elements/in_voltage2_en': '1'}, 'RXERROR identity mask'),
+                ({'session/reader.owned': '101 999'}, 'RXERROR identity reader'),
+                ({'proc/101/stat': '101 (replacement) S '+('0 '*18)+'999 0'}, 'RXERROR identity reader'),
+                ({'rx/buffer/enable': '0'}, 'RXERROR unavailable dma')]:
+            with self.subTest(overrides=overrides):
+                self.assertEqual(self.run_snapshot(check=True, overrides=overrides), expected)
 
     def test_exit_after_ownership_check_returns_only_unavailable(self):
         self.assertEqual(self.run_snapshot('rm proc/101/stat'), 'RXERROR unavailable reader')

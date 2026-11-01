@@ -1,0 +1,377 @@
+{
+  "passed": true,
+  "independent_acceptance": true,
+  "host_tests": {
+    "unique_tests": 136,
+    "all_passed": true,
+    "logs": [
+      "host_tests.log",
+      "backend_tests.log",
+      "latest_host_tests.log",
+      "independent_guards.log"
+    ]
+  },
+  "unique_crc_messages": 18,
+  "main_crc_messages": 17,
+  "manual_retry_crc_messages": 1,
+  "checks": {
+    "cancel_preserves_retry": true,
+    "no_automatic_cancelled_replay": true,
+    "rf_status_confirms_real_expiry_mute": true,
+    "negative_ack_retains_retry": true,
+    "success_does_not_replay_old_retry": true,
+    "real_upper_bound_verified": {
+      "remaining_upper_bound_ms": 292581,
+      "upper_absolute": 1793529682.715765,
+      "capture_based_absolute": 1793529682.7149708
+    },
+    "latest_ui_real_time_expiry": true,
+    "final_quiet_readback": true,
+    "all_cancelled_old_text_never_replayed_through_final_close": true,
+    "tc_queued_text_only_released_after_matched_enable": true
+  },
+  "timings": {
+    "tc_total": {
+      "count": 12,
+      "median": 29.0463108999993,
+      "maximum": 41.720921799998905,
+      "minimum": 22.695649100000082
+    },
+    "text_execution": {
+      "count": 17,
+      "median": 5.552667399999336,
+      "maximum": 6.108485000000655,
+      "minimum": 5.392298800001299
+    },
+    "text_preparation": {
+      "count": 17,
+      "median": 3.0257832999996026,
+      "maximum": 3.3117707000001246,
+      "minimum": 3.0077621999989788
+    },
+    "text_queue": {
+      "count": 17,
+      "median": 9.911621100000048,
+      "maximum": 37.1129906999995,
+      "minimum": 0.0013450999995257007
+    },
+    "normal_message_submit_to_observed_crc": {
+      "count": 12,
+      "median": 15.11065409999992,
+      "maximum": 24.132367999998678,
+      "minimum": 6.255986399999529
+    },
+    "first_message_in_each_bidirectional_batch": {
+      "count": 4,
+      "median": 7.113246500000059,
+      "maximum": 11.719994299999598,
+      "minimum": 6.255986399999529
+    },
+    "unqueued_submit_to_observed_crc": {
+      "count": 3,
+      "median": 6.271781100000226,
+      "maximum": 6.320175999999265,
+      "minimum": 6.255986399999529
+    },
+    "unqueued_execution": {
+      "count": 3,
+      "median": 5.533849499999633,
+      "maximum": 5.578627400000187,
+      "minimum": 5.392298800001299
+    },
+    "normal_fifo_queue": {
+      "count": 12,
+      "median": 8.93286954999985,
+      "maximum": 18.499525400000493,
+      "minimum": 0.0013450999995257007
+    }
+  },
+  "lease": {
+    "real_wait_ended_at": 1793529194.7376797,
+    "ui_message": "转发有效期已过，当前状态待查询 · 来源：本会话测控回报",
+    "polls": {
+      "sender": 258,
+      "receiver": 253
+    },
+    "conservative_expiry_upper_at": 1793529191.7105007,
+    "latest_ui_expired_at": 1793529191.8063898
+  },
+  "synthetic_sample_geometry": {
+    "period_samples": 125000,
+    "capture_samples": 131072,
+    "frame_samples": 23400,
+    "phases_checked": 125000,
+    "minimum_complete_frames": 3,
+    "maximum_complete_frames": 4
+  },
+  "relay_clip_delta": 0,
+  "ui_expiry_final_verified": {
+    "expected_at": 1793529191.7105007,
+    "observed_at": 1793529191.8063898,
+    "late_seconds": 0.09588909149169922
+  },
+  "superseded_main_ui_expiry": {
+    "old_observed_at": 1793529168.1115763,
+    "note": "Main process used superseded lower-bound UI. Its early expiry led to the final upper-bound fix; this timestamp is not final acceptance evidence."
+  },
+  "tc_stages": {
+    "prepare_uplink": {
+      "count": 12,
+      "median": 2.9386570999995456,
+      "maximum": 2.974875300000349,
+      "minimum": 2.926333800000066
+    },
+    "configure_return": {
+      "count": 12,
+      "median": 0.7357390999995914,
+      "maximum": 0.7359546999996383,
+      "minimum": 0.7351445999993302
+    },
+    "previous_reply_wait": {
+      "count": 7,
+      "median": 6.567871900000682,
+      "maximum": 18.943119999999908,
+      "minimum": 6.331642199998896
+    },
+    "start_uplink": {
+      "count": 12,
+      "median": 1.3140891499988356,
+      "maximum": 1.4077718000007735,
+      "minimum": 1.307876099999703
+    },
+    "uplink_hold": {
+      "count": 12,
+      "median": 4.004295499998989,
+      "maximum": 4.0141203999992285,
+      "minimum": 4.00028999999995
+    },
+    "stop_uplink": {
+      "count": 12,
+      "median": 0.43106094999893685,
+      "maximum": 0.5194322999996075,
+      "minimum": 0.4267493999996077
+    },
+    "capture_and_download": {
+      "count": 12,
+      "median": 7.623558899999807,
+      "maximum": 7.672330499999589,
+      "minimum": 7.622700100000657
+    },
+    "decode_return": {
+      "count": 12,
+      "median": 0.34635009999965405,
+      "maximum": 0.4820911000006163,
+      "minimum": 0.21992710000085935
+    },
+    "validate_return": {
+      "count": 12,
+      "median": 0.0005554500003199792,
+      "maximum": 0.0006719000011798926,
+      "minimum": 0.0004378000012366101
+    }
+  },
+  "limitations": [
+    "Host arrival is the first CRC-checked receive poll, not a measured RF propagation time.",
+    "Queue delays include the 2-second minimum TX dwell and preceding jobs; TC-queued texts additionally wait for control and RX restoration.",
+    "Main run imported the earlier fast-path implementation. Latest UI was checked in a separate hidden Tk process using that same real result and real elapsed time; supplemental RF run loaded the final upper-bound and exact-eight-DDS code.",
+    "Initial harness attempts used an incorrect frequency-result field or oversized text; their successful RF steps remain in preserved attempt logs and are excluded from final timing statistics."
+  ],
+  "schema": "control_latency_acceptance_v1",
+  "date": "2026-11-01",
+  "business_centers_mhz": [
+    [
+      "1989.500",
+      "2179.500"
+    ],
+    [
+      "1995.123",
+      "2185.456"
+    ]
+  ],
+  "method": "Production terminal backend with real six-wire RF; latest Tk UI checked with a real RF result and real elapsed time.",
+  "rf_redecode": [
+    {
+      "source": "verified_run2/sender/control/command_0001/result.json",
+      "operation": "frequency",
+      "air_seq": 99,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "d46037a5a9e7bce51d86a0a8af6f8da08344e759d54f9ede6583961ddf47e4c4"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0002/result.json",
+      "operation": "enable",
+      "air_seq": 100,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "201de7e76b4bc6994a4a4b064d804f1c555569e08e484315a21dea28657c386a"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0003/result.json",
+      "operation": "status",
+      "air_seq": 101,
+      "frames": 4,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "ad9daac48e938cbbb9a1ad3f835bb36301085459ea5aadea199ef9e2dd8ddf0b"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0004/result.json",
+      "operation": "frequency",
+      "air_seq": 102,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "86134dbc3e9969b40f3e992a98470ffcfd005ade51db7756e6f8f891073c70be"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0005/result.json",
+      "operation": "enable",
+      "air_seq": 103,
+      "frames": 4,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "777ef4d5d98dfa6fbb4e6b72cf23604ce48ac64ce809144d91738851af778213"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0006/result.json",
+      "operation": "status",
+      "air_seq": 104,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "e7498b1107cb5b3633a5e849487e6b49431a1527cb2d3b140f98169ee9e7acfe"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0007/result.json",
+      "operation": "enable",
+      "air_seq": 105,
+      "frames": 4,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "0a1e3255528a8a96ca242768e4c883ff9f1cc65a9f7b48b291317195da356668"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0008/result.json",
+      "operation": "frequency",
+      "air_seq": 106,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "cccc90b7634a613e4ed3e0e4e324e2f78f9973ba2450a8277d60c9cf8c6d9fdb"
+    },
+    {
+      "source": "verified_run2/sender/control/command_0009/result.json",
+      "operation": "stop",
+      "air_seq": 107,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "256c7055f9afdac87c6379c01992bbff2a82c8fec9b7fc540c154c55be3157fa"
+    },
+    {
+      "source": "failure_retry/sender/control/command_0001/result.json",
+      "operation": "enable",
+      "air_seq": 108,
+      "frames": 4,
+      "passed": false,
+      "remote_rc": -5,
+      "samples": 131072,
+      "sha256": "0da175339642ddcf912df115c3d998f3a15a49a618170dd879a94d0fe5d97017"
+    },
+    {
+      "source": "failure_retry/sender/control/command_0002/result.json",
+      "operation": "enable",
+      "air_seq": 109,
+      "frames": 4,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "7bf34180212737a8c8a75840183023fa21feeab6d1e251e60d3da013c78b375a"
+    },
+    {
+      "source": "failure_retry/sender/control/command_0003/result.json",
+      "operation": "stop",
+      "air_seq": 110,
+      "frames": 3,
+      "passed": true,
+      "remote_rc": 0,
+      "samples": 131072,
+      "sha256": "0a78d5ba5b1192e2e1810f5926aeecffff92e3a6662515ce9b2b8547b37f37f8"
+    }
+  ],
+  "final_state": {
+    "terminals": {
+      "COM19": {
+        "tx_lo_off": true,
+        "tx_dma": 0,
+        "rx_dma": 0,
+        "dds_scales_zero": 8
+      },
+      "COM17": {
+        "tx_lo_off": true,
+        "tx_dma": 0,
+        "rx_dma": 0,
+        "dds_scales_zero": 8
+      }
+    },
+    "relay_mode": 2,
+    "relay_diagnostics": {
+      "relay_rx_hz_readback": 1989000000,
+      "relay_tx_hz_readback": 2178999998,
+      "relay_tx_atten_db_readback": 89,
+      "relay_rx_gain_db_readback": 0
+    },
+    "passed": true
+  },
+  "evidence_files": [
+    {
+      "path": "acceptance.json",
+      "bytes": 14646,
+      "sha256": "5457838401db540017af741c28f48a994dee94cb66a4c3fe7fbd5faa072d9437"
+    },
+    {
+      "path": "acceptance.md",
+      "bytes": 3363,
+      "sha256": "fd143fa042e8bc22fe977f3b48438c90639b01fb7176e71389e89310b774b019"
+    },
+    {
+      "path": "verified_run2/acceptance.json",
+      "bytes": 81053,
+      "sha256": "c69e1e5c0a7f966d602f337066179a70d3f412c33d920340f6145bd1eee94ced"
+    },
+    {
+      "path": "failure_retry/result.json",
+      "bytes": 23043,
+      "sha256": "f61eca60873c939b06efa6e32c3f94e3ebce11ba5aeac0307f57be95c514ad54"
+    },
+    {
+      "path": "latest_ui_expiry.json",
+      "bytes": 1246,
+      "sha256": "39a63f647721edcb098001830d1daaf73b44dcdefec09751dde37da96e80c08a"
+    },
+    {
+      "path": "final_state.json",
+      "bytes": 2539,
+      "sha256": "8eae1e03d6c8f91f6add3e95070184527995e9696853555b14adb195c6a4e6e2"
+    }
+  ],
+  "full_regression_note": {
+    "tests_run_before_final_boundary_fixes": 444,
+    "existing_layout_subtest_failures": 2,
+    "observed_history_height_px": 68,
+    "old_assertion_min_px": 80,
+    "same_failure_reproduced_on_parent_revision": true
+  }
+}

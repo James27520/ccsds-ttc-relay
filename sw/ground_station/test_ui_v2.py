@@ -45,19 +45,76 @@ class ReviewDataTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             command_request('900.5', '1001.5', 9, 'other')
 
-    def test_snapshot_remaining_is_conservative_and_invalid_values_stay_unknown(self):
+    def test_snapshot_hides_remaining_time_and_only_warns_after_expiry(self):
         relay = dict(valid=True, mode=1, rx_gain_db=[30, 30], tx_attenuation_mdb=[50000, 50000],
-                     lease_active=True, remaining_lower_bound_ms=5000, snapshot_received_at=1000)
+                     lease_active=True, remaining_lower_bound_ms=0,
+                     remaining_upper_bound_ms=5000, snapshot_received_at=1000)
         view = relay_snapshot_view(relay, 1002)
-        self.assertIn('保守剩余 3 秒', view['body'])
+        self.assertNotIn('剩余', view['body'])
+        self.assertNotIn('秒', view['body'])
+        self.assertNotIn('已过', view['body'])
+        self.assertEqual(view['refresh_after_ms'], 3000)
         self.assertIn('30 / 30 dB', view['body'])
         self.assertFalse(view['expired'])
         self.assertTrue(relay_snapshot_view(relay, 1006)['expired'])
         self.assertIn('待查询', relay_snapshot_view(relay, 1006)['body'])
+        self.assertNotIn('确认静音', relay_snapshot_view(relay, 1006)['body'])
         invalid = relay_snapshot_view(dict(relay, valid=False), 1000)
         self.assertNotIn('30 / 30', invalid['body'])
         self.assertIn('实际值未知', invalid['body'])
-        self.assertTrue(invalid['expired'])
+        self.assertFalse(invalid['expired'])
+        self.assertEqual(invalid['state'], 'unknown')
+
+    def test_unknown_lease_fields_never_imply_expiry_or_confirmed_mute(self):
+        relay = dict(valid=True, mode=1, rx_gain_db=[30, 30], tx_attenuation_mdb=[50000, 50000],
+                     lease_active=True, remaining_lower_bound_ms=0,
+                     remaining_upper_bound_ms=5000, snapshot_received_at=1000)
+        for changes in ({'remaining_upper_bound_ms': None}, {'remaining_upper_bound_ms': float('nan')},
+                        {'remaining_upper_bound_ms': False}, {'remaining_upper_bound_ms': -1},
+                        {'remaining_upper_bound_ms': 5000.0},
+                        {'snapshot_received_at': None}, {'lease_active': False}, {'valid': False}):
+            with self.subTest(changes=changes):
+                view = relay_snapshot_view(dict(relay, **changes), 1006)
+                self.assertEqual(view['state'], 'unknown')
+                self.assertFalse(view['expired'])
+                self.assertIsNone(view['refresh_after_ms'])
+                self.assertNotIn('确认静音', view['body'])
+
+    def test_upper_bound_controls_expiry_even_after_lower_bound_is_exhausted(self):
+        relay = dict(valid=True, mode=1, rx_gain_db=[30, 30], tx_attenuation_mdb=[50000, 50000],
+                     lease_active=True, remaining_lower_bound_ms=1000,
+                     remaining_upper_bound_ms=5000, snapshot_received_at=1000)
+        self.assertFalse(relay_snapshot_view(relay, 1001)['expired'])
+        self.assertEqual(relay_snapshot_view(relay, 1001)['refresh_after_ms'], 4000)
+        self.assertFalse(relay_snapshot_view(relay, 1004.999)['expired'])
+        self.assertTrue(relay_snapshot_view(relay, 1005)['expired'])
+        self.assertNotIn('确认静音', relay_snapshot_view(relay, 1005)['body'])
+
+    def test_legacy_remaining_ms_is_a_late_safe_fallback_without_an_upper_bound(self):
+        relay = dict(valid=True, mode=1, rx_gain_db=[30, 30], tx_attenuation_mdb=[50000, 50000],
+                     lease_active=True, remaining_lower_bound_ms=0,
+                     remaining_ms=5000, snapshot_received_at=1000)
+        self.assertFalse(relay_snapshot_view(relay, 1002)['expired'])
+        self.assertEqual(relay_snapshot_view(relay, 1002)['refresh_after_ms'], 3000)
+        self.assertTrue(relay_snapshot_view(relay, 1005)['expired'])
+        for invalid in (None, True, False, -1, float('nan'), 0.0):
+            view = relay_snapshot_view(dict(relay, remaining_ms=invalid), 1006)
+            self.assertEqual(view['state'], 'unknown')
+            self.assertFalse(view['expired'])
+            self.assertIsNone(view['refresh_after_ms'])
+        for invalid in (True, False, float('nan')):
+            self.assertEqual(relay_snapshot_view(dict(relay, remaining_upper_bound_ms=invalid), 1006)['state'], 'unknown')
+
+    def test_only_actual_mute_levels_confirm_mute_in_snapshot(self):
+        relay = dict(valid=True, mode=2, rx_gain_db=[0, 0], tx_attenuation_mdb=[89000, 89000],
+                     lease_active=False, remaining_ms=0, lease_expired=True)
+        view = relay_snapshot_view(relay, 1000)
+        self.assertEqual(view['state'], 'muted')
+        self.assertIn('确认静音', view['body'])
+        self.assertFalse(view['expired'])
+        self.assertEqual(relay_snapshot_view(dict(relay, mute_fault=True), 1000)['state'], 'unknown')
+        for invalid in (False, 0.0, None):
+            self.assertEqual(relay_snapshot_view(dict(relay, remaining_ms=invalid), 1000)['state'], 'unknown')
 
     def test_authorized_business_profiles_keep_exact_centers_and_original_if(self):
         for role,center,lo,offset in (('sender','900.5',900000000,500000),('sender','901.5',901000000,500000),
@@ -326,7 +383,8 @@ class OnlineControlTests(unittest.TestCase):
     def relay(**changes):
         value = dict(mode=1, rx_gain_db=[30, 30], tx_attenuation_mdb=[50000, 50000],
                      valid=True, flags=3, lease_active=True, lease_expired=False, mute_fault=False,
-                     remaining_ms=300000, uptime_ms=3000, remaining_lower_bound_ms=5000,
+                     remaining_ms=5000, uptime_ms=3000, remaining_lower_bound_ms=1000,
+                     remaining_upper_bound_ms=5000,
                      snapshot_received_at=time.time())
         value.update(changes)
         return value
@@ -337,7 +395,9 @@ class OnlineControlTests(unittest.TestCase):
         self.assertEqual(request['operation'], 'enable')
         self.assertEqual(self.control.stop_button.cget('text'), '取消本次')
         self.assertIn('5 分钟', self.control.operation_note.get())
-        self.result(request, matched=True, remote_rc=0, relay=self.relay())
+        relay = self.relay()
+        with patch('sw.ground_station.ui_v2.time.time', return_value=0):
+            self.result(request, matched=True, remote_rc=0, relay=relay)
         self.assertIn('开启转发回报', self.control.reply_title.get())
         self.assertIn('实际 mode 1', self.control.reply_body.get())
         self.assertIn('50 / 50 dB', self.control.reply_body.get())
@@ -347,10 +407,156 @@ class OnlineControlTests(unittest.TestCase):
         self.control._snapshot_mono_anchor -= 6
         with patch('sw.ground_station.ui_v2.time.time', return_value=0):
             self.control._refresh_relay_snapshot()
-        self.assertIn('已过期', self.control.reply_title.get())
+        self.assertEqual('转发有效期已过，当前状态待查询', self.control.reply_title.get())
         self.assertIn('待查询', self.control.reply_body.get())
         self.assertIsNone(self.control._snapshot_after)
         self.assertEqual(self.session.sender_plan_origin, '本地计划')
+
+    def test_communication_expiry_survives_control_draft_edits_and_never_sends(self):
+        sender = self.session.show('sender')
+        receiver = self.session.show('receiver')
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertIn('尚无测控回报', receiver.relay_status.get())
+        self.control.operation.set('开启转发')
+        request = self.sent()
+        self.result(request, matched=True, remote_rc=0, relay=self.relay())
+        self.assertIn('来源：本会话测控回报', sender.relay_status.get())
+        self.assertNotIn('剩余', sender.relay_status.get())
+        self.assertNotIn('已过', sender.relay_status.get())
+        calls = list(self.controller.calls)
+        rows = [sender.history.item(i, 'values') for i in sender.history.get_children()]
+        self.control.operation.set('查询状态')
+        self.assertIsNone(self.control.relay_snapshot)
+        self.session.root.after_cancel(self.session._relay_display_after)
+        self.session._relay_display_mono_anchor -= 6
+        with patch('sw.ground_station.ui_v2.time.time', return_value=0):
+            self.session._refresh_relay_status()
+        for page in (sender, receiver):
+            self.assertIn('转发有效期已过，当前状态待查询', page.relay_status.get())
+            self.assertNotIn('确认静音', page.relay_status.get())
+            self.assertTrue(page.relay_status_label.winfo_manager())
+        self.assertEqual(self.controller.calls, calls)
+        self.assertEqual(rows, [sender.history.item(i, 'values') for i in sender.history.get_children()])
+        self.assertIsNone(self.session._relay_display_after)
+
+    def test_unchecked_results_do_not_publish_remote_state(self):
+        sender = self.session.show('sender')
+        self.control.operation.set('查询状态')
+        request = self.sent()
+        self.result(request, matched=True, remote_rc=0, relay=self.relay(), frame_count=0)
+        self.assertIsNone(self.session._relay_display_snapshot)
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual(self.session._relay_status_event()['state'], 'unknown')
+
+    def enable_then_submit(self, operation):
+        sender = self.session.show('sender')
+        self.control.operation.set('开启转发')
+        request = self.sent()
+        self.result(request, matched=True, remote_rc=0, relay=self.relay())
+        self.assertEqual(self.session._relay_status_event()['state'], 'snapshot')
+        timer = self.session._relay_display_after
+        self.control.operation.set(operation)
+        self.assertEqual(self.session._relay_display_after, timer)
+        self.assertEqual(self.session._relay_status_event()['state'], 'snapshot')
+        self.control._handle_online_event(dict(type='status', state='connected'))
+        self.control.generate_command()
+        self.control.send_online()
+        request = dict(self.control.active_request)
+        self.assertEqual(self.session._relay_status_event()['state'], 'unknown')
+        self.assertIn('执行中', sender.relay_status.get())
+        self.assertNotIn(timer, self.root.tk.call('after', 'info'))
+        return sender, request
+
+    def test_negative_ack_can_report_actual_mute_without_operation_success(self):
+        sender, request = self.enable_then_submit('开启转发')
+        self.result(request, matched=True, passed=False, remote_rc=-5,
+            relay=self.relay(mode=2, rx_gain_db=[0, 0], tx_attenuation_mdb=[89000, 89000],
+                             lease_active=False, remaining_ms=0, remaining_lower_bound_ms=0))
+        self.assertIn('远端拒绝', self.control.reply_title.get())
+        self.assertNotIn('成功', self.control.reply_title.get())
+        self.assertIn('确认静音', sender.relay_status.get())
+        self.assertEqual(self.session._relay_status_event()['state'], 'muted')
+        self.assertIsNone(self.session._relay_display_after)
+
+    def test_negative_ack_with_invalid_state_withdraws_old_enable_snapshot(self):
+        sender, request = self.enable_then_submit('开启转发')
+        self.result(request, matched=True, passed=False, remote_rc=-5,
+                    relay=self.relay(valid=False, lease_active=False))
+        self.assertIn('远端拒绝', self.control.reply_title.get())
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertNotIn('确认静音', sender.relay_status.get())
+        self.assertIsNone(self.session._relay_display_snapshot)
+
+    def test_frequency_ack_does_not_reuse_old_enable_or_confirm_mute(self):
+        sender, request = self.enable_then_submit('设置频率')
+        self.result(request)
+        self.assertEqual(self.control.reply_title.get(), '改频成功')
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertNotIn('确认静音', sender.relay_status.get())
+        self.assertIsNone(self.session._relay_display_snapshot)
+
+    def test_timeout_after_enable_withdraws_old_shared_snapshot(self):
+        sender, _ = self.enable_then_submit('开启转发')
+        self.control._handle_online_event(dict(type='status', state='error', category='timeout', message='timeout'))
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertIn('结果未知', self.control.reply_title.get())
+        self.assertIsNone(self.session._relay_display_snapshot)
+
+    def test_cancel_and_late_result_do_not_restore_old_shared_enable(self):
+        sender, request = self.enable_then_submit('开启转发')
+        self.control.cancel_online()
+        self.result(request, matched=True, remote_rc=0, relay=self.relay())
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertNotIn('确认静音', sender.relay_status.get())
+        self.assertIsNone(self.session._relay_display_snapshot)
+
+    def test_invalid_crc_after_enable_leaves_shared_state_unknown(self):
+        sender, request = self.enable_then_submit('开启转发')
+        self.result(request, matched=True, remote_rc=0, relay=self.relay(), frame_count=0)
+        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertIsNone(self.session._relay_display_snapshot)
+
+    def test_new_query_snapshot_cancels_old_expiry_and_retains_confirmed_mute(self):
+        sender = self.session.show('sender')
+        self.control.operation.set('开启转发')
+        request = self.sent()
+        self.result(request, matched=True, remote_rc=0, relay=self.relay())
+        old_timer = self.session._relay_display_after
+        self.control.operation.set('查询状态')
+        self.assertEqual(self.session._relay_display_after, old_timer)
+        self.control._handle_online_event(dict(type='status', state='connected'))
+        self.control.generate_command()
+        self.control.send_online()
+        request = dict(self.control.active_request)
+        self.result(request, matched=True, remote_rc=0,
+            relay=self.relay(mode=2, rx_gain_db=[0, 0], tx_attenuation_mdb=[89000, 89000],
+                             lease_active=False, remaining_ms=0, remaining_lower_bound_ms=0))
+        self.assertNotIn(old_timer, self.root.tk.call('after', 'info'))
+        self.assertIsNone(self.session._relay_display_after)
+        calls = list(self.controller.calls)
+        self.session._relay_display_mono_anchor -= 600
+        self.session._refresh_relay_status()
+        self.control._refresh_relay_snapshot()
+        self.assertIn('确认静音', sender.relay_status.get())
+        self.assertNotIn('有效期已过', sender.relay_status.get())
+        self.assertIn('确认静音', self.control.reply_body.get())
+        self.assertEqual(self.controller.calls, calls)
+
+    def test_separate_session_has_no_remote_state_and_late_page_gets_local_snapshot(self):
+        self.control.operation.set('查询状态')
+        request = self.sent()
+        self.result(request, matched=True, remote_rc=0, relay=self.relay())
+        sender = self.session.show('sender')
+        self.assertIn('来源：本会话测控回报', sender.relay_status.get())
+        other_root = tk.Toplevel(self.root)
+        other = ReviewSession(other_root, port_provider=lambda: PORTS, aliases=ALIASES)
+        try:
+            page = other.show('receiver')
+            self.assertIn('状态未知', page.relay_status.get())
+            self.assertIn('尚无测控回报', page.relay_status.get())
+            self.assertIsNone(other._relay_display_snapshot)
+        finally:
+            other._destroy_page('receiver')
 
     def test_query_accepts_actual_frequency_difference_but_never_updates_business_plan(self):
         self.control.operation.set('查询状态')
@@ -364,6 +570,7 @@ class OnlineControlTests(unittest.TestCase):
         self.assertIsNone(self.control.active_request)
 
     def test_remote_negative_ack_is_rejection_with_snapshot_not_success(self):
+        sender = self.session.show('sender')
         self.control.operation.set('开启转发')
         request = self.sent()
         self.result(request, matched=True, passed=False, remote_rc=-5,
@@ -376,6 +583,8 @@ class OnlineControlTests(unittest.TestCase):
         self.assertNotIn('成功', self.control.reply_title.get())
         self.assertIsNotNone(self.control.online_identity)
         self.assertIsNone(self.control.active_request)
+        self.assertIsNone(self.session._relay_display_snapshot)
+        self.assertIn('状态未知', sender.relay_status.get())
         self.assertEqual(self.session.sender_plan_origin, '本地计划')
         self.assertIn('拒绝', self.control.history.item(self.control.history.get_children()[0], 'values')[2])
 
@@ -390,6 +599,7 @@ class OnlineControlTests(unittest.TestCase):
         self.assertIsNone(self.control.relay_snapshot)
 
     def test_stop_requires_actual_mute_levels_without_target_frequency_equality(self):
+        sender = self.session.show('sender')
         self.control.operation.set('停止转发')
         request = self.sent()
         self.result(request, matched=True, remote_rc=0,
@@ -398,6 +608,8 @@ class OnlineControlTests(unittest.TestCase):
                     ack=dict(rx_hz=901000000, tx_hz=1000000000))
         self.assertIn('停止转发已确认', self.control.reply_title.get())
         self.assertIn('89 / 89 dB', self.control.reply_body.get())
+        self.assertIn('确认静音', sender.relay_status.get())
+        self.assertIsNone(self.session._relay_display_after)
         self.assertEqual(self.session.sender_plan_origin, '本地计划')
 
     def test_enable_invalid_levels_or_expired_lease_cannot_pass(self):

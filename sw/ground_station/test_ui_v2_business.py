@@ -5,9 +5,11 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
+from . import test_ui_v2 as control_fixtures
 from .test_ui_v2 import ALIASES, PORTS, FakeTelecontrolController, history_fixture
 from ._tk_test_support import dispose_tk_test
 from .ui_v2 import ReviewSession, main
+from .ui_v2_model import request_lo_hz
 
 
 class FakeBusinessController:
@@ -598,6 +600,31 @@ class SharedTerminalWindowTests(unittest.TestCase):
         self.sender.message_input.delete('1.0', 'end')
         self.sender.message_input.insert('1.0', value)
         self.sender._text_changed()
+
+    def test_checked_control_snapshot_expires_on_both_terminals_after_control_closes(self):
+        self.ready()
+        self.control.operation.set('开启转发')
+        self.control.generate_command()
+        self.control.send_online()
+        request = dict(self.control.active_request)
+        self.emit(type='result', channel='control', passed=True, matched=True, remote_rc=0,
+            requested=request, frame_count=1, relay=control_fixtures.OnlineControlTests.relay(),
+            ack={axis+'_hz': request_lo_hz(request, axis) for axis in ('rx', 'tx')})
+        for page in (self.sender, self.receiver):
+            self.assertIn('来源：本会话测控回报', page.relay_status.get())
+            self.assertNotIn('剩余', page.relay_status.get())
+        self.session.close('control')
+        self.control._drain_online_events()
+        self.assertNotIn('control', self.session.windows)
+        calls = {role: list(backend.calls) for role, backend in self.backends.items()}
+        self.root.after_cancel(self.session._relay_display_after)
+        self.session._relay_display_mono_anchor -= 6
+        self.session._refresh_relay_status()
+        for page in (self.sender, self.receiver):
+            self.assertIn('转发有效期已过，当前状态待查询', page.relay_status.get())
+            self.assertNotIn('确认静音', page.relay_status.get())
+            self.assertEqual(page.history.get_children(), ())
+        self.assertEqual(calls, {role: backend.calls for role, backend in self.backends.items()})
 
     def test_tc_pause_and_recovery_use_same_connection_without_handoff(self):
         self.ready()

@@ -7,7 +7,7 @@ import tempfile
 import threading
 import time
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from .tc_live import TelecontrolController, assess_rf_reply
 from .tc_sequence import SequencePool
@@ -141,6 +141,55 @@ class GroundWorkerTests(unittest.TestCase):
         result = json.loads((self.controller.log_dir/'command_0001'/'result.json').read_text(encoding='utf-8'))
         self.assertFalse(result['passed'])
         self.assertNotIn('ack', result)
+
+    def test_fast_reply_preserves_remote_window_and_records_stage_times(self):
+        self.connect()
+        self.controller.quiet_seconds = 30
+        captured = {}
+        def capture(check):
+            check()
+            captured['end'] = time.monotonic()
+            return b'fixture', dict(finished_monotonic=captured['end'])
+        self.radio.capture_reply = capture
+        self.controller.submit('send', requested=self.request, wiring_confirmed=True)
+        result = self.wait('result')
+        self.assertEqual(self.controller.not_before, captured['end']+23)
+        self.assertGreater(self.controller.not_before, time.monotonic()+20)
+        for name in ('prepare_uplink', 'configure_return', 'start_uplink',
+                     'uplink_hold', 'stop_uplink', 'capture_and_download',
+                     'decode_return', 'validate_return'):
+            self.assertGreaterEqual(result['timings_seconds'][name], 0)
+
+    def test_bad_reply_does_not_shorten_quiet_window(self):
+        self.connect()
+        self.controller.quiet_seconds = 30
+        self.report['frames'] = []
+        self.radio.capture_reply = lambda check: (b'fixture', dict(finished_monotonic=0))
+        self.controller.submit('send', requested=self.request, wiring_confirmed=True)
+        self.wait('status', 'error')
+        self.assertGreater(self.controller.not_before, time.monotonic()+25)
+
+    def test_expiry_upper_bound_subtracts_only_time_after_matched_capture(self):
+        self.connect()
+        assessed = assess_rf_reply(self.request, self.report)
+        assessed['relay'] = dict(remaining_ms=300000)
+        self.radio.capture_reply = lambda check: (b'fixture',
+            dict(finished_monotonic=time.monotonic()-1.25))
+        with patch('sw.ground_station.tc_live.assess_rf_reply', return_value=assessed):
+            self.controller.submit('send', requested=self.request, wiring_confirmed=True)
+            relay = self.wait('result')['relay']
+        self.assertLessEqual(relay['remaining_upper_bound_ms'], 298750)
+        self.assertGreater(relay['remaining_upper_bound_ms'], 297750)
+        self.assertIn('remaining_lower_bound_ms', relay)
+
+    def test_expiry_upper_bound_without_capture_clock_uses_ack_remaining(self):
+        self.connect()
+        assessed = assess_rf_reply(self.request, self.report)
+        assessed['relay'] = dict(remaining_ms=300000)
+        with patch('sw.ground_station.tc_live.assess_rf_reply', return_value=assessed):
+            self.controller.submit('send', requested=self.request, wiring_confirmed=True)
+            relay = self.wait('result')['relay']
+        self.assertEqual(relay['remaining_upper_bound_ms'], 300000)
 
     def test_no_wiring_and_duplicate_sequences_never_transmit(self):
         self.connect()

@@ -138,6 +138,11 @@ class ReviewSession:
         self._terminal_event_lock = threading.Lock()
         self._terminal_event_serial = 0
         self._terminal_poll_id = None
+        # Display-only evidence shared by pages in this process; never persisted
+        # as a remote state source or used to submit a control action.
+        self._relay_display_snapshot = None
+        self._relay_display_after = None
+        self._relay_display_unknown_message = '转发板状态未知 · 本会话尚无测控回报'
         self.business_controller_factory = business_controller_factory
         self.controller_factory, self.log_dir = controller_factory, log_dir
         self.port_provider = port_provider or self._ports
@@ -147,6 +152,53 @@ class ReviewSession:
     def _terminal_event_marker(self):
         with self._terminal_event_lock:
             return self._terminal_event_serial
+
+    def remember_relay_status(self, relay):
+        if self._relay_display_after is not None:
+            self.root.after_cancel(self._relay_display_after)
+            self._relay_display_after = None
+        self._relay_display_snapshot = dict(relay)
+        self._relay_display_wall_anchor = self._relay_clock_anchor(relay)
+        self._relay_display_mono_anchor = time.monotonic()
+        self._refresh_relay_status()
+
+    def invalidate_relay_status(self, message):
+        """Withdraw stale display evidence without issuing a control action."""
+        if self._relay_display_after is not None:
+            self.root.after_cancel(self._relay_display_after)
+            self._relay_display_after = None
+        self._relay_display_snapshot = None
+        self._relay_display_unknown_message = '转发板状态未知 · '+message
+        self._refresh_relay_status()
+
+    @staticmethod
+    def _relay_clock_anchor(relay):
+        received = relay.get('snapshot_received_at')
+        # A clock rollback between RF receipt and UI delivery must not pause
+        # lease aging until the old wall-clock timestamp is reached again.
+        return max(time.time(), received) if type(received) in (int, float) and math.isfinite(received) else time.time()
+
+    def _relay_status_event(self):
+        if self._relay_display_snapshot is None:
+            return dict(type='relay_status', state='unknown',
+                        message=self._relay_display_unknown_message)
+        view = relay_snapshot_view(self._relay_display_snapshot,
+            self._relay_display_wall_anchor+max(0, time.monotonic()-self._relay_display_mono_anchor))
+        return dict(type='relay_status', state=view['state'],
+                    message=view['message']+' · 来源：本会话测控回报',
+                    refresh_after_ms=view['refresh_after_ms'])
+
+    def _refresh_relay_status(self):
+        self._relay_display_after = None
+        if self.root is None:
+            return
+        event = self._relay_status_event()
+        for role, page in tuple(self.windows.items()):
+            if role != 'control':
+                page._handle_online_event(event)
+        delay = event.get('refresh_after_ms')
+        if delay is not None:
+            self._relay_display_after = self.root.after(delay, self._refresh_relay_status)
 
     def _enqueue_terminal_event(self, key, event):
         with self._terminal_event_lock:
@@ -355,6 +407,9 @@ class ReviewSession:
                 setattr(page, name, None)
         value = None
         if not self.windows and not keep_root:
+            if self._relay_display_after is not None:
+                self.root.after_cancel(self._relay_display_after)
+                self._relay_display_after = None
             if self._terminal_poll_id is not None:
                 self.root.after_cancel(self._terminal_poll_id)
                 self._terminal_poll_id = None
@@ -472,6 +527,8 @@ class StationReview:
         self.historical = None
         self.simulation = None
         self._build()
+        if role != 'control':
+            self._handle_online_event(session._relay_status_event())
         self.selection_trace = self.selection.trace_add('write', lambda *_: self.update_details())
         self.update_details()
         if self.online:
@@ -485,7 +542,13 @@ class StationReview:
         main.pack(fill='both', expand=True)
         mast = tk.Frame(main, bg=BG)
         mast.pack(fill='x')
-        label(mast, 'NTN   /   卫星测控与变频转发', color=MUTED, size=10, bg=BG).pack(side='left')
+        if self.role != 'control':
+            self.relay_status = tk.StringVar(self.window)
+            self.relay_status_label = label(mast, variable=self.relay_status,
+                size=10, color=AMBER, bold=True, bg=BG)
+            self.relay_status_label.pack(side='left')
+        else:
+            label(mast, 'NTN   /   卫星测控与变频转发', color=MUTED, size=10, bg=BG).pack(side='left')
         badge = label(mast, ' 在线测控 ' if self.online else ' 在线业务 ' if self.business_online else ' 界面审阅 ',
                       color=TEAL if self.live else AMBER, size=9, bg=PALE if self.live else '#FBF2DE')
         badge.pack(side='right', padx=(15, 0))
@@ -1171,6 +1234,7 @@ class StationReview:
         self.online_state = 'sending'
         self.connection_status.set('●  执行中')
         self._record_online('在线 · 已提交，待回报')
+        self.session.invalidate_relay_status('测控执行中，等待本次射频回报')
         self._submit_online('send', requested=dict(request), wiring_confirmed=True)
         self.session.update_online_controls()
 
@@ -1199,16 +1263,16 @@ class StationReview:
         if self.closed or self.closing or self.relay_snapshot is None:
             return
         # Anchor age to the monotonic clock so a desktop clock correction cannot
-        # extend the conservative estimate or make an expired snapshot green.
+        # extend the expiry boundary or make an expired snapshot green.
         view = relay_snapshot_view(self.relay_snapshot,
             self._snapshot_wall_anchor+max(0, time.monotonic()-self._snapshot_mono_anchor))
         self.reply_body.set(self._snapshot_prefix+'\n\n'+view['body'])
-        if view['expired']:
+        if view['state'] in ('expired', 'unknown'):
             self.reply_heading.configure(fg=AMBER if not self._snapshot_rejected else '#B64242')
-            if self.relay_snapshot.get('lease_active') and not self._snapshot_rejected:
-                self.reply_title.set('状态快照已过期 · 待查询')
-        else:
-            self._snapshot_after = self.window.after(1000, self._refresh_relay_snapshot)
+            if view['state'] == 'expired' and not self._snapshot_rejected:
+                self.reply_title.set('转发有效期已过，当前状态待查询')
+        if view['refresh_after_ms'] is not None:
+            self._snapshot_after = self.window.after(view['refresh_after_ms'], self._refresh_relay_snapshot)
 
     def _complete_relay_result(self, event, count):
         request = self.active_request
@@ -1228,8 +1292,7 @@ class StationReview:
                     relay.get('tx_attenuation_mdb') == [50000, 50000] and relay.get('lease_active') is True and
                     type(relay.get('remaining_ms')) is int and relay['remaining_ms'] > 0 and not relay.get('mute_fault'))
             elif operation == 'stop':
-                valid = valid and relay.get('mode') == 2 and relay.get('rx_gain_db') == [0, 0] and \
-                    relay.get('tx_attenuation_mdb') == [89000, 89000] and relay.get('lease_active') is False and relay.get('remaining_ms') == 0
+                valid = valid and relay_snapshot_view(relay, time.time())['state'] == 'muted'
             if not valid:
                 self._online_error('实际模式、电平或租期未通过本次操作核对。', 'validation')
                 return
@@ -1253,9 +1316,17 @@ class StationReview:
         if relay.get('valid') is True and isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int for axis in ('rx', 'tx')):
             self._snapshot_prefix += f'\n实际本振 RX {ack["rx_hz"]/1e6:.6f} / TX {ack["tx_hz"]/1e6:.6f} MHz'
         self.relay_snapshot = dict(relay)
-        self._snapshot_wall_anchor = time.time()
+        self._snapshot_wall_anchor = self.session._relay_clock_anchor(relay)
         self._snapshot_mono_anchor = time.monotonic()
         self._refresh_relay_snapshot()
+        if rc == 0:
+            self.session.remember_relay_status(relay)
+        elif relay_snapshot_view(relay, self._snapshot_wall_anchor)['state'] == 'muted':
+            # A rejected operation may still report actual mute levels. Keep
+            # operation rejection separate from the checked state evidence.
+            self.session.remember_relay_status(relay)
+        else:
+            self.session.invalidate_relay_status('远端拒绝，本次回报状态不明，待查询')
         for index, item in enumerate(self.step_labels, 1):
             item.configure(text=f'0{index}   '+('远端拒绝' if index == 4 and rc else
                 ('已提交指令', '上行已发送', '收到射频回报', '核对状态快照')[index-1]),
@@ -1269,6 +1340,8 @@ class StationReview:
         if self.session.unified_terminal:
             if not self.online or self.closing or self.controller is None:
                 return
+            if self.active_request is not None:
+                self.session.invalidate_relay_status('测控已取消，执行结果待查询')
             self.cancel_pending = True
             self.cancel_had_request = self.active_request is not None
             self.active_request = self.active_plan = None
@@ -1280,6 +1353,8 @@ class StationReview:
             return
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
             return
+        if self.active_request is not None:
+            self.session.invalidate_relay_status('测控已取消，执行结果待查询')
         self.cancel_pending = True
         self.cancel_had_request = self.active_request is not None
         self.accept_connected = False
@@ -1302,6 +1377,8 @@ class StationReview:
     def close_online(self):
         if self.closing:
             return
+        if self.active_request is not None:
+            self.session.invalidate_relay_status('测控窗口关闭，本次执行结果待查询')
         self.closing = True
         self.accept_connected = False
         self.online_identity = None
@@ -1315,6 +1392,8 @@ class StationReview:
         self.session.update_online_controls()
 
     def _online_error(self, message, category=None):
+        if self.active_request is not None:
+            self.session.invalidate_relay_status('本次测控未确认，执行结果待查询')
         awaiting_cancel = self.cancel_pending and category == 'cancelled'
         timeout = category == 'timeout' or (category is None and ('超时' in message or 'timeout' in message.lower()))
         cancelled = category == 'cancelled'
@@ -1363,6 +1442,12 @@ class StationReview:
 
     def _handle_online_event(self, event):
         if self.closed:
+            return
+        if event.get('type') == 'relay_status':
+            if self.role != 'control' and not self.closing:
+                self.relay_status.set(event['message'])
+                self.relay_status_label.configure(
+                    fg=AMBER if event.get('state') in ('expired', 'unknown') else MUTED)
             return
         if self.business_online:
             self._handle_business_event(event)
@@ -1528,6 +1613,7 @@ class StationReview:
             if event.get('passed') is not True or type(count) is not int or count <= 0 or not matched:
                 self._online_error('真实回报未通过请求关联、CRC 帧数或频率核对。', 'validation')
                 return
+            self.session.invalidate_relay_status('频率回报未提供转发模式与电平，待查询')
             self._reset_reply()
             self.last_evidence = dict(iq_path=str(event.get('iq_path', '未提供')),
                                       report_path=str(event.get('report_path', '未提供')))
@@ -1827,7 +1913,7 @@ class StationReview:
         self.operation_note.set({'frequency': DEMO_HINT+'；设置后保持静音。',
             'enable': '仅开启已设置的转发频率，持续 5 分钟。修改数值后，请先选择“设置频率”并发送。',
             'stop': '远端停止两路转发并静音；无需填写频率。',
-            'status': '读取实际频率、模式和剩余时间，不续期；无需填写频率。'}[
+            'status': '读取实际频率、模式与电平，不续期；无需填写频率。'}[
                 CONTROL_OPERATIONS[self.operation.get()]])
         if self.online and self.active_request is not None:
             self.request_note.set('当前指令执行中；新的参数需在结束后重新生成。')
