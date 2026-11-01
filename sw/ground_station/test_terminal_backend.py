@@ -12,6 +12,7 @@ from unittest.mock import patch
 from .protocol import encode_message, _link
 from .terminal_backend import TerminalController, _Transaction
 from .terminal_radio import ReceiveUnavailable
+from .receive_health import ReceiveHealth
 
 
 class FakeLease:
@@ -128,25 +129,28 @@ class FakeTransaction:
 
 class TerminalBackendTests(unittest.TestCase):
     def test_receive_rate_accepts_measured_startup_trace_but_rejects_sustained_slowdown(self):
-        c = TerminalController.__new__(TerminalController)
-        c.receive_rate_anchor = None
+        h = ReceiveHealth()
         # Actual startup trace: final cumulative rate was 2.299 MSPS, but
         # progress between these snapshots was 2.401 MSPS.
         for samples, uptime in [(4898816, 2268.749), (7487488, 3328.462),
                                 (9912320, 4360.669), (12353536, 5373.890)]:
-            c._check_receive_rate(samples, uptime)
-        with self.assertRaisesRegex(RuntimeError, '吞吐不足'):
-            c._check_receive_rate(15353536, 8374.890)
+            result = h.observe(dict(samples=samples, uptime_ms=uptime))
+            self.assertFalse(result['recover'])
+        result = h.observe(dict(samples=15353536, uptime_ms=8374.890))
+        self.assertEqual(result['level'], 'degraded')
+        self.assertFalse(result['recover'])
+        for n in range(1, 4):
+            result = h.observe(dict(samples=15353536+n*3000000, uptime_ms=8374.890+n*3000))
+        self.assertTrue(result['recover'])
 
     def test_receive_rate_rejects_board_clock_reset_and_restarts_baseline(self):
-        c = TerminalController.__new__(TerminalController)
-        c.receive_rate_anchor = None
-        c._check_receive_rate(10000000, 5000)
-        with self.assertRaisesRegex(RuntimeError, '时间回退'):
-            c._check_receive_rate(10000001, 100)
-        c.receive_rate_anchor = None
-        c._check_receive_rate(100000, 500)
-        c._check_receive_rate(7600000, 3500)
+        h = ReceiveHealth()
+        h.observe(dict(samples=10000000, uptime_ms=5000))
+        with self.assertRaisesRegex(ValueError, '时间回退'):
+            h.observe(dict(samples=10000001, uptime_ms=100))
+        h = ReceiveHealth()
+        h.observe(dict(samples=100000, uptime_ms=500))
+        self.assertEqual(h.observe(dict(samples=7600000, uptime_ms=3500))['level'], 'healthy')
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -211,13 +215,23 @@ class TerminalBackendTests(unittest.TestCase):
         self.assertIs(c.radio,r)
 
     def test_recovery_is_bounded_and_identity_errors_are_not_recovered(self):
-        for fault in (RuntimeError('USB identity changed'),ReceiveUnavailable('expired again')):
-            c=self.controller(); r=c.radio
-            if isinstance(fault,ReceiveUnavailable): c.last_receive_recovery=time.monotonic()
-            r.receive_fault=fault
-            self.wait(lambda: c.radio is None)
-            self.assertEqual(self.count(r,'start_receive'),1)
-            self.assertEqual(self.count(r,'start_tx'),0)
+        c=self.controller(); r=c.radio
+        r.receive_fault=RuntimeError('USB identity changed')
+        self.wait(lambda: c.radio is None)
+        self.assertEqual(self.count(r,'start_receive'),1)
+        c=self.controller(); r=c.radio
+        c.receive_recoveries.extend([time.monotonic(), time.monotonic()])
+        r.receive_fault=ReceiveUnavailable('expired again')
+        self.wait(lambda: c.rx_health == 'suspended')
+        self.assertIs(c.radio, r)
+        self.assertFalse(c.rx_active)
+        self.assertEqual(self.count(r,'start_receive'),1)
+        self.assertEqual(self.count(r,'start_tx'),0)
+        c.submit('resume_rx')
+        self.wait(lambda: c.rx_active)
+        self.assertEqual(self.count(r,'start_receive'),2)
+        self.assertEqual(self.count(r,'start_tx'),0)
+        self.assertEqual(len(c.receive_recoveries),0, 'manual restart must not consume automatic recovery budget')
 
     def test_new_send_checks_and_recovers_receiver_before_transmit(self):
         c=self.controller(); r=c.radio
@@ -245,6 +259,31 @@ class TerminalBackendTests(unittest.TestCase):
         self.assertEqual(self.count(radio, 'start_tx'), 1)
         self.assertTrue(any(event['type'] == 'tx' and event['text'] == 'hello' for event in self.events))
 
+    def test_owned_rx_exit_during_send_is_recovered_without_replaying_send(self):
+        for during_prepare in (True, False):
+            with self.subTest(during_prepare=during_prepare):
+                c=self.controller(); r=c.radio
+                original=r.prepare_message
+                def prepare(*args, **kwargs):
+                    result=original(*args, **kwargs)
+                    if during_prepare:
+                        raise ReceiveUnavailable('owned reader exited while preparing')
+                    r.receive_fault=ReceiveUnavailable('owned reader exited after TX start')
+                    return result
+                r.prepare_message=prepare
+                request=c.submit('send', text='do not replay')
+                self.wait(lambda: self.count(r,'start_receive')==2 and c.rx_active)
+                self.assertIs(c.radio, r)
+                self.assertFalse(c.tx_active)
+                self.assertEqual(c.jobs[request]['state'], 'retry')
+                self.assertEqual(self.count(r,'prepare'), 1)
+                self.assertEqual(self.count(r,'start_tx'), 0 if during_prepare else 1)
+                self.assertFalse(any(e['type']=='tx' and e.get('request_id')==request for e in self.events))
+                r.prepare_message=original
+                c.submit('send', text='new after recovery')
+                self.wait(lambda: c.tx_active)
+                self.assertEqual(self.count(r,'prepare'), 2)
+
     def test_expired_transmit_guard_stops_only_tx_and_keeps_rx(self):
         controller = self.controller()
         radio = controller.radio
@@ -271,21 +310,25 @@ class TerminalBackendTests(unittest.TestCase):
         self.assertFalse(controller.tx_active)
         self.assertEqual(self.count(radio, 'close'), 1)
 
-    def test_receive_eof_input_error_stopped_and_low_throughput_fail_closed(self):
-        for status in (dict(eof=True), dict(input_error=True), dict(stopped=True),
-                       dict(uptime_ms=6000, samples=6000000)):
+    def test_input_error_is_fatal_but_repeated_eof_retains_verified_connection(self):
+        for status in (dict(eof=True), dict(input_error=True), dict(stopped=True)):
             with self.subTest(status=status):
                 controller = self.controller()
                 radio, lease = controller.radio, controller.lease
                 first_event = len(self.events)
                 radio.status_override = status
-                self.wait(lambda: any(event.get('state') == 'error'
-                                      for event in self.events[first_event:]))
-                self.assertIsNone(controller.radio)
+                if status.get('input_error'):
+                    self.wait(lambda: any(event.get('state') == 'error' for event in self.events[first_event:]))
+                    self.assertIsNone(controller.radio)
+                    self.assertTrue(lease.closed)
+                    self.assertEqual(self.count(radio, 'close'), 1)
+                else:
+                    self.wait(lambda: controller.rx_health == 'suspended')
+                    self.assertIs(controller.radio, radio)
+                    self.assertFalse(lease.closed)
+                    self.assertEqual(self.count(radio, 'start_receive'), 3)
                 self.assertFalse(controller.rx_active)
                 self.assertFalse(controller.tx_active)
-                self.assertTrue(lease.closed)
-                self.assertEqual(self.count(radio, 'close'), 1)
 
     def test_telecontrol_restores_rx_without_restarting_previous_text(self):
         controller = self.controller()

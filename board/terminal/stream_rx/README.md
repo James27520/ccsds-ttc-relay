@@ -7,20 +7,22 @@ This receiver implements the existing experimental `AAAA | length | payload | CR
 ## Build and run
 
 ```sh
-cc -O3 -std=c99 -Wall -Wextra -Werror stream_rx.c -lm -o stream_rx
+cc -O3 -std=c99 -Wall -Wextra -Werror stream_rx.c -lm -pthread -o stream_rx
 # Example invocation after the caller has configured/verified the RX scan mask:
-iio_readdev -b 32768 cf-ad9361-lpc voltage0 voltage1 | ./stream_rx /tmp/business_rx
+iio_readdev -b 32768 cf-ad9361-lpc voltage0 voltage1 | ./stream_rx /tmp/business_rx --live
 ```
 
-The device/channel names are examples; the caller owns the board's actual channel mask and format verification. The reader is blocking and single-threaded. Backpressure propagates to `iio_readdev`. TX can run independently; this program contains no TX control. Linux SIGINT/SIGTERM interrupts a blocked stdin read, finishes buffered work, and publishes stopped status. The caller must manage the upstream reader's lifetime as part of the same pipeline/process group. SIGKILL cannot publish final status. Exit 0 means normal EOF or handled stop; 1 means input/publication failure; 2 means incorrect arguments.
+The device/channel names are examples; the caller verifies the actual RX mask and sample format. One input thread drains the pipe into a fixed 32 × 64 KiB queue while the main thread performs DSP. The queue holds 524288 complex samples (209.7 ms); a full queue blocks its producer, never grows or silently discards samples. `--live` records each full-queue episode as an upstream continuity risk. Without `--live`, an unpaced offline file may fill the queue normally and is decoded in full.
 
-Only C99, libc and libm are required. ARM builds should use the board-compatible cross compiler and ABI, for example `make CC=arm-linux-gnueabihf-gcc`; do not infer hard-float compatibility without checking the target rootfs/toolchain. The same source builds with the installed MinGW GCC for offline host testing.
+TX runs independently; this program contains no TX control. Linux SIGINT/SIGTERM requests stop; the consumer wakes within its 100 ms condition timeout, finishes its current work and publishes stopped status. The owner stops the upstream IIO reader as well. Process exit terminates any remaining blocked input thread; SIGKILL cannot publish final status. Exit 0 means normal EOF or handled stop; 1 means input/publication failure; 2 means incorrect arguments.
+
+The Linux build requires C99, libc, libm and POSIX threads (`-pthread`). The MinGW host build uses Windows threads/condition variables and needs `-D__USE_MINGW_ANSI_STDIO=1` for standard 64-bit format specifiers. Host scalar tests do not establish ARM throughput.
 
 The distributable `bin/stream_rx_armv7` is a static ARMv7 hard-float Linux executable targeting Cortex-A9, generated with Zig 0.14.1's musl toolchain. `build_manifest.json` records source and executable hashes, target, flags, format and DSP parameters without machine-specific paths. The same tested executable is copied to the ignored `build/stream_rx` development location. From the repository root, reproduce it with:
 
 ```powershell
 New-Item -ItemType Directory -Force board/terminal/stream_rx/build | Out-Null
-& 'D:/RelayTools/toolchains/zig-python/ziglang/zig.exe' cc -target arm-linux-musleabihf -mcpu=cortex_a9 -O3 -std=c99 -Wall -Wextra -Werror -static -s board/terminal/stream_rx/stream_rx.c -lm -o board/terminal/stream_rx/build/stream_rx
+& 'D:/RelayTools/toolchains/zig-python/ziglang/zig.exe' cc -target arm-linux-musleabihf -mcpu=cortex_a9 -O3 -std=c99 -Wall -Wextra -Werror -static -s board/terminal/stream_rx/stream_rx.c -lm -pthread -o board/terminal/stream_rx/build/stream_rx
 ```
 
 The native host report does not establish board compatibility or sustained board throughput. The actual board pipeline must be benchmarked independently, including TX-active operation and input samples processed per elapsed second.
@@ -48,8 +50,18 @@ One regular hop represents **57.344 ms** of input. `fft_ms`, `carrier_ms` and `m
 From the repository root:
 
 ```powershell
-& 'D:/AMDDesignTools/2026.1/tps/mingw/8.3.0/win64.o/nt/bin/gcc.exe' -O3 -std=c99 -Wall -Wextra -Werror board/terminal/stream_rx/stream_rx.c -lm -o board/terminal/stream_rx/stream_rx_host.exe
+& 'D:/AMDDesignTools/2026.1/tps/mingw/8.3.0/win64.o/nt/bin/gcc.exe' -O3 -std=c99 -D__USE_MINGW_ANSI_STDIO=1 -Wall -Wextra -Werror board/terminal/stream_rx/stream_rx.c -lm -o board/terminal/stream_rx/stream_rx_host.exe
 python board/terminal/stream_rx/test_stream_rx.py board/terminal/stream_rx/stream_rx_host.exe --capture-dir D:/RelayTools/work/six_line_20261031/duplex_rxfirst_recovered --report board/terminal/stream_rx/host_acceptance.json
 ```
 
 Tests use generated IQ for a maximum-length G1 frame (49 payload bytes) crossing a window boundary, a Chinese G1 message with +250 Hz residual CFO, a rejected 50-byte payload, corrupt CRC, noise, malformed sample encoding, truncated IQ, a sudden level increase with exact RMS/clip checks and 135 distinct payloads with a 128-entry retention bound. Optional real captures are decoded without any expected payload supplied to the native process. The test compares the native output to an independent invocation of the existing Python decoder on the first raw IQ window; it does not read previous result or manifest files. `host_acceptance.json` records the actual host run and measured timings.
+
+## Reception health and recovery
+
+The terminal polls a single session-specific script. It verifies the current Linux boot, USB identity before/after the transaction, all three PID/start-time records, selected channels and DMA, renews the RX lease, then returns statistics. Full `iio_info` remains part of configuration/start identification, not periodic TX monitoring.
+
+Status includes acquired/consumed sample counts, current queue occupancy, capacity, high water, backpressure episodes, cumulative pipe-read/consumer-wait/frontend/DSP/publication time and process CPU time. Host snapshots also retain CPU online/load/ticks, process statistics and UART poll duration. Read time includes waiting for the producer; elapsed stage time includes scheduling delays. The raw stream has no hardware sample sequence number: `loss_measured=false` is a limitation, never evidence of zero loss.
+
+The controller observes nonoverlapping intervals of at least 3 seconds. Processing below 2.45 MSPS or a half-full queue gives a visible performance warning; sustained unhealthy intervals totaling 12 seconds rebuild RX. A full live queue or 8 seconds without sample progress also requests recovery. Two healthy intervals (at least 6 seconds) clear a transient warning. Two automatic rebuilds are allowed per 120 seconds; a further failure stops RX/TX but retains the verified connection, readbacks and message history, exposing “恢复接收”. Recovery starts a fresh DSP process, so partial windows cannot bridge the interruption. Old TX is never restarted; pending messages become manual retries. Input-format, CRC-report integrity, USB, boot or ownership failures still disconnect.
+
+Before starting RX, the owner records Linux CPU present/possible/online state. For the verified two-core board booted with `maxcpus=1`, it brings the already-present CPU1 online only after idle-DMA/TX-off checks. This uses CPU hotplug for the current boot, not an overclock or persistent bootloader change. Unsupported or single-core configurations remain subject to the same throughput checks.

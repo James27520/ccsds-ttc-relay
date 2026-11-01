@@ -48,6 +48,7 @@ class TerminalReview(StationReview):
         self.last_business_error = None
         self.business_issue_kind = None
         self.rx_active = self.tx_active = self.tc_active = False
+        self.rx_health = 'warming'
         self.local_apply_pending = False
         self.local_applied = None
         super().__init__(session, role)
@@ -175,6 +176,7 @@ class TerminalReview(StationReview):
         self.business_stop_button.pack(side='right')
         self.retry_button = button(strip, '重试选中', self.retry_selected, disabled=True)
         self.retry_button.pack(side='right', padx=8)
+        self.resume_rx_button = button(strip, '恢复接收', self.resume_receive, disabled=True)
         self.history_card = card(self.body, '通信记录', padding=12)
         self.history_card.edge.grid(row=4, column=0, columnspan=2, sticky='nsew')
         self.history = TrafficHistory(self.history_card, self, columns=('time', 'id', 'content', 'status'),
@@ -264,6 +266,7 @@ class TerminalReview(StationReview):
             self.local_plan_note.set('正在应用本机频率，请稍候。' if self.local_apply_pending else
                 '测控占用中；结束后恢复本机原频率。' if self.tc_active else
                 '修改尚未应用；请先应用本机频率。' if connected and local_dirty else
+                '本机频率已应用；接收已暂停，请先恢复接收。' if connected and self.rx_health == 'suspended' else
                 '本机频率已应用；接收已启动，发送需点击“发送文本”。' if connected else
                 '连接时应用本机频率；不会修改转发板或另一终端。')
         self.local_note_label.configure(fg='#8E671D' if connected and local_dirty else MUTED)
@@ -272,14 +275,21 @@ class TerminalReview(StationReview):
         text = self.message_input.get('1.0', 'end-1c')
         valid_text = bool(text) and len(text.encode('utf-8')) <= 32
         self.send_button.configure(state='normal' if connected and self.business_configured and valid_text
+                                   and self.rx_health not in ('suspended', 'recovering')
                                    and not local_dirty and not self.local_apply_pending
                                    and not self.cancel_pending else 'disabled',
                                    text='排队发送' if self.tc_active else '发送文本')
         self.retry_button.configure(state='normal' if connected and self.business_configured
+                                    and self.rx_health not in ('suspended', 'recovering')
                                     and not local_dirty and not self.local_apply_pending
                                     and not self.cancel_pending and self._selected_retry_request() else 'disabled')
         self.business_stop_button.configure(state='normal' if connected and self.tx_active
                                              and not self.cancel_pending else 'disabled')
+        if self.rx_health == 'suspended' and connected:
+            self.resume_rx_button.pack(side='right', padx=8)
+            self.resume_rx_button.configure(state='normal' if not self.tc_active else 'disabled')
+        else:
+            self.resume_rx_button.pack_forget()
         self.connect_button.configure(text='断开' if self.local_claimed else '连接',
             state='normal' if available and not self.cancel_pending and self.business_pending != 'connect'
             and (self.local_claimed or self.selection.get() in self.session.devices) else 'disabled')
@@ -376,6 +386,13 @@ class TerminalReview(StationReview):
             self._update_tx_queue(dict(request_id=request_id, text=entry['text'], state='queued'))
             self.business_note.set('选中记录已重新加入发送队列。')
         self.session.update_online_controls()
+
+    def resume_receive(self):
+        if self.local_claimed and self.rx_health == 'suspended' and not self.tc_active:
+            if self._business_submit('resume_rx'):
+                self.rx_health = 'recovering'
+                self._show_activity()
+            self.session.update_online_controls()
 
     def _update_tx_queue(self, event):
         request_id, text, state = event.get('request_id'), event.get('text'), event.get('state')
@@ -507,6 +524,7 @@ class TerminalReview(StationReview):
             self.rx_active = bool(event.get('rx_active'))
             self.tx_active = bool(event.get('tx_active'))
             self.tc_active = bool(event.get('tc_active'))
+            self.rx_health = event.get('rx_health', self.rx_health)
             if event.get('connected'):
                 self.last_business_error = None
                 self._clear_business_issue('connection')
@@ -554,6 +572,13 @@ class TerminalReview(StationReview):
                     self._show_activity()
         elif kind == 'tx_queue':
             self._update_tx_queue(event)
+        elif kind == 'receive_health':
+            self.rx_health = event['level']
+            if self.rx_health in ('degraded', 'recovering', 'suspended'):
+                self._show_business_issue(str(event.get('reason', '接收性能下降')), 'receive_health')
+            else:
+                self._clear_business_issue('receive_health')
+            self._show_activity()
         elif kind == 'tx':
             if not self.local_claimed or self.cancel_pending:
                 return
@@ -581,6 +606,12 @@ class TerminalReview(StationReview):
     def _show_activity(self):
         if self.tc_active:
             text = '测控中 · 文本排队，确认转发可用后发送'
+        elif self.rx_health == 'suspended':
+            text = '接收已暂停 · 连接保留，需手动恢复'
+        elif self.rx_health == 'recovering':
+            text = '正在恢复接收 · 未重发旧文本'
+        elif self.rx_health == 'degraded':
+            text = '接收性能下降 · 正在观察，可能漏收'
         elif self.tx_active:
             text = '正在发送 · 自动接收保持运行' if self.rx_active else '正在发送 · 接收暂歇'
         elif self.rx_active:
@@ -591,12 +622,17 @@ class TerminalReview(StationReview):
             return
         self.mode_label.set(text)
         self.connection_status.set('●  已连接')
-        self.capture_note.set('自动接收中' if self.rx_active else '接收暂歇 · 自动恢复')
+        self.capture_note.set({'suspended':'接收已暂停 · 历史记录保留',
+                               'recovering':'正在恢复接收',
+                               'degraded':'性能下降 · 连续性未确认',
+                               'warming':'正在建立接收基线'}.get(self.rx_health,
+                              '自动接收中' if self.rx_active else '接收暂歇 · 自动恢复'))
 
     def _business_rx(self, event):
         # The inherited renderer accepts only CRC-verified messages. Treeview
         # defaults these inserts to received, independent of the window role.
         super()._business_rx(event)
+        self._show_activity()
         for message in event.get('messages', []):
             if (isinstance(message, dict) and message.get('crc_valid') is True
                     and isinstance(message.get('text'), str) and isinstance(message.get('message_id'), str)):

@@ -20,6 +20,11 @@ from .tc_live import TelecontrolController, decode_capture_windows
 from .tc_sequence import SequencePool
 from .terminal_radio import TerminalRadio, ReceiveUnavailable
 from .ui_v2_model import business_frequency_plan
+from .receive_health import ReceiveHealth
+
+
+class ReceiveSuspended(RuntimeError):
+    """Verified local connection retained; manual RX restart required."""
 
 
 class _Transaction:
@@ -90,7 +95,9 @@ class TerminalController:
         self.last_samples = None
         self.last_progress = None
         self.last_receive_recovery = None
-        self.receive_rate_anchor = None
+        self.receive_health = ReceiveHealth()
+        self.rx_health = 'warming'
+        self.receive_recoveries = deque()
         self.last_frame_count = self.last_reject_count = 0
         self.log_dir = Path(log_dir) if log_dir else Path.home()/'CCSDSGroundStation/sessions'/(
             time.strftime('%Y%m%d_%H%M%S')+'_terminal_'+role+'_'+uuid.uuid4().hex[:8])
@@ -119,7 +126,7 @@ class TerminalController:
                    source=self.radio.info if self.radio else None,
                    receiver_process=getattr(self.radio, 'stream_owner', None),
                    rx_active=self.rx_active, tx_active=self.tx_active,
-                   tc_active=self.tc_active, message=message)
+                   tc_active=self.tc_active, rx_health=self.rx_health, message=message)
 
     def submit(self, action, **values):
         """Accept up to eight unsent jobs, independently of long TC commands.
@@ -260,7 +267,8 @@ class TerminalController:
         self.rx_active = True
         self.last_samples = None
         self.last_progress = time.monotonic()
-        self.receive_rate_anchor = None
+        self.receive_health = ReceiveHealth()
+        self.rx_health = 'warming'
         self.last_frame_count = self.last_reject_count = 0
         self.status('receiving', '自动接收中，可随时发送文本')
 
@@ -284,32 +292,58 @@ class TerminalController:
         self.tx_active = False
         self.state('发送已停止，接收保持运行' if self.rx_active else '发送已停止')
 
-    def _recover_receive(self, cause):
+    def _health_event(self, level, reason, **metrics):
+        self.rx_health = level
+        self.event('receive_health', level=level, reason=reason, **metrics)
+        self.state(reason)
+
+    def _recover_receive(self, cause, *, manual=False):
         self.check_cancel()
         now = time.monotonic()
-        if self.last_receive_recovery is not None and now-self.last_receive_recovery < 60:
-            raise RuntimeError('接收恢复后再次退出，已停止自动恢复：'+str(cause))
-        self.last_receive_recovery = now
-        self.status('busy', '正在恢复本地接收，请稍候')
-        self.record(kind='receive_recovery', reason=str(cause))
-        # These methods recheck USB, boot and pinned ownership before writes.
-        # Failure never reconnects another board or resumes a previous TX.
+        while self.receive_recoveries and now-self.receive_recoveries[0] > 120:
+            self.receive_recoveries.popleft()
+        self._retry_pending('接收发生中断，待发文本保留，请手动重试', include_sending=False)
+        self._health_event('recovering', '正在恢复本地接收：'+str(cause))
+        # Bound recovery to two attempts per 120 seconds. The connection and
+        # message history survive; USB/boot/ownership failures still fail closed.
         self._stop_tx()
         self.radio.stop_receive()
         self.rx_active = False
+        if manual:
+            self.receive_recoveries.clear()
+        elif len(self.receive_recoveries) >= 2:
+            self._health_event('suspended', '接收重复异常，自动恢复已暂停；请点击“恢复接收”')
+            self.record(kind='receive_recovery_exhausted', reason=str(cause))
+            return False
+        if not manual:
+            self.receive_recoveries.append(now)
+        self.last_receive_recovery = now
+        self.record(kind='receive_recovery', reason=str(cause))
+        # These methods recheck USB, boot and pinned ownership before writes.
+        # Failure never reconnects another board or resumes a previous TX.
         self.check_cancel()
-        self._resume_receive()
-        self.radio.verify_stream()
+        try:
+            self._resume_receive()
+            self.radio.verify_stream()
+        except ReceiveUnavailable as exc:
+            self.radio.stop_receive()
+            self.rx_active = False
+            self._health_event('suspended', '接收重建未完成，请手动恢复：'+str(exc))
+            return False
         self.record(kind='receive_recovered', old_transmit_resumed=False)
+        return True
 
     def _ensure_receive_ready(self):
         self.check_cancel()
         if not self.radio:
             raise RuntimeError('本地终端未连接，请选择板卡并连接')
+        if self.rx_health == 'suspended':
+            raise ReceiveSuspended('接收已暂停，请先点击“恢复接收”')
         try:
             self.radio.verify_stream()
         except ReceiveUnavailable as exc:
-            self._recover_receive(exc)
+            if not self._recover_receive(exc):
+                raise ReceiveSuspended('接收重复异常，请先手动恢复')
 
     def _send(self, text, request_id=None):
         if not self.radio or not self.rx_active or self.tc_active:
@@ -402,21 +436,6 @@ class TerminalController:
             return '本机频率与远端转发回报未匹配，请应用本机频率后手动重试'
         return None
 
-    def _check_receive_rate(self, samples, uptime):
-        # Measure progress between board snapshots. Startup, FIFO opening and
-        # initial filter fill must not depress every later cumulative average.
-        if self.receive_rate_anchor is None:
-            self.receive_rate_anchor = (samples, uptime)
-            return
-        previous_samples, previous_uptime = self.receive_rate_anchor
-        if uptime < previous_uptime:
-            raise RuntimeError('板端采样时间回退，接收会话已失效')
-        elapsed = uptime-previous_uptime
-        if elapsed >= 3000:
-            if (samples-previous_samples)*1000/elapsed < 2300000:
-                raise RuntimeError('板端解码吞吐不足，不能标记为持续接收')
-            self.receive_rate_anchor = (samples, uptime)
-
     def _poll(self):
         if not self.radio or not self.rx_active:
             return
@@ -432,24 +451,30 @@ class TerminalController:
             return
         if result is None:
             if time.monotonic()-self.last_progress > 12:
-                raise RuntimeError('板端接收统计未出现')
+                self._recover_receive('板端接收统计未出现')
             return
         status, frames = result
         if not isinstance(status, dict) or not isinstance(frames, list) or len(frames)>128:
             raise ValueError('板端接收报告结构异常')
-        if status.get('input_error') or status.get('stopped') or status.get('eof'):
-            raise RuntimeError('板端采样程序已停止或输入异常')
+        if status.get('input_error'):
+            raise RuntimeError('板端采样输入异常')
+        if status.get('stopped') or status.get('eof'):
+            self._recover_receive('板端采样程序已停止')
+            return
         samples = status['samples']
         if type(samples) is not int or samples < 0 or (self.last_samples is not None and samples < self.last_samples):
             raise ValueError('板端采样计数回退或无效')
         uptime = status.get('uptime_ms', 0)
         if not math.isfinite(uptime) or uptime < 0:
             raise ValueError('板端采样时间无效')
-        self._check_receive_rate(samples, uptime)
+        health = self.receive_health.observe(status)
+        self._health_event(health['level'], health['reason'],
+                           **{k:v for k,v in health.items() if k not in ('level', 'reason')})
         if samples != self.last_samples:
             self.last_samples, self.last_progress = samples, time.monotonic()
         elif time.monotonic()-self.last_progress > 8:
-            raise RuntimeError('板端采样进度停止，不能继续显示接收中')
+            self._recover_receive('板端采样进度停止')
+            return
         messages = []
         for frame in frames:
             payload = bytes.fromhex(frame['payload_hex'])
@@ -473,8 +498,11 @@ class TerminalController:
                    crc_rejected=max(0, rejects-self.last_reject_count), rms_codes=rms,
                    carrier_hz=carrier, spectrum=dict(freq_mhz=[], dbfs=[]),
                    capture_seconds=self.poll_seconds, received_at=time.time(),
-                   capture_file='', continuous=True, stream_status=status)
+                   capture_file='', continuous=health['level'] == 'healthy' and not health['continuity_uncertain'],
+                   loss_measured=False, receive_health=health, stream_status=status)
         self.last_frame_count, self.last_reject_count = counts, rejects
+        if health['recover']:
+            self._recover_receive(health['reason'])
 
     def _disconnect(self):
         self._retry_pending('连接已断开，请连接后手动重试')
@@ -524,7 +552,7 @@ class TerminalController:
                         self._retry_pending('发送已停止或测控已取消，请手动重试')
                         self._stop_tx()
                         if self.urgent.empty(): self.interrupt.clear()
-                        if self.radio and not self.rx_active and not self.interrupt.is_set():
+                        if self.radio and not self.rx_active and self.rx_health != 'suspended' and not self.interrupt.is_set():
                             self._resume_receive()
                         if action == 'cancel_tc':
                             self.event('status', channel='control', state='error', category='cancelled',
@@ -536,7 +564,30 @@ class TerminalController:
                         elif action == 'telecontrol': self._telecontrol(**values)
                         elif action == 'apply_plan':
                             self._apply_local_plan(**values)
+                        elif action == 'resume_rx':
+                            if self.radio and not self.tc_active:
+                                self._recover_receive('手动恢复', manual=True)
                         else: raise ValueError('未知终端操作')
+                except ReceiveSuspended as exc:
+                    self._retry_pending(str(exc))
+                    self._health_event('suspended', str(exc))
+                except ReceiveUnavailable as exc:
+                    # An owned RX can exit during TX preparation as well as
+                    # during polling. A partly started send is never replayed.
+                    self._retry_pending('接收中断，本次发送结果未确认，请手动重试：'+str(exc))
+                    self.discard_pending()
+                    try:
+                        self._recover_receive(exc)
+                        if action == 'telecontrol':
+                            self.event('status', channel='control', state='error',
+                                       category='hardware', message='接收中断，测控结果未确认')
+                    except Cancelled:
+                        self.status('paused', '操作取消中')
+                    except Exception as recovery_error:
+                        cleanup = ''
+                        try: self._disconnect()
+                        except Exception as err: cleanup = '；'+str(err)
+                        self.status('error', str(recovery_error)+cleanup)
                 except Cancelled:
                     if action == 'apply_plan':
                         self.event('local_plan_cancelled')

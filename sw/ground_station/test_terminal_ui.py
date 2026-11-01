@@ -60,6 +60,27 @@ class TerminalWorkspaceTests(unittest.TestCase):
             self.assertFalse(hasattr(page, 'tx_frequency_combo'))
             self.assertFalse(hasattr(page, 'rx_apply_button'))
 
+    def test_receive_warning_retains_connection_and_manual_restart_is_explicit(self):
+        page = self.sender
+        self.ready(page)
+        page.message_input.insert('1.0', 'test')
+        page._handle_business_event(dict(type='receive_health', level='degraded', reason='处理速率下降'))
+        page._handle_business_event(dict(type='terminal_state', connected=True, rx_active=True,
+                                        rx_health='degraded'))
+        self.assertTrue(page.local_claimed)
+        self.assertEqual(page.sender_frequency.get(), '1989.500000')
+        self.assertIn('性能下降', page.mode_label.get())
+        self.assertNotIn('自动接收中', page.capture_note.get())
+        page._handle_business_event(dict(type='receive_health', level='suspended', reason='自动恢复已暂停'))
+        page._handle_business_event(dict(type='terminal_state', connected=True, rx_active=False,
+                                        rx_health='suspended'))
+        self.root.update()
+        self.assertTrue(page.resume_rx_button.winfo_ismapped())
+        self.assertEqual(str(page.send_button['state']), 'disabled')
+        page.resume_rx_button.invoke()
+        self.assertEqual(page.controller.calls[-1], ('resume_rx', {}))
+        self.assertIn('正在恢复', page.mode_label.get())
+
     def test_receive_status_and_send_controls_remain_visible_at_minimum_size(self):
         for page in (self.sender, self.receiver):
             page.window.geometry('1040x800')

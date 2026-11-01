@@ -1,6 +1,6 @@
 CC ?= cc
 CFLAGS ?= -O3 -std=c99 -Wall -Wextra -Werror
-LDLIBS ?= -lm
+LDLIBS ?= -lm -pthread
 
 all: stream_rx
 

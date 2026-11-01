@@ -1,0 +1,236 @@
+{
+  "passed": true,
+  "checks": {
+    "input_final_status_classification": true,
+    "independent_unit_tests": true,
+    "host_vectors_and_real_iq": true,
+    "actual_event_tk_replay": true,
+    "final_standby": true,
+    "long_duration": true,
+    "long_no_error": true,
+    "long_rate": true,
+    "normal_guard_expiry": true,
+    "one_receiver_owner_each": true,
+    "long_no_pressure": true,
+    "long_no_recovery": true,
+    "all_actual_messages": true,
+    "no_duplicate_application_events": true,
+    "fault_recovery": true,
+    "native_exit_and_speed": true,
+    "real_trace_replay": true,
+    "long_workers_closed": true,
+    "fault_workers_closed": true,
+    "terminal_final": true
+  },
+  "loss_measured": false,
+  "long_seconds": 1800.0843489,
+  "sent_messages": 60,
+  "rf_crc_content_matched_messages": 60,
+  "long_metrics": {
+    "sender": {
+      "seconds": 1800.063916,
+      "rate_sps": 2500027.70679394,
+      "min_interval_rate_sps": 2490837.141013152,
+      "max_queue_samples": 81920,
+      "max_high_water_samples": 114688,
+      "backpressure": 0,
+      "recoveries": 0,
+      "suspended": 0,
+      "current_health": "healthy",
+      "tx_count": 30,
+      "normal_tx_expiries": 30,
+      "receiver_starts": 1,
+      "queue_first_samples": 81920,
+      "queue_last_samples": 49152,
+      "crc_rejects": 3472,
+      "frames": 212484,
+      "clips": 0,
+      "cpu_online": [
+        "0-1"
+      ]
+    },
+    "receiver": {
+      "seconds": 1799.5568259999998,
+      "rate_sps": 2500022.0315354466,
+      "min_interval_rate_sps": 2490579.546977524,
+      "max_queue_samples": 81920,
+      "max_high_water_samples": 114688,
+      "backpressure": 0,
+      "recoveries": 0,
+      "suspended": 0,
+      "current_health": "healthy",
+      "tx_count": 30,
+      "normal_tx_expiries": 30,
+      "receiver_starts": 1,
+      "queue_first_samples": 81920,
+      "queue_last_samples": 32768,
+      "crc_rejects": 2170,
+      "frames": 213247,
+      "clips": 0,
+      "cpu_online": [
+        "0-1"
+      ]
+    }
+  },
+  "manual_budget": 0,
+  "native_exit": [
+    {
+      "version": "old",
+      "case": "signal_open_fifo",
+      "alive_after_one_second": true,
+      "state": "S",
+      "binary_sha256": "ec71bb85603f4c1e45cb6091241199a79a4c65ea1d7f77e22013c95ade4c54f6",
+      "elapsed": 1.443575199999941
+    },
+    {
+      "version": "old",
+      "case": "invalid_open_fifo",
+      "alive_after_one_second": true,
+      "state": "S",
+      "binary_sha256": "ec71bb85603f4c1e45cb6091241199a79a4c65ea1d7f77e22013c95ade4c54f6",
+      "elapsed": 1.411991200000557
+    },
+    {
+      "version": "new",
+      "case": "signal_open_fifo",
+      "alive_after_one_second": false,
+      "state": "",
+      "binary_sha256": "0e998d8377e72bc34188274e2ca6be15b4b30e4e7d02a11da445c0d7d346100d",
+      "elapsed": 1.4436854000005042
+    },
+    {
+      "version": "new",
+      "case": "invalid_open_fifo",
+      "alive_after_one_second": false,
+      "state": "",
+      "binary_sha256": "0e998d8377e72bc34188274e2ca6be15b4b30e4e7d02a11da445c0d7d346100d",
+      "elapsed": 1.4116329000007681
+    }
+  ],
+  "binary_scope": {
+    "long_hash": "0e998d8377e72bc34188274e2ca6be15b4b30e4e7d02a11da445c0d7d346100d",
+    "final_hash": "0e998d8377e72bc34188274e2ca6be15b4b30e4e7d02a11da445c0d7d346100d",
+    "difference": "Final native binary and TX-expiry fix ran throughout successful round2. Late snapshot-exit and busy-send recovery paths used the final source in a new-process real-RF fault phase. Fatal input-status classification separately replayed actual ARM invalid-FIFO final status with binding checks mocked/count-verified. Failed round1 preserved."
+  },
+  "limitations": [
+    "ADC sample loss is not measured; no hardware sequence numbers, zero sample loss is not proved.",
+    "Transient and sustained CPU shortage health thresholds were replayed from real rate traces; no live CPU contention injection.",
+    "RX start CPU1 auto-online was not re-exercised on hardware because both CPUs were already online; conditional path covered by unit tests.",
+    "Relay lease was maintained through diagnostic UART remotenettest; this run is not a new RF telecontrol protocol acceptance.",
+    "Initial 20-minute round failed on TX guard expiry; failed evidence retained. Later error-path fixes were checked with a new-process RF fault phase and separate actual-ARM-status replay, rather than restarting the successful steady long run."
+  ],
+  "date": "2026-11-01",
+  "frequency_plan_mhz": {
+    "input": 1989.5,
+    "output": 2179.5
+  },
+  "source_sha256": "5ffbcc0217bebc9bb9ff3b68edcd1efa1b1b996a0a0155c7ec3d0ecea4c8edcc",
+  "binary_sha256": "0e998d8377e72bc34188274e2ca6be15b4b30e4e7d02a11da445c0d7d346100d",
+  "hardware_faults": [
+    {
+      "index": 0,
+      "kind": "late reader TERM between snapshot ownership and metrics",
+      "elapsed": 19.19178009999996,
+      "health": "warming",
+      "connected": true,
+      "rx_active": true,
+      "tx_active": false,
+      "automatic_attempts": 1
+    },
+    {
+      "index": 1,
+      "kind": "owned reader TERM",
+      "elapsed": 17.237503500000457,
+      "health": "warming",
+      "connected": true,
+      "rx_active": true,
+      "tx_active": false,
+      "automatic_attempts": 2
+    },
+    {
+      "index": 2,
+      "kind": "owned reader TERM",
+      "elapsed": 5.136675199999445,
+      "health": "suspended",
+      "connected": true,
+      "rx_active": false,
+      "tx_active": false,
+      "automatic_attempts": 2
+    },
+    {
+      "kind": "owned reader TERM during production prepare_message",
+      "elapsed": 29.05741390000003,
+      "health": "healthy",
+      "connected": true,
+      "job_state": "retry"
+    }
+  ],
+  "fault_phase_messages": {
+    "sent": 6,
+    "actual_crc_content_matched": 6,
+    "duplicate_application_events": 0,
+    "old_tx_resumed": false
+  },
+  "pure_decode_sps": [
+    {
+      "role": "terminal1",
+      "repeat": 0,
+      "sps": 3345136.833416245
+    },
+    {
+      "role": "terminal1",
+      "repeat": 1,
+      "sps": 3341043.3033625074
+    },
+    {
+      "role": "terminal2",
+      "repeat": 0,
+      "sps": 3333551.7655555964
+    },
+    {
+      "role": "terminal2",
+      "repeat": 1,
+      "sps": 3339019.2322006514
+    }
+  ],
+  "software_tests": {
+    "related": 83,
+    "related_passed": 83,
+    "full_suite_cases": 431,
+    "full_suite_failures": 2,
+    "failure_scope": "Existing test_ui_v2.test_key_workspaces_visible_at_minimum_size sender/receiver history height: 68 px, expected >80 px."
+  },
+  "final_state": {
+    "terminals": {
+      "sender": {
+        "tx_lo_off": true,
+        "tx_dma": 0,
+        "rx_dma": 0,
+        "reader_stderr": "",
+        "decoder_stderr": ""
+      },
+      "receiver": {
+        "tx_lo_off": true,
+        "tx_dma": 0,
+        "rx_dma": 0,
+        "reader_stderr": "",
+        "decoder_stderr": ""
+      }
+    },
+    "relay": {
+      "mode": 2,
+      "tx_attenuation_db": 89,
+      "rx_gain_db": 0
+    },
+    "remote_control": {
+      "standby": true,
+      "network": true,
+      "armed": true,
+      "pending": 0,
+      "dac_idle": true
+    },
+    "all_workers_stopped": true,
+    "all_serial_ports_released": true
+  },
+  "native_exit_baseline": "old denotes the first threaded candidate before the exit fix, not the previous published single-thread release"
+}

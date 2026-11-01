@@ -18,6 +18,8 @@ from .tc_live import AutonomousRadio
 from .transport import Console
 from .rf_profiles import BUSINESS_TX_LO_HZ, BUSINESS_RX_LO_HZ, business_lo_allowed
 from .ui_v2_model import business_frequency_plan
+from .rf_session import _usb_identity, _USB_KEYS
+from .receive_snapshot import snapshot_script
 
 
 class ReceiveUnavailable(RuntimeError):
@@ -143,6 +145,7 @@ class TerminalRadio(AutonomousRadio):
         if self.stream or not self.business_mode:
             raise RuntimeError('接收状态不允许启动')
         self.verify_binding(); super().require_idle()
+        self.ensure_receive_cpu()
         first = (self.rx_channel-1)*2
         for i in (first, first+1):
             if self.read(f'{self.rx}/scan_elements/in_voltage{i}_type') != 'le:S12/16>>0':
@@ -154,7 +157,7 @@ class TerminalRadio(AutonomousRadio):
         Console.upload(self, directory+'/decode', raw)
         self.run(f'chmod 700 {directory}/decode; mkfifo {directory}/iq')
         # Three separately pinned processes. The lease never enables a TX.
-        self._launch_owned('decoder', f'exec {directory}/decode {directory}/rx < {directory}/iq')
+        self._launch_owned('decoder', f'exec {directory}/decode {directory}/rx --live < {directory}/iq')
         self._launch_owned('reader', f'exec iio_readdev -u local: -T 2000 -b 32768 cf-ad9361-lpc '
                            f'voltage{first} voltage{first+1} > {directory}/iq')
         self.renew_receive()
@@ -173,8 +176,39 @@ class TerminalRadio(AutonomousRadio):
             time.sleep(.05)
         self.stream_owner = self.read(directory+'/reader.owned').split()
         self.verify_stream()
+        Console.upload(self, directory+'/snapshot.sh', snapshot_script(self))
         self.record(kind='continuous_receiver_started', directory=directory,
                     reader=self.stream_owner, binary_sha256=hashlib.sha256(raw).hexdigest())
+
+    def ensure_receive_cpu(self):
+        """Online an available second Zynq CPU for this boot, never edit bootargs.
+
+        The affected board boots with maxcpus=1. Linux present/possible are
+        checked instead of inferring hardware from a vendor model string.
+        Called only before RX startup with idle DMA and a verified binding.
+        """
+        _verify_runtime_binding(self)
+        state = self.run('cat /sys/devices/system/cpu/present '
+                         '/sys/devices/system/cpu/possible /sys/devices/system/cpu/online '
+                         '/proc/cmdline').splitlines()
+        if len(state) != 4:
+            raise RuntimeError('CPU配置快照不完整')
+        present, possible, online, cmdline = state
+        changed = False
+        if present == possible == '0-1' and online == '0' and 'maxcpus=1' in cmdline.split():
+            if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
+                raise RuntimeError('CPU接收优化前必须停止发射')
+            _verify_runtime_binding(self)
+            result = self.run('if test -w /sys/devices/system/cpu/cpu1/online; then '
+                              'echo 1 > /sys/devices/system/cpu/cpu1/online; fi; '
+                              'cat /sys/devices/system/cpu/online')
+            _verify_runtime_binding(self)
+            changed = result == '0-1'
+            online = result
+        self.record(kind='receive_cpu_configuration', present=present, possible=possible,
+                    online=online, second_cpu_enabled=changed, persistence='current boot only')
+        if online == '0':
+            self.record(kind='receive_cpu_warning', message='只有一个CPU在线；并行收发吞吐需实测，异常恢复保持启用')
 
     def _launch_owned(self, name, body):
         d = self.stream
@@ -217,44 +251,114 @@ class TerminalRadio(AutonomousRadio):
             elif state not in ('R', 'S', 'D', 'I'):
                 raise RuntimeError('接收进程身份或运行状态变化：'+name)
         if missing:
-            raise ReceiveUnavailable('本会话接收进程已退出：'+', '.join(missing))
+            self._receive_unavailable('本会话接收进程已退出：'+', '.join(missing))
         mask = self.run('cat '+self.rx+'/scan_elements/in_voltage?_en').split()
         if mask != (['0','0','1','1'] if self.rx_channel == 2 else ['1','1','0','0']):
             raise RuntimeError('业务接收通道掩码变化')
         if self.read(self.rx+'/buffer/enable') != '1':
-            raise ReceiveUnavailable('业务接收DMA已停止')
+            self._receive_unavailable('业务接收DMA已停止')
+
+    def _receive_unavailable(self, reason):
+        # A fatal input error publishes its reason before the decoder exits.
+        # Do not hide it behind the later observation of a missing process.
+        _verify_runtime_binding(self)
+        path = shlex.quote(self.stream+'/rx.status.json')
+        raw = self.run(f'if test -f {path}; then echo RXFINAL; cat {path}; else echo RXFINAL_MISSING; fi')
+        _verify_runtime_binding(self)
+        if raw != 'RXFINAL_MISSING':
+            marker, separator, payload = raw.partition('\n')
+            if marker.strip() != 'RXFINAL' or not separator:
+                raise ValueError('接收退出状态报告缺失或无效')
+            status = json.loads(payload)
+            if not isinstance(status, dict) or type(status.get('input_error')) is not bool:
+                raise ValueError('接收退出状态报告无效')
+            if status['input_error']:
+                raise RuntimeError('板端采样输入异常，接收进程已退出')
+        raise ReceiveUnavailable(reason)
 
     def poll_receive(self):
-        self.verify_stream(); self.renew_receive()
+        if self._closed or not self.stream:
+            raise RuntimeError('本地接收会话已关闭')
+        before = _usb_identity(self.info['port'])
+        if any(before[k] != self._fingerprint[k] for k in _USB_KEYS):
+            raise RuntimeError('本地设备USB身份变化')
         d = self.stream
-        result = self.run(f'if test -f {d}/rx.status.json; then cat {d}/rx.status.json; '
-                          f'echo; cat {d}/rx.messages.json; fi', timeout=12)
-        if not result.strip():
-            return None
-        # Two atomically replaced, independently valid JSON records.
+        mark = time.monotonic()
+        result = self.run(f'sh {d}/snapshot.sh', timeout=12)
+        elapsed = time.monotonic()-mark
+        if _usb_identity(self.info['port']) != before:
+            raise RuntimeError('本地设备USB身份变化')
+        if result.startswith('RXERROR unavailable '):
+            self._receive_unavailable('本会话接收已停止：'+result.split()[-1])
+        if result.startswith('RXERROR '):
+            raise RuntimeError('本地接收身份或配置变化：'+result)
+        if not result.startswith('RXSNAP1\n') and not result.startswith('RXSNAP1\r\n'):
+            raise ValueError('板端接收快照标记无效')
+        payload, metrics = result.split('RXMETRICS', 1)
+        metrics = metrics.strip().splitlines()
+        if len(metrics) != 6 or metrics[-1] != self._fingerprint['linux_boot_id']:
+            raise RuntimeError('本地设备重启或接收性能快照无效')
+        payload = payload.split('\n', 1)[1].lstrip()
         decoder = json.JSONDecoder()
-        status, pos = decoder.raw_decode(result.lstrip())
-        messages = json.loads(result.lstrip()[pos:].strip())
+        status, pos = decoder.raw_decode(payload)
+        messages = json.loads(payload[pos:].strip())
+        if status is None:
+            return None
+        status['host_poll_ms'] = round(elapsed*1000, 3)
+        status['cpu_online'], status['loadavg'], status['cpu_ticks'] = metrics[:3]
+        status['decoder_proc_stat'], status['reader_proc_stat'] = metrics[3:5]
         return status, messages
 
     def verify_transmit(self):
-        self.verify_binding()
-        state = self.read(self.remote+'/guard_state')
-        if state == 'stopped':
-            return False
-        if state != 'enabled' or self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '0':
+        # Full IIO identification is performed at prepare/start. Repeating it
+        # every poll consumed the single-core board's DSP scheduling margin.
+        _verify_runtime_binding(self)
+        values = self.run('cat '+' '.join((self.remote+'/guard_state',
+            self.phy+'/out_altvoltage1_TX_LO_powerdown', self.remote+'/guard_owned',
+            self.remote+'/owned', self.remote+'/deadline', '/proc/uptime',
+            self.tx+'/buffer/enable'))).splitlines()
+        if len(values) != 7:
+            # guard_state is written by the exiting shell. An in-flight
+            # truncate/write may briefly omit its line; accept only a fully
+            # confirmed off state, never infer that an incomplete TX is live.
+            return self._confirm_transmit_stopped()
+        state, powerdown, guard, writer, deadline, uptime, dma = values
+        if state not in ('enabled', 'stopped'):
             raise RuntimeError('发送保护状态异常')
-        for name in ('guard_owned', 'owned'):
-            owned = self.read(self.remote+'/'+name).split()
+        if state == 'stopped' or powerdown != '0' or dma != '1' or int(deadline)-float(uptime.split()[0]) <= 0:
+            return self._confirm_transmit_stopped()
+        checks = []
+        for identity in (guard, writer):
+            owned = identity.split()
             if len(owned) != 2 or not all(x.isdigit() for x in owned):
                 raise RuntimeError('发送保护进程身份无效')
-            self.run(f'test "$(awk \'{{print $22}}\' /proc/{owned[0]}/stat)" = {owned[1]}')
-        remaining = int(self.run(f'echo $(( $(cat {self.remote}/deadline) - $(cut -d. -f1 /proc/uptime) ))'))
-        if remaining <= 0:
-            return False
-        if self.read(self.tx+'/buffer/enable') != '1':
-            raise RuntimeError('发送DMA已停止')
+            checks.append(f'if {{ read -r s < /proc/{owned[0]}/stat; }} 2>/dev/null; then '
+                          's=${s##*) }; set -- $s; state=$1; shift 19; '
+                          f'if test "$1" != {owned[1]}; then echo changed; '
+                          'elif test "$state" = Z; then echo missing; else echo live; fi; '
+                          'else echo missing; fi')
+        states = self.run('; '.join(checks)).splitlines()
+        if len(states) != 2 or any(s not in ('live', 'missing') for s in states):
+            raise RuntimeError('发送保护进程身份变化')
+        if 'missing' in states:
+            # The deadline can cross between the two reads. Missing is not
+            # equivalent to PID reuse, and a completed guarded stop is normal.
+            return self._confirm_transmit_stopped()
         return True
+
+    def _confirm_transmit_stopped(self):
+        """A transition is normal only after guard, LO and DMA agree on off."""
+        until = time.monotonic()+1.5
+        while True:
+            values = self.run('cat '+self.remote+'/guard_state '+
+                              self.phy+'/out_altvoltage1_TX_LO_powerdown '+
+                              self.tx+'/buffer/enable').splitlines()
+            if values == ['stopped', '1', '0']:
+                self.record(kind='transmit_stop_confirmed', guard='stopped', tx_lo_off=True, tx_dma=0)
+                return False
+            if time.monotonic() >= until:
+                raise RuntimeError('发送保护发生变化，但停发状态未确认')
+            time.sleep(.05)
 
     def stop_receive(self):
         if not self.stream:

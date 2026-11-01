@@ -1,9 +1,9 @@
 {
   "source": "board/terminal/stream_rx/stream_rx.c",
-  "source_sha256": "b73f7afe2e8480e201640683e8551bb56990ccf1f71de6536113bc0bab853ea8",
+  "source_sha256": "5ffbcc0217bebc9bb9ff3b68edcd1efa1b1b996a0a0155c7ec3d0ecea4c8edcc",
   "binary": "board/terminal/stream_rx/bin/stream_rx_armv7",
-  "binary_sha256": "1be62e06dd2469de5e385efd94106464f026f2131573c4c431264311b2153a61",
-  "binary_bytes": 53852,
+  "binary_sha256": "0e998d8377e72bc34188274e2ca6be15b4b30e4e7d02a11da445c0d7d346100d",
+  "binary_bytes": 64968,
   "toolchain": {
     "name": "Zig cc",
     "version": "0.14.1",
@@ -20,7 +20,8 @@
     "-Werror",
     "-static",
     "-s",
-    "-lm"
+    "-lm",
+    "-pthread"
   ],
   "elf": {
     "class": "ELF32",
@@ -45,5 +46,11 @@
     "carrier_branch_decimation": 4,
     "carrier_fft_length": 16384
   },
-  "validation_note": "Host scalar IQ acceptance and real ARM RX throughput were checked independently; sample-loss absence is not established by raw counters."
+  "validation_note": "Host scalar IQ acceptance and real ARM RX throughput were checked independently; sample-loss absence is not established by raw counters.",
+  "pipeline": {
+    "input_queue_bytes": 2097152,
+    "overflow_policy": "bounded backpressure; no deliberate drop; upstream loss unknown",
+    "reader_threads": 1,
+    "consumer_threads": 1
+  }
 }

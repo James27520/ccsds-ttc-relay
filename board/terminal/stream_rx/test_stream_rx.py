@@ -80,6 +80,21 @@ def main():
         status, messages, _ = run(executable, b"\0\0\0", directory, "truncated", success=False)
         assert not messages
         run(executable, np.array([[32767, 0]], dtype="<i2").tobytes(), directory, "wrong_format", success=False)
+        # Keep the producer end open after one invalid full block. The input
+        # thread waits for more; fatal exit must not wait for stdin's FILE lock.
+        prefix = directory/'open_input_error'
+        child = subprocess.Popen([str(executable), str(prefix)], stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            child.stdin.write(np.tile(np.array([[32767, 0]], dtype='<i2'), (16384, 1)).tobytes())
+            child.stdin.flush()
+            assert child.wait(timeout=3) == 1
+            result = json.loads(prefix.with_suffix('.status.json').read_text())
+            assert result['input_error'] is True
+            report['open_input_error'] = dict(bounded_exit=True, returncode=child.returncode)
+        finally:
+            if child.poll() is None: child.kill(); child.wait(timeout=3)
+            child.stdin.close(); child.stdout.close(); child.stderr.close()
         rng = np.random.default_rng(13)
         status, messages, _ = run(executable, rng.integers(-10, 11, (170000, 2), dtype=np.int16).astype("<i2").tobytes(), directory, "noise")
         assert not messages and status["frames"] == 0

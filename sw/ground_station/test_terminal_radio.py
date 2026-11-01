@@ -13,6 +13,7 @@ from unittest.mock import Mock, patch
 from .protocol import MessageTracker
 from .terminal_backend import TerminalController
 from .terminal_radio import TerminalRadio, ReceiveUnavailable
+from .receive_health import ReceiveHealth
 
 
 class BoardState:
@@ -46,6 +47,8 @@ class BoardState:
         self.max_wire_bytes = max(self.max_wire_bytes, len(wrapper.encode('ascii'))+1)
         if command.startswith('cat ') and '/scan_elements/' in command:
             return '\n'.join(self.mask)
+        if command.startswith('if test -f ') and '/rx.status.json' in command:
+            return 'RXFINAL\n{"input_error":false}'
         match = re.search(r'/([^/]+)\.owned;', command)
         if command.startswith('if test -f ') and match:
             return ' '.join(self.owned.get(match[1], []))
@@ -96,7 +99,9 @@ class TerminalRadioSafetyTests(unittest.TestCase):
         r.rx_channel, r.business_mode = 2, True
         r.phy, r.tx, r.rx, r.debug = '/fake/phy', '/fake/tx', '/fake/rx', '/fake/debug'
         r.owned, r._closed = True, False
+        r._fingerprint = dict(linux_boot_id='fake-boot')
         r.record, r.verify_binding = Mock(), Mock()
+        r.ensure_receive_cpu = Mock()
         board = BoardState(r)
         r.read, r.run = board.read, board.run
         return r, board
@@ -231,8 +236,19 @@ class TerminalRadioSafetyTests(unittest.TestCase):
                           radio.remote+'/owned': '202 2002',
                           radio.phy+'/out_altvoltage1_TX_LO_powerdown': '0',
                           radio.tx+'/buffer/enable': '1'}
-                radio.read = lambda path: values[path]
-                radio.run = lambda command, timeout=8: str(remaining) if command.startswith('echo $((') else board.run(command, timeout)
+                def run(command, timeout=8):
+                    if command.startswith('cat '):
+                        if '/deadline' not in command:
+                            return 'stopped\n1\n0' if remaining <= 0 else 'enabled\n0\n1'
+                        return '\n'.join(['enabled', '0', '201 2001', '202 2002',
+                                          str(100+remaining), '100.00 20.00', '1'])
+                    if command.startswith('if { read -r s < /proc/'):
+                        self.assertIn('/proc/201/stat',command)
+                        self.assertIn('/proc/202/stat',command)
+                        self.assertNotIn('iio_info',command)
+                        return 'live\nlive' if guard_alive else 'missing\nlive'
+                    return board.run(command,timeout)
+                radio.run = run
                 if expected == 'error':
                     with self.assertRaises(RuntimeError):
                         radio.verify_transmit()
@@ -252,6 +268,10 @@ class TerminalCleanupSafetyTests(unittest.TestCase):
         c.jobs, c.send_order = OrderedDict(), deque()
         c.tc_active = c.tx_active = False
         c.rx_active = True
+        c.rx_health = 'healthy'
+        c.receive_health = ReceiveHealth()
+        c.receive_recoveries = deque()
+        c.record = Mock()
         c.discard_pending = c.discard_pending_sends = c.status = c.state = c.event = Mock()
         c.check_cancel = Mock()
         c._resume_receive = Mock()
@@ -314,12 +334,15 @@ class TerminalCleanupSafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, '电平'):
             c._poll()
 
-    def test_stopped_input_or_insufficient_throughput_invalidates_receive(self):
-        for values in ({'eof': True}, {'stopped': True}, {'input_error': True},
-                       {'samples': 6_000_000, 'uptime_ms': 6000}):
+    def test_stopped_stream_is_recovered_but_invalid_input_is_fatal(self):
+        with self.assertRaises(RuntimeError):
+            self.polling_controller(input_error=True)._poll()
+        for values in ({'eof': True}, {'stopped': True}):
             with self.subTest(values=values):
-                with self.assertRaises(RuntimeError):
-                    self.polling_controller(**values)._poll()
+                c = self.polling_controller(**values)
+                c._recover_receive = Mock()
+                c._poll()
+                c._recover_receive.assert_called_once()
 
 
 if __name__ == '__main__':

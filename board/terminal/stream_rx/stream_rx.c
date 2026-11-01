@@ -1,5 +1,8 @@
 /* Text-blind experimental AAAA/LEN/payload/CRC16 receiver. See README.md. */
 #define _POSIX_C_SOURCE 200809L
+#ifdef _WIN32
+#define _WIN32_WINNT 0x0600
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -16,6 +19,7 @@
 #include <windows.h>
 #else
 #include <unistd.h>
+#include <pthread.h>
 #endif
 
 #define PI 3.14159265358979323846
@@ -54,6 +58,41 @@ static int mixer_phase;
 static const char *prefix;
 static volatile sig_atomic_t stopping;
 static int output_failed,input_error;
+static double frontend_ms,decode_ms,fft_total_ms,carrier_total_ms,matched_total_ms,publish_ms,consumer_wait_ms;
+static int live_mode;
+
+/* Two MiB = 210 ms at 2.5 MSPS. One reader drains the pipe while the
+   consumer decodes a window. A full queue applies bounded backpressure;
+   it never discards a sample or grows without limit. DMA loss is unknown. */
+#define BLOCK_BYTES 65536
+#define QUEUE_BLOCKS 32
+static unsigned char input_queue[QUEUE_BLOCKS][BLOCK_BYTES];
+static size_t queue_lengths[QUEUE_BLOCKS];
+static unsigned queue_head,queue_count,queue_high;
+static uint64_t acquired_bytes,queue_bytes,backpressure_events;
+static double read_ms,backpressure_ms;
+static int reader_done,reader_error;
+#ifdef _WIN32
+static CRITICAL_SECTION queue_mutex;
+static CONDITION_VARIABLE queue_cond;
+static HANDLE reader_thread;
+static void lock_queue(void) { EnterCriticalSection(&queue_mutex); }
+static void unlock_queue(void) { LeaveCriticalSection(&queue_mutex); }
+static void wake_queue(void) { WakeAllConditionVariable(&queue_cond); }
+static void wait_queue(void) { SleepConditionVariableCS(&queue_cond,&queue_mutex,100); }
+#else
+static pthread_mutex_t queue_mutex=PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t queue_cond=PTHREAD_COND_INITIALIZER;
+static pthread_t reader_thread;
+static void lock_queue(void) { pthread_mutex_lock(&queue_mutex); }
+static void unlock_queue(void) { pthread_mutex_unlock(&queue_mutex); }
+static void wake_queue(void) { pthread_cond_broadcast(&queue_cond); }
+static void wait_queue(void) {
+    struct timespec t;clock_gettime(CLOCK_REALTIME,&t);t.tv_nsec+=100000000;
+    if(t.tv_nsec>=1000000000) {t.tv_nsec-=1000000000;t.tv_sec++;}
+    pthread_cond_timedwait(&queue_cond,&queue_mutex,&t);
+}
+#endif
 
 static double now_ms(void) {
 #ifdef _WIN32
@@ -63,6 +102,54 @@ static double now_ms(void) {
     struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t);
     return (double)t.tv_sec*1000.0+t.tv_nsec/1e6;
 #endif
+}
+static double cpu_ms(void) {
+#ifdef _WIN32
+    FILETIME a,b,k,u;ULARGE_INTEGER x,y;
+    GetProcessTimes(GetCurrentProcess(),&a,&b,&k,&u);
+    x.LowPart=k.dwLowDateTime;x.HighPart=k.dwHighDateTime;
+    y.LowPart=u.dwLowDateTime;y.HighPart=u.dwHighDateTime;
+    return (x.QuadPart+y.QuadPart)/10000.0;
+#else
+    struct timespec t;clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&t);
+    return t.tv_sec*1000.0+t.tv_nsec/1e6;
+#endif
+}
+#ifdef _WIN32
+static DWORD WINAPI read_input(LPVOID unused) {
+#else
+static void *read_input(void *unused) {
+#endif
+    unsigned char block[BLOCK_BYTES];(void)unused;
+    while(!stopping) {
+        double mark=now_ms(),duration;size_t n=fread(block,1,sizeof(block),stdin);
+        int bad=ferror(stdin),done=feof(stdin)||bad;duration=now_ms()-mark;
+        lock_queue();read_ms+=duration;acquired_bytes+=n;
+        if(queue_count==QUEUE_BLOCKS) {
+            mark=now_ms();if(live_mode)backpressure_events++;
+            while(queue_count==QUEUE_BLOCKS&&!stopping)wait_queue();
+            backpressure_ms+=now_ms()-mark;
+        }
+        if(n&&!stopping) {
+            unsigned slot=(queue_head+queue_count)%QUEUE_BLOCKS;
+            memcpy(input_queue[slot],block,n);queue_lengths[slot]=n;queue_count++;queue_bytes+=n;
+            if(queue_count>queue_high)queue_high=queue_count;
+        }
+        if(done||stopping) {reader_done=1;reader_error=bad;}
+        wake_queue();unlock_queue();if(done)break;
+    }
+    lock_queue();reader_done=1;wake_queue();unlock_queue();
+    return 0;
+}
+static size_t take_input(unsigned char *out) {
+    size_t n=0;double mark=now_ms();lock_queue();
+    while(!queue_count&&!reader_done&&!stopping)wait_queue();
+    consumer_wait_ms+=now_ms()-mark;
+    if(queue_count&&!stopping) {
+        n=queue_lengths[queue_head];memcpy(out,input_queue[queue_head],n);
+        queue_bytes-=n;queue_head=(queue_head+1)%QUEUE_BLOCKS;queue_count--;wake_queue();
+    }
+    unlock_queue();return n;
 }
 static void stop(int sig) { (void)sig; stopping=1; }
 static unsigned crc16(const unsigned char *p,int n) {
@@ -168,15 +255,23 @@ static void atomic_close(FILE *f,const char *path,const char *temp) {
     if(bad) {fprintf(stderr,"stream_rx: cannot publish %s\n",path);output_failed=1;}
 }
 static void status_json(FILE *f,int eof) {
-    fprintf(f,"{\"samples\":%llu,\"clips\":%llu,\"rms\":%.6f,\"frames\":%llu,\"rejects\":%llu,\"windows\":%llu,\"max_decode_ms\":%.3f,\"last_decode_ms\":%.3f,\"carrier_offset_hz\":%.4f,\"messages\":%d,\"sample_rate_hz\":2500000,\"decimated_rate_hz\":500000,\"hop_samples\":143360,\"eof\":%s,\"stopped\":%s,\"loss_measured\":false,\"input_error\":%s,\"uptime_ms\":%.3f,\"fft_ms\":%.3f,\"carrier_ms\":%.3f,\"matched_ms\":%.3f,\"recent_rms\":%.6f,\"recent_clips\":%llu}",
+    fprintf(f,"{\"samples\":%llu,\"clips\":%llu,\"rms\":%.6f,\"frames\":%llu,\"rejects\":%llu,\"windows\":%llu,\"max_decode_ms\":%.3f,\"last_decode_ms\":%.3f,\"carrier_offset_hz\":%.4f,\"messages\":%d,\"sample_rate_hz\":2500000,\"decimated_rate_hz\":500000,\"hop_samples\":143360,\"eof\":%s,\"stopped\":%s,\"loss_measured\":false,\"input_error\":%s,\"uptime_ms\":%.3f,\"fft_ms\":%.3f,\"carrier_ms\":%.3f,\"matched_ms\":%.3f,\"recent_rms\":%.6f,\"recent_clips\":%llu",
         (unsigned long long)samples,(unsigned long long)clips,samples?sqrt((sumsq+(double)pending_energy)/samples):0,
         (unsigned long long)frames,(unsigned long long)rejects,(unsigned long long)windows,max_decode_ms,last_decode_ms,last_cfo,message_count,eof?"true":"false",stopping?"true":"false",input_error?"true":"false",now_ms()-started_ms,last_fft_ms,last_carrier_ms,last_matched_ms,recent_rms,(unsigned long long)recent_clips);
+    lock_queue();
+    fprintf(f,",\"acquired_samples\":%llu,\"queue_samples\":%llu,\"queue_capacity_samples\":%u,\"queue_high_water_samples\":%u,\"queue_backpressure_events\":%llu,\"read_ms_total\":%.3f,\"backpressure_ms_total\":%.3f",
+        (unsigned long long)(acquired_bytes/4),(unsigned long long)(queue_bytes/4),
+        QUEUE_BLOCKS*BLOCK_BYTES/4,queue_high*BLOCK_BYTES/4,(unsigned long long)backpressure_events,read_ms,backpressure_ms);
+    unlock_queue();
+    fprintf(f,",\"consumer_wait_ms_total\":%.3f,\"frontend_ms_total\":%.3f,\"decode_ms_total\":%.3f,\"fft_ms_total\":%.3f,\"carrier_ms_total\":%.3f,\"matched_ms_total\":%.3f,\"publish_ms_total\":%.3f,\"cpu_ms_total\":%.3f}",
+        consumer_wait_ms,frontend_ms,decode_ms,fft_total_ms,carrier_total_ms,matched_total_ms,publish_ms,cpu_ms());
 }
 static void publish(int eof,int dirty) {
-    char path[4096],temp[4096]; FILE *f; int n;
+    char path[4096],temp[4096]; FILE *f; int n;double mark=now_ms();
     f=atomic_open(".status.json",path,temp); if(f) {status_json(f,eof); fputc('\n',f);atomic_close(f,path,temp);}
     if(dirty) {f=atomic_open(".messages.json",path,temp); if(f) {fputs("[",f);for(n=0;n<message_count;n++) {if(n) fputc(',',f);message_json(f,&messages[n]);} fputs("]\n",f);atomic_close(f,path,temp);}}
     if(stdio_mode) {fputs("{\"type\":\"status\",\"status\":",stdout);status_json(stdout,eof);fputs("}\n",stdout);fflush(stdout);}
+    publish_ms+=now_ms()-mark;
 }
 static int accept_frame(const Frame *f,uint64_t base,double cfo) {
     int n; Message m;
@@ -237,6 +332,7 @@ static void decode(int count,uint64_t base) {
         if(trial.count>best.count||(trial.count==best.count&&(trial.complete>best.complete||(trial.complete==best.complete&&trial.eye>best.eye)))) best=trial;}}
     for(n=0;n<best.count;n++) dirty|=accept_frame(&best.f[n],base,last_cfo);
     rejects+=best.rejects; windows++;last_decode_ms=now_ms()-started;if(last_decode_ms>max_decode_ms)max_decode_ms=last_decode_ms;
+    decode_ms+=last_decode_ms;fft_total_ms+=last_fft_ms;carrier_total_ms+=last_carrier_ms;matched_total_ms+=last_matched_ms;
     publish(0,dirty);
 }
 static size_t prepare_input(const unsigned char *input,size_t count,int *fatal) {
@@ -276,17 +372,30 @@ static size_t prepare_input(const unsigned char *input,size_t count,int *fatal) 
 }
 int main(int argc,char **argv) {
     unsigned char input[65536+4];size_t pending=0,nread,n,valid;int pos=0,decim_phase=0,filled=0,fatal=0;uint64_t base=0;
-    if(argc<2||argc>3||(argc==3&&strcmp(argv[2],"--stdio"))) {fprintf(stderr,"usage: stream_rx <output-prefix> [--stdio]\nstdin: S12 sign-extended int16 LE IQ at 2500000 complex samples/s\n");return 2;}
-    prefix=argv[1];stdio_mode=argc==3;
+    int a;
+    if(argc<2||argc>4) {fprintf(stderr,"usage: stream_rx <output-prefix> [--stdio] [--live]\n");return 2;}
+    prefix=argv[1];for(a=2;a<argc;a++) {
+        if(!strcmp(argv[a],"--stdio"))stdio_mode=1;
+        else if(!strcmp(argv[a],"--live"))live_mode=1;
+        else return 2;
+    }
 #ifdef _WIN32
+    InitializeCriticalSection(&queue_mutex);InitializeConditionVariable(&queue_cond);
     _setmode(_fileno(stdin),_O_BINARY);
     signal(SIGTERM,stop);signal(SIGINT,stop);
 #else
     {struct sigaction sa;memset(&sa,0,sizeof(sa));sa.sa_handler=stop;sigaction(SIGTERM,&sa,NULL);sigaction(SIGINT,&sa,NULL);}
 #endif
     started_ms=now_ms();init();publish(0,1);
+#ifdef _WIN32
+    reader_thread=CreateThread(NULL,0,read_input,NULL,0,NULL);
+    if(!reader_thread)return 1;
+#else
+    if(pthread_create(&reader_thread,NULL,read_input,NULL))return 1;
+#endif
     while(!stopping&&!output_failed) {
-        nread=fread(input+pending,1,65536-pending,stdin);nread+=pending;
+        double mark;
+        nread=take_input(input+pending);if(!nread)break;nread+=pending;mark=now_ms();
         valid=prepare_input(input,nread/4,&fatal);
         for(n=0;n<valid;n++) {
             C z=mixed_input[n];
@@ -311,17 +420,22 @@ int main(int argc,char **argv) {
                 }
 #endif
                 window[filled].r=r;window[filled++].i=i;decimated++;
-                if(filled==WIN) {decode(filled,base);memmove(window,window+HOP,KEEP*sizeof(C));filled=KEEP;base+=HOP;}
+                if(filled==WIN) {frontend_ms+=now_ms()-mark;decode(filled,base);mark=now_ms();memmove(window,window+HOP,KEEP*sizeof(C));filled=KEEP;base+=HOP;}
             }
         }
-        if(fatal)break;
+        frontend_ms+=now_ms()-mark;if(fatal)break;
         pending=nread-valid*4;memmove(input,input+valid*4,pending);
-        if(feof(stdin)||ferror(stdin))break;
     }
-    if(!stopping&&ferror(stdin)) {perror("stream_rx: stdin");fatal=1;}
+    lock_queue();if(!stopping&&reader_error)fatal=1;unlock_queue();
     if(!stopping&&!fatal&&pending) {fprintf(stderr,"stream_rx: truncated IQ group (%u bytes)\n",(unsigned)pending);fatal=1;}
     input_error=fatal;
     if(!fatal&&filled>=SPS*48&&decimated>base+(windows?KEEP:0)) decode(filled,base);
     publish(!stopping&&!fatal&&!output_failed,0);
-    return fatal||output_failed?1:0;
+    /* All atomic output files are closed. A producer can still be blocked in
+       fread holding stdin's FILE lock; libc exit would try to lock it again.
+       Flush only our output streams, then terminate the whole process. The
+       session owner separately stops the upstream IIO reader. */
+    if(fflush(stdout))output_failed=1;
+    if(fflush(stderr))output_failed=1;
+    _Exit(fatal||output_failed?1:0);
 }
