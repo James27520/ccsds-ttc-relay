@@ -161,7 +161,7 @@ class ReviewDataTests(unittest.TestCase):
         duplicate = dict(PORTS[0], port='DUPLICATE')
         choices = device_choices(PORTS+[duplicate], ALIASES)
         self.assertNotIn('终端1板卡（上次识别） · COM_A', choices)
-        self.assertEqual(choices['未识别 USB 串口 · COM_A']['role'], None)
+        self.assertEqual(choices['未识别 USB 串口 · COM_A · 序号 sender-unique']['role'], None)
 
     def test_text_limit_is_utf8_bytes(self):
         self.assertEqual(text_bytes('你好'), 6)

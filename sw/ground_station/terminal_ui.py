@@ -180,7 +180,7 @@ class TerminalReview(StationReview):
         self.history_card = card(self.body, '通信记录', padding=12)
         self.history_card.edge.grid(row=4, column=0, columnspan=2, sticky='nsew')
         self.history = TrafficHistory(self.history_card, self, columns=('time', 'id', 'content', 'status'),
-            displaycolumns=('time', 'status', 'content', 'id'), show='headings', style='V2.Treeview', height=1)
+            displaycolumns=('time', 'status', 'content', 'id'), show='headings', style='V2.Treeview', height=2)
         for key, title, width in (('time','时间',80), ('id','消息编号',140), ('content','文本内容',360), ('status','方向 / 状态',240)):
             self.history.heading(key, text=title)
             self.history.column(key, width=width, minwidth=60, stretch=key=='content')

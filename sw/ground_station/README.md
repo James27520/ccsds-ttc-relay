@@ -1,6 +1,8 @@
 # NTN 验证地面站
 
-## 当前三窗口入口与验证范围
+## 当前入口与验证范围
+
+双电脑使用[部署与操作说明](../../docs/two-computer-guide.md)。首次运行根目录`setup_station.bat`；电脑1用`start_terminal1.bat`，电脑2用`start_terminal2.bat`，各只打开一个双向通信窗口。电脑1点“测控 →”进入测控，不另开第二套进程。`check_station.bat`只检查环境和USB枚举。
 
 同日晚更新：[测控与文本收发提速](../../docs/validation/20261101_control_latency.md)减少重复设备枚举和程序部署，补齐仅在过期后出现的转发提示；不修改四种遥控操作的含义。
 
@@ -8,7 +10,7 @@
 
 当前第二版入口已接入统一终端后台：每块本地终端板卡只有一个工作线程和一个串口owner，终端1通信与测控页面订阅同一个后台。默认启动仍是离线界面审阅，不连接设备、不发射。**10月31日晚已修正本机终端角色标签，通过实际GUI双向文本、真实测控及测控期间两条新文本按序自动发送和对端实收。USB长期稳定性、SD启动CRC及掉电自启动仍待解决，详见[最新验收范围](../../docs/unified-terminal-validation.md#gui收发恢复与角色核对)。**
 
-实板操作请双击仓库根目录的 [start_station_v2.bat](../../start_station_v2.bat)。[review_ui_v2.bat](../../review_ui_v2.bat) 是离线布局预览，标题带“离线预览”，不能连接设备；对应命令为 `python -m sw.ground_station.ui_v2 --all --preview`。三个页面的职责如下：
+实板操作使用上述两个终端入口；[start_station_v2.bat](../../start_station_v2.bat)现为选择菜单，选3才打开单电脑三页面。[review_ui_v2.bat](../../review_ui_v2.bat)是离线布局预览，标题带“离线预览”，不能连接设备；对应命令为`python -m sw.ground_station.ui_v2 --all --preview`。三个页面的职责如下：
 
 | 页面 | 职责 |
 | --- | --- |
@@ -28,12 +30,12 @@
 
 | 入口 | 打开的窗口 |
 | --- | --- |
-| [start_sender_v2.bat](../../start_sender_v2.bat) | 终端1双向通信，可打开测控页 |
-| [start_receiver_v2.bat](../../start_receiver_v2.bat) | 终端2双向通信 |
-| [start_station_v2.bat](../../start_station_v2.bat) | 本机三个页面 |
+| [start_terminal1.bat](../../start_terminal1.bat) | 电脑1：终端1双向通信，可打开测控页；旧start_sender_v2名称兼容 |
+| [start_terminal2.bat](../../start_terminal2.bat) | 电脑2：仅终端2双向通信；旧start_receiver_v2名称兼容 |
+| [start_station_v2.bat](../../start_station_v2.bat) | 选择菜单，选3打开本机三个页面 |
 | [start_control.bat](../../start_control.bat) | 测控页及终端1通信连接入口 |
 
-命令行可使用 `--all --online-business --online-control`。单独运行 `--role control --online-control` 也会自动打开具备连接能力的终端1通信页，在该页连接板卡后测控页继承状态；无须先断开通信再连接测控。`--online-business` 启用通信页面；未带在线参数始终是离线审阅。
+命令行可使用`python -m sw.ground_station.ui_v2 --computer 1`或`--computer 2`启动对应在线工作区；加`--preview`只预览，不连接设备。传统`--all --online-business --online-control`保留三窗口台架方式。单独运行`--role control --online-control`也会自动打开具备连接能力的终端1通信页；双电脑正常操作应直接在终端1页打开测控。传统`--role`/`--all`没有在线参数时仍为离线审阅。
 
 1. 保持固定六线接线，并按配套固件完成远端转发准备。正向为终端1 TX1A → LDSDR RX1/TX1 → 终端2 RX1A；反向为终端2 TX1A → LDSDR RX2/TX2 → 终端1 RX2A。测控上行为终端1 TX2A/JP3 → 遥控板ADC1/J5，下行为遥控板DAC1/J6 → 终端1 RX1A/JP2；遥控板与LDSDR以太网直连。见[六线表与历史验证](../../docs/six-line-validation.md#接线与运行方式)。本地连接成功不表示远端已经开启转发，业务页不代做远端准备。
 2. 两个终端分别输入约定的本机发送／接收中心，选择自己的本地板卡并连接。连接核验身份、配置本地业务频率并启动板端常驻RX进程，无须点击“开始接收”。连接后改频须点击“应用本机频率”，等待回读完成；未应用的草稿不能用于发送。每个终端只打开自身串口，不打开遥控板或LDSDR管理串口。发送板USB序号不唯一时绑定本次USB、启动编号和IIO映射，不把COM标签当作永久身份；连接和运行中均核验会话。
@@ -90,25 +92,28 @@ USB掉线、身份变化、进程被替换、削顶及采样格式异常仍需�
 
 ## 环境与启动
 
-需要 Python 3.10 或更高版本、Tkinter、NumPy 和 pyserial；运行桌面程序不需要 Vivado。Windows Python 安装应包含 Tcl/Tk。先在仓库根目录执行：
+双电脑部署使用64位Python 3.11或更高版本（推荐3.13），包含Tcl/Tk；运行桌面程序不需要Vivado。优先双击根目录`setup_station.bat`。手动安装的等价命令为：
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r sw/ground_station/requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r sw/ground_station/requirements-windows.txt
+.\.venv\Scripts\python.exe -m sw.ground_station.station_environment
 ```
 
-在仓库根目录启动两个独立窗口：
+在各自电脑的仓库根目录选择对应入口，不在电脑2启动终端1：
 
 ```powershell
-.\.venv\Scripts\python.exe -m sw.ground_station --role sender
-.\.venv\Scripts\python.exe -m sw.ground_station --role receiver
+.\.venv\Scripts\python.exe -m sw.ground_station.ui_v2 --computer 1
+.\.venv\Scripts\python.exe -m sw.ground_station.ui_v2 --computer 2
 ```
 
-也可分别双击根目录的 [start_sender.bat](../../start_sender.bat) 和 [start_receiver.bat](../../start_receiver.bat)。脚本会把工作目录切换到自身所在的仓库根目录，支持路径中含中文和空格；优先使用仓库 `.venv`，不存在时使用 PATH 中的 `python`。启动失败时保留错误提示。脚本不会安装依赖、自动连接设备或自动发送文本。
+也可直接双击[start_terminal1.bat](../../start_terminal1.bat)和[start_terminal2.bat](../../start_terminal2.bat)。启动脚本定位自身仓库目录并检查本机`.venv`，缺依赖时提示先安装，不自动下载、连接设备或发射。`start_sender.bat`和`start_receiver.bat`是第一版历史工具，不用于这次双电脑联调。
 
-若使用其他虚拟环境，可先激活环境再直接运行模块命令。两台电脑分别安装依赖并保留完整仓库；接收电脑不需要启动发送进程。
+若使用其他虚拟环境，可先激活环境、运行环境检查，再直接运行上述模块命令。两台电脑分别安装依赖并保留完整仓库；电脑2的一个终端窗口已包含发送与接收，不另启动单向发送程序。
 
-## 当前接线与工作点
+## 历史第一版台架接口与工作点
+
+下面保留早期工具的接线范围。当前双电脑使用[六线接法](../../docs/two-computer-guide.md#原六根sma保持不变)，不要按下面的阶段性表格减少或改动连接。
 
 | 功能 | 当前已登记接口 | 本阶段用途 |
 | --- | --- | --- |

@@ -166,6 +166,8 @@ def device_choices(ports, aliases):
             continue
         prefix = {'sender': '终端1板卡（上次识别）', 'receiver': '终端2板卡（上次识别）'}.get(role)
         name = f'{prefix or "未识别 USB 串口"} · {port["port"]}'
+        if not prefix and port.get('serial'):
+            name += ' · 序号 '+str(port['serial'])
         devices[name] = dict(port, role=role)
     return dict(sorted(devices.items(), key=lambda item: (item[1].get('role') not in ('sender', 'receiver'), item[0])))
 

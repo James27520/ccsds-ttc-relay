@@ -2054,17 +2054,25 @@ def main(argv=None):
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--all', action='store_true', help='打开三个审阅窗口')
     group.add_argument('--role', choices=tuple(ROLES))
+    group.add_argument('--computer', choices=('1', '2'), help='双电脑入口：1为终端1（可打开测控），2仅终端2')
     parser.add_argument('--online-control', action='store_true', help='启用测控及终端1连接入口；与终端1通信共享设备后台')
     parser.add_argument('--online-business', action='store_true', help='启用本地双向文本；测控共享终端1连接并自动恢复接收')
     parser.add_argument('--preview', action='store_true', help='明确使用离线预览，不连接设备')
     args = parser.parse_args(argv)
     if args.preview and (args.online_control or args.online_business):
         parser.error('--preview 不能与在线参数同时使用')
+    if args.computer == '2' and args.online_control:
+        parser.error('电脑2入口不提供测控；请在电脑1操作')
+    if args.computer and not args.preview:
+        args.online_business = True
+        args.online_control = args.computer == '1'
     root = tk.Tk()
     root.withdraw()
     root.tk.call('tk', 'scaling', 1.33)
     session = ReviewSession(root, online_control=args.online_control, online_business=args.online_business)
-    for role in ROLES if args.all else (args.role,):
+    roles = tuple(ROLES) if args.all else (
+        ('sender' if args.computer == '1' else 'receiver',) if args.computer else (args.role,))
+    for role in roles:
         session.show(role)
     root.mainloop()
 
