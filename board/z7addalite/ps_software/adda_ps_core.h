@@ -12,7 +12,7 @@ enum aps_origin { APS_ADC_NORMAL=1, APS_ADC_TEST=2, APS_SYNTHETIC=3, APS_UART_NE
 #define APS_RELAY_PORT 5005u
 #define APS_RETRY_MS 250u
 #define APS_MAX_SENDS 3u
-#define APS_TM1_MAX_BYTES 1024u /* includes CRLF and terminating NUL */
+#define APS_TM1_MAX_BYTES 1024u /* TM1/TM2, includes CRLF and terminating NUL */
 /* Records survive PC reconnects, not aps_init/reboot. Each stage owns its
  * origin/command, so a newer local decode cannot relabel an older ACK. */
 struct aps_command_record {
@@ -72,7 +72,11 @@ struct aps_state {
  * Read-only, serialized core caller required (same as all existing core APIs).
  * Returns line length excluding NUL, or AP_EARG/AP_ELENGTH; an undersized
  * nonempty buffer is cleared rather than returning a partial valid-looking TM1.
- * Future field/order/meaning changes require a new TM version. */
+ * If any valid record uses a kHz version, the prefix is TM2. For each d/s/a
+ * record, the rx_mhz/tx_mhz fields become *_version, *_rx_raw, *_tx_raw
+ * in that order. Raw fields follow the command version (legacy MHz/new kHz
+ * offset); TM2 retains binary negative ACK records. Other fields/CRC/order
+ * are unchanged and actual ACK rx_hz/tx_hz remain uint64 Hz. */
 int aps_telemetry_format(const struct aps_state *state, uint32_t uptime_ms,
                          char *output, size_t capacity);
 void aps_init(struct aps_state *state, const struct aps_io *io);

@@ -20,7 +20,7 @@ from .transport import Console
 from .rf_live import Cancelled, FS, SAMPLES
 from .tc_evidence import _integer, _json_finite
 from sw.tools.telemetry_downlink import decode_capture_windows, parse_frame
-from sw.tools.telecontrol_waveform import OPERATIONS
+from sw.tools.telecontrol_protocol import wire_fields
 
 
 def assess_rf_reply(requested, report, previous=None):
@@ -30,7 +30,9 @@ def assess_rf_reply(requested, report, previous=None):
     reply in a connection has no remote boot/uptime baseline. Later replies
     must advance events and uptime; a reboot requires a new connection.
     """
-    request_values(**requested)
+    requested = request_values(**requested)
+    version, rx_raw, tx_raw, air_seq = wire_fields(requested)
+    exact_hz = bool(version & 0x80)
     _json_finite(report)
     if type(report) is not dict or type(report.get('frames')) is not list or not report['frames']:
         raise TimeoutError('没有收到有效射频回报，执行结果未知')
@@ -42,14 +44,15 @@ def assess_rf_reply(requested, report, previous=None):
         payload = bytes.fromhex(frame['payload_hex'])
         snapshot = parse_frame(b'\xaa\xaa'+bytes([len(payload)])+payload+crc.to_bytes(2, 'big'))
         operation = requested.get('operation', 'frequency')
-        if (operation != 'frequency') != (snapshot['protocol'] == 'EXPERIMENTAL_ATM2'):
+        if (exact_hz or operation != 'frequency') != (snapshot['protocol'] == 'EXPERIMENTAL_ATM2'):
             raise ValueError('回报版本与操作不符')
         records = [snapshot[name] for name in ('decoded_record', 'send_record', 'ack_record')]
         for record in records:
             if record['valid'] != 1 or record['origin'] != 1:
                 raise ValueError('回报并非完整的 ADC_NORMAL 遥控事务')
-            if (any(record[key] != requested[key] for key in ('rx_mhz', 'tx_mhz', 'air_seq')) or
-                    record['command_version'] != OPERATIONS[operation]):
+            frequency_keys = ('rx_offset_khz', 'tx_offset_khz') if exact_hz else ('rx_mhz', 'tx_mhz')
+            if (record['command_version'] != version or record['air_seq'] != air_seq or
+                    tuple(record.get(key) for key in frequency_keys) != (rx_raw, tx_raw)):
                 raise ValueError('射频回报与本次指令不符，不能标为成功')
         decoded, sent, ack = records
         if not (0 < decoded['event'] < sent['event'] < ack['event'] == snapshot['events']):
@@ -65,7 +68,8 @@ def assess_rf_reply(requested, report, previous=None):
         if not ack['rc']:
             if operation in ('frequency', 'enable'):
                 for axis in ('rx', 'tx'):
-                    if abs(ack[axis+'_hz']-requested[axis+'_mhz']*1_000_000) > 10_000:
+                    target = requested[axis+'_hz'] if exact_hz else requested[axis+'_mhz']*1_000_000
+                    if abs(ack[axis+'_hz']-target) > (10 if exact_hz else 10_000):
                         raise ValueError('返回频率与请求不符')
             if operation != 'frequency':
                 radio = snapshot['relay']
@@ -98,6 +102,8 @@ def assess_rf_reply(requested, report, previous=None):
 
 class AutonomousRadio(CommandSource):
     """Fixed TC transmitter plus bounded local RX, sharing one console owner."""
+    tx_channel = 2  # Six-wire TC uplink; TX1A remains wired to LDSDR RX1.
+
     def __init__(self, *args, **kwargs):
         self.capture_directory = None
         self.rx_lo = None
@@ -122,7 +128,13 @@ class AutonomousRadio(CommandSource):
                             ('in_voltage0_rf_port_select', 'A_BALANCED'),
                             ('out_altvoltage0_RX_LO_frequency', 90000000)]:
             check_cancel()
-            got = Console.write(self, self.phy+'/'+name, value, 10 if 'frequency' in name else 0)
+            if (name in ('in_voltage_sampling_frequency', 'in_voltage_rf_bandwidth') and
+                    self.read(self.phy+'/'+name) == str(value)):
+                got = str(value)
+                self.record(kind='rf_configuration_unchanged', attribute=name,
+                            requested=value, readback=got)
+            else:
+                got = Console.write(self, self.phy+'/'+name, value, 10 if 'frequency' in name else 0)
             if name == 'out_altvoltage0_RX_LO_frequency':
                 self.rx_lo = int(got)
         for channel, index in [('voltage0', '0'), ('voltage1', '1')]:

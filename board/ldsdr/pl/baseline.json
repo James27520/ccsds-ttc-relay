@@ -1,0 +1,10 @@
+{
+  "sources_sha256": {
+    "relay_nco.v": "f8e09c6115e6e2798572247a9b61e7ce1fc9de25b827c1d81d2ce8d880170440",
+    "relay_sin_rom.v": "2b87a3442c0f4def800e1300ad270ff80300e13c9270e0d45849f9771ccfab1e",
+    "relay_cmix.v": "e1a86250c85f1e7d13db406e4fb0aeda02022932d3a92a564299c60e4b87710b",
+    "relay_path.v": "4f014ae390f5e297ebd9150234e4c024702f8bf496e8cabc29252c683a8b8f1c"
+  },
+  "candidate_nco_sha256": "d63425940cdfe2ff4c4505f2a07cf930abad05ea3c73e2dcc7d9e4f741b83477",
+  "provenance": "LDSDR external hardware cache, matching IoT-NTN-FPGA-Relay RTL; no assertion of current board bitstream equivalence"
+}

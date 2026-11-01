@@ -1,0 +1,277 @@
+{
+  "date": "2026-11-01",
+  "status": "stopped_at_user_request",
+  "full_hardware_acceptance": false,
+  "implemented": [
+    "ADDA continuous command listener",
+    "owned local RX preflight and recovery"
+  ],
+  "host_tests": {
+    "passed": true,
+    "count": 69
+  },
+  "native_service_tests": {
+    "passed": true,
+    "mock_only": true,
+    "capture_controller_assertions": 11216
+  },
+  "arm_build": {
+    "passed": true,
+    "elf_sha256": "2d17ba3faef76afd4fd4235f1e69e21817549eaf6c3ede6bbf7978cb7b7f950a",
+    "ram_only": true
+  },
+  "hardware": {
+    "owned_rx_expiry_recovered": true,
+    "old_transmit_resumed": false,
+    "rf_status": {
+      "passed": true,
+      "requested": {
+        "rx_hz": 1979500000,
+        "tx_hz": 2169500000,
+        "air_seq": 81,
+        "operation": "status",
+        "encoding": "n256_khz_v1"
+      },
+      "source": {
+        "port": "COM19",
+        "usb_vid": 1027,
+        "usb_pid": 24592,
+        "usb_serial": "6",
+        "usb_location": "",
+        "hwid": "USB VID:PID=0403:6010 SER=6",
+        "linux_boot_id": "b230cd6d-c6ad-4e62-b61e-674a0048b80a",
+        "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+        "iio_serial": "",
+        "identity_scope": "current boot and USB; one local terminal owner",
+        "physical_role": "local TX1A business / TX2A TC / selected business RX"
+      },
+      "waveform": {
+        "source": "OFFLINE_REFERENCE",
+        "mode": "cmd",
+        "operation": "status",
+        "sample_rate_hz": 2500000,
+        "symbol_rate_sym_s": 100000,
+        "srrc_beta": 0.35,
+        "srrc_span_symbols": 8,
+        "complex_offset_hz": 500000,
+        "nominal_carrier": {
+          "lo_hz": 100000000,
+          "center_hz": 100500000,
+          "note": "Nominal convention only; board support is not established."
+        },
+        "amplitude": 0.1,
+        "amplitude_units": "normalized complex peak; int16 scale 32767; not RF power",
+        "encoding": "n256_khz_v1",
+        "rx_offset_khz": 0,
+        "tx_offset_khz": 0,
+        "rx_hz": 1979500000,
+        "tx_hz": 2169500000,
+        "requested_rx_hz": 1979500000,
+        "requested_tx_hz": 2169500000,
+        "command_version": 163,
+        "seq": 81,
+        "body_hex": "a300000000516b0c",
+        "frame_hex": "1acffc1d6206c67db9bf9b82852800c6f1c7a5b8",
+        "frame_bits": 160,
+        "complex_samples": 4000,
+        "byte_count": 16000,
+        "block_duration_seconds": 0.0016,
+        "dtype": "signed int16 little-endian",
+        "channel_order": "I0,Q0,I1,Q1,...",
+        "iq_file": "iq_s16le.bin",
+        "sha256": "6a9e9d2206044d4bdda6935b59c31685743c89a352d303f0b27f4c1e3ffa5858",
+        "shaping": "three repeated frames, center frame retained"
+      },
+      "uplink_started_at": 1793464163.7676914,
+      "uplink_stopped_at": 1793464183.1265984,
+      "acquisition": {
+        "started_at": 1793464186.070613,
+        "finished_at": 1793464186.3264716,
+        "sample_rate_hz": 2500000,
+        "samples": 262144,
+        "receiver_lo_hz": 90000000
+      },
+      "matched": true,
+      "ack": {
+        "rx_hz": 1999499998,
+        "tx_hz": 2189751000,
+        "udp_seq": 66
+      },
+      "frame_count": 8,
+      "snapshot": {
+        "protocol": "EXPERIMENTAL_ATM2",
+        "ccsds": false,
+        "sequence": 0,
+        "uptime_ms": 306453,
+        "events": 133,
+        "decoded": 1,
+        "applied": 2,
+        "failures": 64,
+        "network": 1,
+        "armed": 0,
+        "pending": 0,
+        "spi_valid": 1,
+        "boot_identity": null,
+        "sequence_scope": "since PS initialization; may repeat after reboot",
+        "decoded_record": {
+          "valid": true,
+          "event": 131,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 81,
+          "encoding": "n256_khz_v1",
+          "rx_offset_khz": 0,
+          "tx_offset_khz": 0,
+          "rx_hz": 1979500000,
+          "tx_hz": 2169500000,
+          "requested_rx_hz": 1979500000,
+          "requested_tx_hz": 2169500000,
+          "command_version": 163
+        },
+        "send_record": {
+          "valid": true,
+          "event": 132,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 81,
+          "encoding": "n256_khz_v1",
+          "rx_offset_khz": 0,
+          "tx_offset_khz": 0,
+          "rx_hz": 1979500000,
+          "tx_hz": 2169500000,
+          "requested_rx_hz": 1979500000,
+          "requested_tx_hz": 2169500000,
+          "command_version": 163,
+          "udp_seq": 66,
+          "count": 1,
+          "rc": 0,
+          "evidence": "local UDP transport acceptance only"
+        },
+        "ack_record": {
+          "valid": true,
+          "event": 133,
+          "origin": 1,
+          "origin_name": "ADC_NORMAL",
+          "air_seq": 81,
+          "encoding": "n256_khz_v1",
+          "rx_offset_khz": 0,
+          "tx_offset_khz": 0,
+          "rx_hz": 1999499998,
+          "tx_hz": 2189751000,
+          "requested_rx_hz": 1979500000,
+          "requested_tx_hz": 2169500000,
+          "command_version": 163,
+          "udp_seq": 66,
+          "rc": 0,
+          "evidence": "matched remote ACK; not independent SPI readback"
+        },
+        "relay": {
+          "mode": 2,
+          "rx_gain_db": [
+            0,
+            0
+          ],
+          "tx_attenuation_mdb": [
+            89000,
+            89000
+          ],
+          "flags": 5,
+          "valid": true,
+          "lease_active": false,
+          "lease_expired": true,
+          "mute_fault": false,
+          "remaining_ms": 0,
+          "uptime_ms": 36133409
+        }
+      },
+      "evidence_source": "actual_iq_crc_checked",
+      "frequency_source": "relay_ack_in_rf_return",
+      "independent_spi": false,
+      "remote_rc": 0,
+      "relay": {
+        "mode": 2,
+        "rx_gain_db": [
+          0,
+          0
+        ],
+        "tx_attenuation_mdb": [
+          89000,
+          89000
+        ],
+        "flags": 5,
+        "valid": true,
+        "lease_active": false,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 0,
+        "uptime_ms": 36133409,
+        "remaining_lower_bound_ms": 0,
+        "snapshot_received_at": 1793464200.3418515
+      },
+      "iq_path": "D:\\RelayTools\\work\\standby_20261101\\hardware\\sender\\control\\command_0001\\reply.bin",
+      "report_path": "D:\\RelayTools\\work\\standby_20261101\\hardware\\sender\\control\\command_0001\\reply.json",
+      "elapsed_seconds": 66.5677144999936
+    },
+    "cancelled_cleanup": {
+      "sender": {
+        "rx": "0",
+        "tx": "0",
+        "tx_off": "1"
+      },
+      "receiver": {
+        "rx": "0",
+        "tx": "0",
+        "tx_off": "1"
+      }
+    }
+  },
+  "not_completed": [
+    "RF response after more than 600 seconds idle",
+    "business text after recovery",
+    "this round enable/stop"
+  ],
+  "limits": [
+    "5-minute relay output lease retained",
+    "RAM only; cold boot not fixed",
+    "UDP sequence resync after one-board reboot remains maintenance"
+  ],
+  "evidence_root": "D:\\RelayTools\\work\\standby_20261101",
+  "artifacts": [
+    {
+      "path": "host_recovery.txt",
+      "sha256": "1963887911fe3fc3e6c6c6c71cd868af00751ac0161e353af6721e2a9139e166"
+    },
+    {
+      "path": "service_tests.txt",
+      "sha256": "db2e9ee66f40960453deb44648194d5e51cf95606311625b1520ca266142fb4a"
+    },
+    {
+      "path": "adda_restore_002401\\result.json",
+      "sha256": "52b1f76464c7d4d5d1e4b0b64f3e7c2567deabc81497366b0728a41cd69814de"
+    },
+    {
+      "path": "sequence_recovery.json",
+      "sha256": "7c0c78f04a83d44bde5911b51f7ebdba98c1064eaf0360ebdb3de7103548f63d"
+    },
+    {
+      "path": "sequence_recovery_retry.json",
+      "sha256": "40803c270285244fb4cad86c7c981c5ec4879fab8878db1fef6d712970bce327"
+    },
+    {
+      "path": "hardware\\sender\\events.jsonl",
+      "sha256": "5ec0974273b1033049e0bb857a2c5df220f880f2b09e6e27c2141df33dca122c"
+    },
+    {
+      "path": "hardware\\receiver\\events.jsonl",
+      "sha256": "39f39b20be51d19dff5dc4de8395e781e18e9e22cd55bc77fdf0361125d6e203"
+    },
+    {
+      "path": "hardware.txt",
+      "sha256": "559d837b7a21979d4487b7ecdabe0dd684046d6123817b429c33db786cf0b9db"
+    },
+    {
+      "path": "hardware\\cancel_cleanup.json",
+      "sha256": "6032f24b766e28e611395469f7171e5083663ef3358970ef03868296dc505b44"
+    }
+  ]
+}

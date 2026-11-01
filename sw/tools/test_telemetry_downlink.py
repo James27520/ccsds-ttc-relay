@@ -1,6 +1,7 @@
 """Synthetic/offline protocol tests; never radio acceptance evidence."""
 import struct
 import unittest
+from unittest.mock import patch
 import numpy as np
 try:
     from . import telemetry_downlink as tm
@@ -24,6 +25,30 @@ def frame():
 
 
 class TelemetryTests(unittest.TestCase):
+    def test_nontelemetry_crc_candidate_does_not_veto_valid_telemetry(self):
+        def candidate(data, sample):
+            return dict(payload_hex=data.hex(), crc16=tm.phy.crc16(data),
+                        crc_valid=True, first_symbol_sample=sample,
+                        sample_end_exclusive=sample+100, carrier_offset_hz=500000)
+        good = candidate(payload(), 200)
+        unrelated = candidate(b'\xaa'*170, 1)
+        malformed = bytearray(payload()); malformed[4]=99
+        wrong_schema = candidate(bytes(malformed), 500)
+        raw = bytes(65536*4)
+        with patch.object(tm.phy, 'decode', return_value=dict(
+                frames=[unrelated,good,wrong_schema], carrier_offset_hz=500000,rms_codes=20)):
+            result=tm.decode_capture_windows(raw)
+        self.assertEqual(result['valid_telemetry_count'],1)
+        self.assertEqual(result['valid_frame_count'],1)
+        self.assertEqual(result['frames'][0]['payload_hex'],payload().hex())
+        self.assertEqual(result['rejected_frame_count'],2)
+        self.assertEqual([f['payload_hex'] for f in result['rejected_frames']],
+                         [unrelated['payload_hex'],wrong_schema['payload_hex']])
+        with patch.object(tm.phy, 'decode', return_value=dict(frames=[unrelated])):
+            result=tm.decode_capture(raw)
+        self.assertEqual(result['frames'],[])
+        self.assertEqual(result['valid_telemetry_count'],0)
+
     def test_three_independent_sources_and_exact_hz(self):
         value = tm.parse_frame(frame())
         self.assertEqual([value[k]['origin'] for k in ('decoded_record', 'send_record', 'ack_record')], [3, 1, 4])

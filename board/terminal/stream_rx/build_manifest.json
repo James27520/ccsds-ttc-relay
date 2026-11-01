@@ -1,0 +1,49 @@
+{
+  "source": "board/terminal/stream_rx/stream_rx.c",
+  "source_sha256": "b73f7afe2e8480e201640683e8551bb56990ccf1f71de6536113bc0bab853ea8",
+  "binary": "board/terminal/stream_rx/bin/stream_rx_armv7",
+  "binary_sha256": "1be62e06dd2469de5e385efd94106464f026f2131573c4c431264311b2153a61",
+  "binary_bytes": 53852,
+  "toolchain": {
+    "name": "Zig cc",
+    "version": "0.14.1",
+    "libc": "musl"
+  },
+  "flags": [
+    "-target",
+    "arm-linux-musleabihf",
+    "-mcpu=cortex_a9",
+    "-O3",
+    "-std=c99",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-static",
+    "-s",
+    "-lm"
+  ],
+  "elf": {
+    "class": "ELF32",
+    "endianness": "little",
+    "machine": "ARM",
+    "type": "ET_EXEC",
+    "flags": "0x5000400",
+    "static": true
+  },
+  "protocol": {
+    "name": "EXPERIMENTAL_TEXT_AAAA_LEN_UTF8_CRC16",
+    "maximum_payload_bytes": 49,
+    "application": "G1",
+    "sample_rate_hz": 2500000,
+    "symbol_rate_hz": 100000
+  },
+  "dsp": {
+    "decimation": 5,
+    "window_decimated_samples": 32768,
+    "hop_decimated_samples": 28672,
+    "overlap_decimated_samples": 4096,
+    "carrier_branch_decimation": 4,
+    "carrier_fft_length": 16384
+  },
+  "validation_note": "Host scalar IQ acceptance and real ARM RX throughput were checked independently; sample-loss absence is not established by raw counters."
+}

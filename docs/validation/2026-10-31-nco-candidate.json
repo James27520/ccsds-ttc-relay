@@ -1,0 +1,476 @@
+{
+  "date": "2026-10-31",
+  "passed": true,
+  "wiring_unchanged": true,
+  "scope": "volatile NCO axis candidate; real RF TC and two-direction text regression at 1999.5 -> 2189.5 MHz",
+  "load": {
+    "passed": true,
+    "ram_only": true,
+    "pins": {
+      "D:\\RelayTools\\work\\six_line_20261031\\relay_pl_candidate01\\zynq_dev_fmcomms3.runs\\impl_2\\ad9361_top.bit": "616ba7a26842350acf076564859fbab43c23f579bd60c786e8ec56eec01bb5ff",
+      "D:\\RelayTools\\work\\remote_relay_20261029\\ldsdr_relocated02\\relay_remote.elf": "fab74c01703e37b99d46e4e4251a28b1835742f07285b67f49c2c64530ba90af"
+    },
+    "time": 1793428017.094073,
+    "returncode": 0
+  },
+  "build": {
+    "tool": "Vivado 2026.1",
+    "part": "xc7z010clg400-1",
+    "bit_sha256": "616ba7a26842350acf076564859fbab43c23f579bd60c786e8ec56eec01bb5ff",
+    "source_changes": [
+      "relay_nco.v"
+    ],
+    "rtl_sha256": {
+      "ad9361_top.v": {
+        "baseline": "224ddebee94528eff131e9e601b811c8b4229298e9237500bd6bc5b9e3bc3275",
+        "candidate": "224ddebee94528eff131e9e601b811c8b4229298e9237500bd6bc5b9e3bc3275"
+      },
+      "relay_cdc.v": {
+        "baseline": "c139eec8d07c25a2ae494867bd9c8ec9bfa5263b5d31161b0414bef45d5bb02e",
+        "candidate": "c139eec8d07c25a2ae494867bd9c8ec9bfa5263b5d31161b0414bef45d5bb02e"
+      },
+      "relay_cmix.v": {
+        "baseline": "e1a86250c85f1e7d13db406e4fb0aeda02022932d3a92a564299c60e4b87710b",
+        "candidate": "e1a86250c85f1e7d13db406e4fb0aeda02022932d3a92a564299c60e4b87710b"
+      },
+      "relay_dq.v": {
+        "baseline": "2fb93ff7e547f41b33e984ad6754411d5b99b8407013fff46e74675c37c3d9b3",
+        "candidate": "2fb93ff7e547f41b33e984ad6754411d5b99b8407013fff46e74675c37c3d9b3"
+      },
+      "relay_nco.v": {
+        "baseline": "f8e09c6115e6e2798572247a9b61e7ce1fc9de25b827c1d81d2ce8d880170440",
+        "candidate": "d63425940cdfe2ff4c4505f2a07cf930abad05ea3c73e2dcc7d9e4f741b83477"
+      },
+      "relay_path.v": {
+        "baseline": "4f014ae390f5e297ebd9150234e4c024702f8bf496e8cabc29252c683a8b8f1c",
+        "candidate": "4f014ae390f5e297ebd9150234e4c024702f8bf496e8cabc29252c683a8b8f1c"
+      },
+      "relay_sin_rom.v": {
+        "baseline": "2b87a3442c0f4def800e1300ad270ff80300e13c9270e0d45849f9771ccfab1e",
+        "candidate": "2b87a3442c0f4def800e1300ad270ff80300e13c9270e0d45849f9771ccfab1e"
+      }
+    },
+    "wns_ns": 0.28,
+    "whs_ns": 0.019,
+    "tns_ns": 0,
+    "unconstrained_internal_endpoints": 0,
+    "configuration": {
+      "clock_period_ns": 8.138,
+      "optional_ila_removed": true,
+      "debug_constraint_lines_removed": 4,
+      "ip_upgrade": "2018.3 -> 2026.1 revisions"
+    },
+    "bd_contract": {
+      "address_map_equal": false,
+      "common_parameter_changes": {},
+      "removed_cells": [
+        "ila_0"
+      ],
+      "added_cells": [],
+      "ps_removed_parameters": [
+        "PCW_IRQ_F2P_MODE",
+        "PCW_S_AXI_HP0_DATA_WIDTH",
+        "PCW_S_AXI_HP1_DATA_WIDTH",
+        "PCW_S_AXI_HP2_DATA_WIDTH",
+        "PCW_S_AXI_HP3_DATA_WIDTH"
+      ],
+      "address_segments_equal": true,
+      "address_map_note": "Vivado removed derived range/width metadata; mapped segment remains unchanged"
+    },
+    "limitations": [
+      "7 input ports and 8 output ports lack delay constraints in inherited XDC",
+      "dedicated CDC report contains 497 CDC-1, 1 CDC-7, 96 CDC-13, 7 CDC-14 critical structural entries; not CDC signoff",
+      "positive WNS/WHS only cover the specified constraints; no release/cold boot signoff"
+    ],
+    "reports": {
+      "timing_summary.txt": "0ef45033190baa4229cd42a70394f3473492a8da879a69b2ef39057751efed86",
+      "drc.txt": "a3b371b705baac17ad544e928b73f0a2c2f8d3adaee333458513321da0ba287e",
+      "candidate_cdc.txt": "baaa9eff473c5b9201747484596b342b99dca7902062fcc5e5d7e52d9c33ebc8",
+      "candidate_clocks.txt": "5dce0cc8e8eb254e44d9c82b86b1a1121051603a7bbc85bd3000167e38f77623",
+      "candidate_io.txt": "a90a86dad9b0f51a2a21db79e23a4f4ec2e05a346705788b6e881e8d51b5a43a"
+    }
+  },
+  "simulation": {
+    "hardware_tested": false,
+    "baseline_sha256": {
+      "relay_nco.v": "f8e09c6115e6e2798572247a9b61e7ce1fc9de25b827c1d81d2ce8d880170440",
+      "relay_sin_rom.v": "2b87a3442c0f4def800e1300ad270ff80300e13c9270e0d45849f9771ccfab1e",
+      "relay_cmix.v": "e1a86250c85f1e7d13db406e4fb0aeda02022932d3a92a564299c60e4b87710b",
+      "relay_path.v": "4f014ae390f5e297ebd9150234e4c024702f8bf496e8cabc29252c683a8b8f1c"
+    },
+    "patch_sha256": "63bcfbd72a3f0233e27fd3f8ad34ea6bf44f2955bbd847d980eb6676b709f6f3",
+    "bench_sha256": "76ff3e29d3fb866eaac64c1ee8e16b16a5b4636b7b76363e105aa18780938f79",
+    "cases": {
+      "baseline": {
+        "result": "BASELINE_REPRODUCED checked=8192 clips=1024 cos=2047 sin=2",
+        "commands": [
+          [
+            "D:\\AMDDesignTools\\2026.1\\Vivado\\bin\\xvlog.bat",
+            "--sv",
+            "--define",
+            "BASELINE",
+            "C:\\Users\\Lu\\Desktop\\全国大学生嵌入式芯片与系统设计竞赛\\ccsds-ttc-relay\\board\\ldsdr\\pl\\tb_nco_axis.sv",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\baseline\\src\\relay_nco.v",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\baseline\\src\\relay_sin_rom.v",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\baseline\\src\\relay_cmix.v",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\baseline\\src\\relay_path.v"
+          ],
+          [
+            "D:\\AMDDesignTools\\2026.1\\Vivado\\bin\\xelab.bat",
+            "tb_nco_axis",
+            "-s",
+            "nco_test"
+          ],
+          [
+            "D:\\AMDDesignTools\\2026.1\\Vivado\\bin\\xsim.bat",
+            "nco_test",
+            "-runall"
+          ]
+        ]
+      },
+      "candidate": {
+        "result": "CANDIDATE_PASS checked=8192 clips=0",
+        "commands": [
+          [
+            "D:\\AMDDesignTools\\2026.1\\Vivado\\bin\\xvlog.bat",
+            "--sv",
+            "C:\\Users\\Lu\\Desktop\\全国大学生嵌入式芯片与系统设计竞赛\\ccsds-ttc-relay\\board\\ldsdr\\pl\\tb_nco_axis.sv",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\candidate\\src\\relay_nco.v",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\candidate\\src\\relay_sin_rom.v",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\candidate\\src\\relay_cmix.v",
+            "D:\\RelayTools\\work\\six_line_20261031\\nco_portable_verify\\candidate\\src\\relay_path.v"
+          ],
+          [
+            "D:\\AMDDesignTools\\2026.1\\Vivado\\bin\\xelab.bat",
+            "tb_nco_axis",
+            "-s",
+            "nco_test"
+          ],
+          [
+            "D:\\AMDDesignTools\\2026.1\\Vivado\\bin\\xsim.bat",
+            "nco_test",
+            "-runall"
+          ]
+        ]
+      }
+    },
+    "passed": true
+  },
+  "tune_probe": {
+    "source_tx_lo_hz": [
+      100000000,
+      1999000000,
+      100000000,
+      1999000000,
+      100000000
+    ],
+    "local_tx_lo_powerdown": 1,
+    "local_tx_attenuation_db": [
+      89,
+      89
+    ],
+    "source_dma": 0,
+    "local_calibration": "auto",
+    "relay_mode": 1,
+    "relay_rx_gain_db": 30,
+    "relay_tx_attenuation_db": 50,
+    "clip_deltas": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "evidence": "candidate_tune_probe/result.json"
+  },
+  "commands": [
+    {
+      "evidence": "candidate_frequency",
+      "request": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 32
+      },
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 21
+      },
+      "relay": null,
+      "crc_frames": 8,
+      "iq_sha256": "3181389d223091bf82658718587935ef7bcf35168e7d80d7b6df1884cef5cec7"
+    },
+    {
+      "evidence": "candidate_enable",
+      "request": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 33,
+        "operation": "enable"
+      },
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 22
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 3,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 299999,
+        "uptime_ms": 213444,
+        "remaining_lower_bound_ms": 224448,
+        "snapshot_received_at": 1793428279.9748168
+      },
+      "crc_frames": 8,
+      "iq_sha256": "68c82b8e164972b31da071f1d64390a14ebf455a014665ac622fcfbf36090665"
+    },
+    {
+      "evidence": "candidate_reverse_enable",
+      "request": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 34,
+        "operation": "enable"
+      },
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 23
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 3,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 299998,
+        "uptime_ms": 424333,
+        "remaining_lower_bound_ms": 224488,
+        "snapshot_received_at": 1793428490.7020047
+      },
+      "crc_frames": 7,
+      "iq_sha256": "6c23f68604f77ac3b6638f74600a1530e36d1a531fdcce2f6c6d4d412174e39b"
+    },
+    {
+      "evidence": "candidate_final_stop",
+      "request": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 35,
+        "operation": "stop"
+      },
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 24
+      },
+      "relay": {
+        "mode": 2,
+        "rx_gain_db": [
+          0,
+          0
+        ],
+        "tx_attenuation_mdb": [
+          89000,
+          89000
+        ],
+        "flags": 1,
+        "valid": true,
+        "lease_active": false,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 0,
+        "uptime_ms": 614474,
+        "remaining_lower_bound_ms": 0,
+        "snapshot_received_at": 1793428681.104352
+      },
+      "crc_frames": 8,
+      "iq_sha256": "daf8f5fe30a26aff2114017075506d5ef4c65bd351cdb399f262f7565dadb8ba"
+    }
+  ],
+  "business": [
+    {
+      "direction": "forward",
+      "evidence": "candidate_forward",
+      "captures": 13,
+      "crc_frames": 13,
+      "sample_clip_components": 0,
+      "text": "FWD 1999.5 e3f3addc",
+      "message_id": "80f95b7f:0000",
+      "all_phase_pl_clip_delta": 0,
+      "pl_clip_first": 303,
+      "pl_clip_last": 303
+    },
+    {
+      "direction": "reverse",
+      "evidence": "candidate_reverse",
+      "captures": 13,
+      "crc_frames": 18,
+      "sample_clip_components": 0,
+      "text": "REV 1999.5 07ca146b",
+      "message_id": "4b899a06:0000",
+      "all_phase_pl_clip_delta": 0,
+      "pl_clip_first": 303,
+      "pl_clip_last": 303
+    }
+  ],
+  "final_safe": {
+    "action": "audit",
+    "passed": true,
+    "time": 1793428693.949721,
+    "adda": {
+      "tm": {
+        "uptime_ms": 8285383,
+        "events": 73,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 25,
+        "applied": 24,
+        "failures": 0,
+        "d_valid": 1,
+        "d_event": 71,
+        "d_origin": 1,
+        "d_air_seq": 35,
+        "d_rx_mhz": 1999,
+        "d_tx_mhz": 2189,
+        "s_valid": 1,
+        "s_event": 72,
+        "s_origin": 1,
+        "s_air_seq": 35,
+        "s_rx_mhz": 1999,
+        "s_tx_mhz": 2189,
+        "s_udp_seq": 24,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 73,
+        "a_origin": 1,
+        "a_air_seq": 35,
+        "a_rx_mhz": 1999,
+        "a_tx_mhz": 2189,
+        "a_udp_seq": 24,
+        "a_rc": 0,
+        "a_rx_hz": 1998999998,
+        "a_tx_hz": 2189000000,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 24,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=1 remaining_ms=0 accepted=4 completed=4 failed=0 air_seq=35 udp_seq=24 reply_seq=23 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=4",
+        "CLI_RESULT rc=0"
+      ],
+      "status": [
+        "CONTROLLER auto=0 capture_state=7 capture_valid=0 consumed=0",
+        "STATUS network=0 armed=0 decoded=25 applied=24 pending=0 retries=1 failures=0 gain=0 att=89",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1998",
+        "txlo": "2189",
+        "fs": "30720000",
+        "in": "3314681924",
+        "out": "3314687996",
+        "clip": "303",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1998999998,
+        "relay_tx_hz_readback": 2189000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    "terminals": [
+      {
+        "identity": {
+          "port": "COM18",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "6",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=6",
+          "linux_boot_id": "4fd611a2-93cb-426b-94b8-3ad44d80c44c",
+          "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+          "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      },
+      {
+        "identity": {
+          "port": "COM17",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "000000000069B",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+          "linux_boot_id": "a2ddea72-31a9-4b00-bdc7-a22722539bbb",
+          "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+          "iio_serial": "",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      }
+    ]
+  },
+  "remaining": [
+    "Initial PL clip=303 after startup, retained without clearing; origin not yet isolated",
+    "Inherited I/O delay constraints and CDC structures require review before hardware release",
+    "Prototype RAM image only, no persistent boot image/cold-start signoff",
+    "No second physical PC migration or continuous link reliability measurement"
+  ]
+}

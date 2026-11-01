@@ -526,8 +526,13 @@ class RFTelemetryWindow:
             if not record["valid"]:
                 variable.set("未知 · 帧内此记录无效\n来源与频率：—")
                 continue
-            text = (f"来源：{record['origin_name']} ({record['origin']})\n事件 {record['event']} / 空口序号 {record['air_seq']}\n"
-                    f"RX {record['rx_mhz']} / TX {record['tx_mhz']} MHz")
+            if record.get('command_version') in (0xa2, 0xa3):
+                frequency = '本操作不携带调谐请求'
+            elif 'requested_rx_hz' in record:
+                frequency = f"RX {record['requested_rx_hz']/1e6:.6f} / TX {record['requested_tx_hz']/1e6:.6f} MHz"
+            else:
+                frequency = f"RX {record['rx_mhz']} / TX {record['tx_mhz']} MHz"
+            text = (f"来源：{record['origin_name']} ({record['origin']})\n事件 {record['event']} / 空口序号 {record['air_seq']}\n"+frequency)
             if key == "send_record":
                 text += f"\nUDP {record['udp_seq']} / 尝试 {record['count']} / rc {record['rc']}\n仅本地 UDP 发送记录"
             if key == "ack_record":

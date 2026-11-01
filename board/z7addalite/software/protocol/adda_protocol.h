@@ -26,10 +26,25 @@ enum ap_status {
 
 struct ap_command {
     uint8_t version;
+    /* Frozen uint16 wire layout. Legacy versions use MHz; 0x81/0xa1 use
+     * independent kHz offsets from AP_RX_BASE_HZ/AP_TX_BASE_HZ. 0xa2/0xa3
+     * require both fields zero. Names remain for source/ABI compatibility. */
     uint16_t rx_mhz;
     uint16_t tx_mhz;
     uint8_t seq;
 };
+
+#define AP_RX_BASE_HZ UINT64_C(1979500000)
+#define AP_TX_BASE_HZ UINT64_C(2169500000)
+#define AP_OFFSET_MIN_KHZ 100u
+#define AP_OFFSET_MAX_KHZ 29900u
+/* Recognized versions only: base operation 1, 0x21, 0x22, 0x23; otherwise 0.
+ * Hz helpers require a valid command, return 0 for invalid input. New stop /
+ * status map zero offsets to the bases; their ACKs never compare requested LO. */
+uint8_t ap_command_operation(const struct ap_command *command);
+int ap_command_validate(const struct ap_command *command);
+uint64_t ap_command_rx_hz(const struct ap_command *command);
+uint64_t ap_command_tx_hz(const struct ap_command *command);
 
 struct ap_frame_result {
     struct ap_command command;
@@ -99,7 +114,8 @@ void ap_transaction_init(struct ap_transaction *state, uint16_t first_transactio
 int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *command,
                            uint8_t rx_gain_db, uint8_t tx_att_db);
 /* Every non-success response leaves pending/applied state untouched. The caller
- * decides retry versus abort. tolerance_hz <=10000 matches legacy apply check. */
+ * decides retry versus abort. Legacy tolerance_hz <=10000; new frequency and
+ * enable commands require tolerance_hz <=10 to distinguish adjacent kHz. */
 int ap_transaction_ack(struct ap_transaction *state, const struct ap_ack *ack,
                         uint32_t tolerance_hz);
 int ap_transaction_control_ack(struct ap_transaction *,const struct ap_ack *,const struct ap_relay_status *,uint32_t);

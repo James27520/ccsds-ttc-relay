@@ -19,7 +19,7 @@ static int filter(void *context,const struct ap_frame_result *frame,uint32_t now
     struct asv_service *s=context;struct aps_state *c=core(s);struct ap_command command;
     unsigned byte,bit;
     if(!s->active || s->state!=ASV_LISTEN)return AP_EBUSY;
-    if((uint32_t)(now-s->started_ms)>=ASV_LEASE_MS){(void)asv_stop(s,ASV_LEASE,now);return AP_EBUSY;}
+    if(!s->standby && (uint32_t)(now-s->started_ms)>=ASV_LEASE_MS){(void)asv_stop(s,ASV_LEASE,now);return AP_EBUSY;}
     if(!c->network_ready){(void)asv_stop(s,ASV_NETWORK,now);return AP_EBUSY;}
     if(ap_body_parse(frame->body,AP_BODY_BYTES,&command)!=AP_OK)return AP_EARG;
     byte=command.seq>>3;bit=1u<<(command.seq&7u);
@@ -27,10 +27,11 @@ static int filter(void *context,const struct ap_frame_result *frame,uint32_t now
     if(c->transaction.applied_valid && c->transaction.applied_command.seq==command.seq){
         /* Remember an inherited already-applied sequence too: observing old A,
          * then accepting B, must not allow A again within this service lease. */
-        s->used[byte]|=(uint8_t)bit;++s->used_count;return AP_DUPLICATE;
+        s->used[byte]|=(uint8_t)bit;s->seen_ms[command.seq]=now;++s->used_count;return AP_DUPLICATE;
     }
-    if(s->accepted>=ASV_TRANSACTION_LIMIT){(void)asv_stop(s,ASV_LIMIT,now);return AP_EBUSY;}
+    if(!s->standby && s->accepted>=ASV_TRANSACTION_LIMIT){(void)asv_stop(s,ASV_LIMIT,now);return AP_EBUSY;}
     s->used[byte]|=(uint8_t)bit;++s->used_count;++s->accepted;
+    s->seen_ms[command.seq]=now;
     s->command=command;s->baseline_applied=c->applied_commands;
     s->baseline_failures=c->failed_transactions;s->reply_sent=0;s->reply_failed=0;
     /* Critical ordering: no further capture/decode can overwrite d before ACK. */
@@ -39,7 +40,7 @@ static int filter(void *context,const struct ap_frame_result *frame,uint32_t now
 }
 void asv_init(struct asv_service *s,struct act_controller *c,struct atm_tx *t)
 {memset(s,0,sizeof(*s));s->controller=c;s->tx=t;}
-int asv_start(struct asv_service *s,uint32_t now)
+static int start(struct asv_service *s,uint32_t now,unsigned standby,unsigned preserve)
 {
     struct aps_state *c;struct act_controller *a;
     if(!s || !s->controller || !s->tx || !s->controller->core)return AP_EARG;
@@ -51,17 +52,26 @@ int asv_start(struct asv_service *s,uint32_t now)
        c->rx_gain_db!=0u || c->tx_attenuation_db!=89u || s->tx->pending ||
        ac_probe(a->capture)!=AC_OK || tx_ready(s)!=AP_OK)return AP_EBUSY;
     if(a->capture->state==AC_ERROR && ac_recover_cancel(a->capture)!=AC_OK)return AP_EBUSY;
-    memset(s->used,0,sizeof(s->used));s->accepted=s->completed=s->failed=s->reply_sent=s->used_count=0;
+    if(!preserve){
+        memset(s->used,0,sizeof(s->used));memset(s->seen_ms,0,sizeof(s->seen_ms));
+        s->accepted=s->completed=s->failed=s->used_count=0;
+    }
+    s->reply_sent=0;s->standby=standby;s->wanted=standby;
     memset(&s->command,0,sizeof(s->command));s->udp_seq=0;s->reply_seq=0;
     s->started_ms=now;s->ack_ms=s->last_reply_ms=0;s->reason=ASV_NONE;
     s->active=1;s->state=ASV_LISTEN;
     a->filter_context=s;a->filter=filter;a->consumed=1;a->automatic=1;c->armed=1;
     return AP_OK;
 }
+int asv_start(struct asv_service *s,uint32_t now){return start(s,now,0u,0u);}
+int asv_start_standby(struct asv_service *s,uint32_t now)
+{return start(s,now,1u,s && s->standby);}
 int asv_stop(struct asv_service *s,enum asv_reason reason,uint32_t now)
 {
     struct act_controller *a;int rc;
     if(!s || !s->controller)return AP_EARG;
+    /* Only a lost link resumes itself. Explicit off and faults stay stopped. */
+    if(reason!=ASV_NETWORK)s->wanted=0u;
     if(!s->active)return AP_OK;
     a=s->controller;s->active=0;s->reason=(unsigned)reason;s->state=ASV_STOPPING;
     a->automatic=0;a->filter=0;a->filter_context=0;a->core->armed=0;
@@ -72,21 +82,30 @@ int asv_stop(struct asv_service *s,enum asv_reason reason,uint32_t now)
 }
 static void listen(struct asv_service *s,uint32_t now)
 {
-    if(s->accepted>=ASV_TRANSACTION_LIMIT){(void)asv_stop(s,ASV_LIMIT,now);return;}
+    if(!s->standby && s->accepted>=ASV_TRANSACTION_LIMIT){(void)asv_stop(s,ASV_LIMIT,now);return;}
     s->state=ASV_LISTEN;s->controller->consumed=1;
     s->controller->automatic=1;core(s)->armed=1;
 }
 void asv_poll(struct asv_service *s,uint32_t now)
 {
-    struct aps_state *c;uint32_t status,diag,age;int rc;
+    struct aps_state *c;uint32_t status,diag,age;unsigned i;int rc;
     if(!s || !s->controller || !s->tx)return;
+    if(s->standby)for(i=0;i<256u;++i){
+        unsigned byte=i>>3,bit=1u<<(i&7u);
+        if((s->used[byte]&bit) && (uint32_t)(now-s->seen_ms[i])>=ASV_SEQUENCE_HOLD_MS)
+            s->used[byte]&=(uint8_t)~bit;
+    }
     if(!s->active){
         if(s->state==ASV_STOPPING && !s->tx->pending && !s->tx->stopping &&
            (!s->controller->capture || !ac_busy(s->controller->capture)))s->state=ASV_OFF;
+        if(s->wanted && s->standby && s->reason==ASV_NETWORK && s->state==ASV_OFF &&
+           core(s)->network_ready && (uint32_t)(now-s->retry_ms)>=1000u){
+            s->retry_ms=now;(void)start(s,now,1u,1u);
+        }
         return;
     }
     c=core(s);
-    if((uint32_t)(now-s->started_ms)>=ASV_LEASE_MS){(void)asv_stop(s,ASV_LEASE,now);return;}
+    if(!s->standby && (uint32_t)(now-s->started_ms)>=ASV_LEASE_MS){(void)asv_stop(s,ASV_LEASE,now);return;}
     if(!c->network_ready){(void)asv_stop(s,ASV_NETWORK,now);return;}
     if(atm_tx_status(s->tx,&status,&diag)<0 || diag || (status&196u) || s->tx->stopping){
         (void)asv_stop(s,ASV_TM,now);return;
@@ -96,7 +115,7 @@ void asv_poll(struct asv_service *s,uint32_t now)
         if(!s->controller->automatic){(void)asv_stop(s,ASV_DECODE,now);return;}
     } else if(s->state==ASV_WAIT_ACK){
         if(c->transaction.pending)return;
-        s->reply_failed=(s->command.version!=1u && c->last_ack.reply.rc<0 &&
+        s->reply_failed=(ap_command_operation(&s->command)!=1u && c->last_ack.reply.rc<0 &&
             c->failed_transactions==s->baseline_failures+1u && c->applied_commands==s->baseline_applied);
         if((!s->reply_failed && (c->applied_commands!=s->baseline_applied+1u || c->failed_transactions!=s->baseline_failures)) ||
            !same(&c->last_decoded,&s->command) || !same(&c->last_send.record,&s->command) ||
@@ -140,14 +159,14 @@ int asv_status(const struct asv_service *s,uint32_t now,char *out,size_t size)
     uint32_t elapsed,left=0,reply_left=0;int n;
     if(!s || !out || !size)return AP_EARG;
     elapsed=(uint32_t)(now-s->started_ms);
-    if(s->active && elapsed<ASV_LEASE_MS)left=ASV_LEASE_MS-elapsed;
+    if(s->active && !s->standby && elapsed<ASV_LEASE_MS)left=ASV_LEASE_MS-elapsed;
     elapsed=(uint32_t)(now-s->ack_ms);
     if(s->active && (s->state==ASV_DELAY || s->state==ASV_REPLY) &&
        elapsed<ASV_REPLY_DELAY_MS+ASV_REPLY_WINDOW_MS)reply_left=ASV_REPLY_DELAY_MS+ASV_REPLY_WINDOW_MS-elapsed;
-    n=snprintf(out,size,"SERVICE active=%u state=%u reason=%u remaining_ms=%lu accepted=%u completed=%u failed=%u air_seq=%u udp_seq=%u reply_seq=%lu reply_sent=%u reply_limit=%u reply_remaining_ms=%lu used=%u\r\n",
+    n=snprintf(out,size,"SERVICE active=%u state=%u reason=%u remaining_ms=%lu accepted=%u completed=%u failed=%u air_seq=%u udp_seq=%u reply_seq=%lu reply_sent=%u reply_limit=%u reply_remaining_ms=%lu used=%u standby=%u wanted=%u\r\n",
        s->active,s->state,s->reason,(unsigned long)left,s->accepted,s->completed,s->failed,
        (unsigned)s->command.seq,(unsigned)s->udp_seq,(unsigned long)s->reply_seq,
-       s->reply_sent,ASV_REPLY_LIMIT,(unsigned long)reply_left,s->used_count);
+       s->reply_sent,ASV_REPLY_LIMIT,(unsigned long)reply_left,s->used_count,s->standby,s->wanted);
     if(n<0 || (size_t)n>=size){out[0]=0;return AP_ELENGTH;}return n;
 }
 int asv_cancel_command(const char *line)

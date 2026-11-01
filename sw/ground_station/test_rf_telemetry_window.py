@@ -126,6 +126,17 @@ class RFWindowTests(unittest.TestCase):
         self.assertIn("1 帧", self.window.status_var.get())
         self.assertNotIn("9000", self.window.status_var.get())
 
+    def test_khz_record_view_preserves_requested_and_actual_hz(self):
+        from .test_tc_evidence import khz_evidence
+        for operation in ('frequency', 'status'):
+            value = khz_evidence(operation)[4]
+            value['format'] = 'EXPERIMENTAL_ATM2_RF'
+            value['frames'][0]['crc_valid'] = True
+            self.inject(value)
+            text = self.window.record_vars['ack_record'].get()
+            self.assertIn('1991845004 Hz', text)
+            self.assertIn('不携带调谐' if operation=='status' else '1991.845000', text)
+
     def test_corrupt_frame_and_empty_report_clear_old_results(self):
         self.inject(report())
         bad = report()

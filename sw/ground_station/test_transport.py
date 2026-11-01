@@ -60,6 +60,22 @@ class ConsoleRunTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'rc=17'):
             self.run_response(b'\nGS_BEGIN_123456abcdef\nfailed\nGS_END_123456abcdef_17\n')
 
+    def test_bootloader_prompt_reports_startup_problem_and_invalidates_console(self):
+        console = console_without_serial()
+        console.port = FragmentedPort(b"Unknown command 'printf' - try 'help'\r\nPluto> ")
+        with patch('sw.ground_station.transport.time.monotonic', side_effect=lambda: console.port.clock):
+            with self.assertRaisesRegex(RuntimeError, 'U-Boot.*Linux'):
+                console.run('cat /proc/sys/kernel/random/boot_id', timeout=.1)
+        self.assertFalse(console._console_synchronized)
+        self.assertEqual(len(console.port.writes), 1)
+        with self.assertRaisesRegex(RuntimeError, '禁止继续'):
+            console.run('anything')
+        self.assertEqual(len(console.port.writes), 1)
+
+    def test_framed_linux_output_may_quote_a_bootloader_prompt(self):
+        _, output = self.run_response(b'\nGS_BEGIN_123456abcdef\nPluto> \nGS_END_123456abcdef_0\n')
+        self.assertEqual(output, 'Pluto>')
+
     def test_unicode_response_uses_byte_marker_boundaries(self):
         _, output = self.run_response(('启动\nGS_BEGIN_123456abcdef\n状态正常\n'
                                        'GS_END_123456abcdef_0\n').encode('utf-8'))
@@ -296,7 +312,7 @@ class FastUploadPort:
     def baudrate(self, rate):
         self._baudrate = rate
         self.rates.append(rate)
-        if rate == 921600 and self.phase == 'ready':
+        if rate == 460800 and self.phase == 'ready':
             self.phase = 'binary'
             self.last_input = self.clock
             if self.fault != 'begin_timeout':
@@ -387,10 +403,10 @@ class FastUploadTests(unittest.TestCase):
             return console.upload('/tmp/message.iq', data, progress), sleep
 
     def assert_no_post_failure_control_bytes(self, console):
-        # Only the initial shell command and 4096-byte raw chunks may be written.
+        # Only the initial shell command and 1024-byte raw chunks may be written.
         # Restoration confirmation is exercised through the separately mocked run.
         for _, payload in console.port.writes[1:]:
-            self.assertLessEqual(len(payload), 4096)
+            self.assertLessEqual(len(payload), 1024)
             self.assertNotEqual(payload, b'\x03\n')
             self.assertNotEqual(payload, b'\x03\nstty 115200\n')
         self.assertEqual(console.port.baudrate, 115200)
@@ -403,14 +419,18 @@ class FastUploadTests(unittest.TestCase):
         digest, sleep = self.execute(console, data, progress)
         self.assertEqual(digest, hashlib.sha256(data).hexdigest())
         self.assertEqual(console.port.received, data)
-        self.assertEqual(len(console.port.writes)-1, (len(data)+4095)//4096)
+        self.assertEqual(len(console.port.writes)-1, (len(data)+1023)//1024)
         self.assertEqual(progress.call_args_list[0].args, (0.,))
         self.assertEqual(progress.call_args.args, (1.,))
-        self.assertEqual(progress.call_count, (len(data)+4095)//4096+1)
+        self.assertEqual(progress.call_count, (len(data)+1023)//1024+1)
         self.assertIn(b'raw -echo min 0 time 30', console.port.writes[0][1])
         self.assertIn(b'head -c ', console.port.writes[0][1])
         self.assert_no_post_failure_control_bytes(console)
-        sleep.assert_called_once_with(.5)
+        self.assertEqual(console.record.call_args.kwargs['baudrate'],460800)
+        self.assertIn(b'stty 460800 raw', console.port.writes[0][1])
+        for (at, chunk), (later, _) in zip(console.port.writes[1:],console.port.writes[2:]):
+            self.assertGreaterEqual(later-at, len(chunk)*10/460800+.0039)
+        self.assertEqual(sleep.call_args.args,(.5,))
 
     def test_cancel_waits_for_raw_timeout_without_more_input(self):
         data = bytes(range(256))*40
@@ -421,7 +441,7 @@ class FastUploadTests(unittest.TestCase):
                     raise RuntimeError('upload cancelled')
             with self.subTest(before_first=cancel_before_first), self.assertRaisesRegex(RuntimeError, 'cancelled'):
                 self.execute(console, data, progress)
-            self.assertEqual(len(console.port.received), 0 if cancel_before_first else 4096)
+            self.assertEqual(len(console.port.received), 0 if cancel_before_first else 1024)
             self.assertGreaterEqual(console.port.clock-console.port.writes[-1][0], 3.6)
             self.assertEqual(console.port.purged, 1)
             self.assert_no_post_failure_control_bytes(console)
@@ -455,7 +475,7 @@ class FastUploadTests(unittest.TestCase):
                 console.port.advance(3.2)
         with self.assertRaisesRegex(TimeoutError, '包间隔'):
             self.execute(console, data, progress)
-        self.assertEqual(len(console.port.received), 4096)
+        self.assertEqual(len(console.port.received), 1024)
         self.assert_no_post_failure_control_bytes(console)
 
     def test_stale_begin_cannot_grant_a_new_raw_input_deadline(self):

@@ -1,0 +1,282 @@
+{
+  "date": "2026-10-31",
+  "scope": "Unified terminal backend and three UI roles",
+  "feature_acceptance_passed": true,
+  "full_transport_stability_passed": false,
+  "known_issue": "Terminal2 USB cable disconnect during final stop preparation; not investigated per user instruction",
+  "firmware_flash_changed": false,
+  "wiring_changed": false,
+  "rf_center_mhz": {
+    "input": 1999.5,
+    "output": 2189.5
+  },
+  "tests": {
+    "enable": {
+      "passed": true,
+      "air_seq": 42,
+      "rf_crc_frames": 8,
+      "elapsed_seconds": 66.16022689999954,
+      "evidence_source": "actual_iq_crc_checked"
+    },
+    "status": {
+      "passed": true,
+      "air_seq": 43,
+      "rf_crc_frames": 8,
+      "elapsed_seconds": 66.03646270000172,
+      "evidence_source": "actual_iq_crc_checked"
+    },
+    "exchange_before": {
+      "texts": {
+        "sender": "T1 parallel 1793435679",
+        "receiver": "T2 parallel 1793435679"
+      },
+      "received": [
+        {
+          "terminal": "receiver",
+          "messages": [
+            {
+              "id": "e5dcc8ff:0000",
+              "text": "T1 parallel 1793435679",
+              "crc16": 4834
+            }
+          ]
+        },
+        {
+          "terminal": "sender",
+          "messages": [
+            {
+              "id": "453d2047:0000",
+              "text": "T2 parallel 1793435679",
+              "crc16": 49617
+            }
+          ]
+        }
+      ],
+      "receiver_process_unchanged_during_tx": true
+    },
+    "exchange_after": {
+      "texts": {
+        "sender": "T1 restored 1793435792",
+        "receiver": "T2 restored 1793435792"
+      },
+      "received": [
+        {
+          "terminal": "sender",
+          "messages": [
+            {
+              "id": "453d2047:0001",
+              "text": "T2 restored 1793435792",
+              "crc16": 51798
+            }
+          ]
+        },
+        {
+          "terminal": "receiver",
+          "messages": [
+            {
+              "id": "e5dcc8ff:0001",
+              "text": "T1 restored 1793435792",
+              "crc16": 6501
+            }
+          ]
+        }
+      ],
+      "receiver_process_unchanged_during_tx": true
+    },
+    "sender_receiver": {
+      "observations": 3,
+      "minimum_processed_rate_msps": 2.4891504633688277,
+      "maximum_decode_ms": 28.743,
+      "maximum_clip_components": 0,
+      "sample_loss_measured": false
+    },
+    "receiver_receiver": {
+      "observations": 141,
+      "minimum_processed_rate_msps": 2.452928156845314,
+      "maximum_decode_ms": 30.42,
+      "maximum_clip_components": 0,
+      "sample_loss_measured": false
+    }
+  },
+  "automatic_tests": {
+    "full_suite_passed": 357,
+    "subsequent_backend_radio_passed": 32,
+    "note": "32 includes added unchanged-plan and successful-TC queue tests and repeats relevant safety tests; counts must not be summed."
+  },
+  "raw_artifacts": "D:\\RelayTools\\work\\unified_terminal_20261031",
+  "source_result_sha256": "a90fdb16fdb6135cfa4146fc6988ea7c544796c96c9d9273ef84d579a06b8774",
+  "final_stop": {
+    "passed": true,
+    "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+    "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+    "port": "COM17",
+    "requested": {
+      "rx_mhz": 1999,
+      "tx_mhz": 2189,
+      "air_seq": 44,
+      "operation": "stop"
+    },
+    "frame_count": 7,
+    "elapsed_seconds": 75.6299433000022,
+    "ack": {
+      "rx_hz": 1998999998,
+      "tx_hz": 2189000000,
+      "udp_seq": 33
+    },
+    "relay": {
+      "mode": 2,
+      "rx_gain_db": [
+        0,
+        0
+      ],
+      "tx_attenuation_mdb": [
+        89000,
+        89000
+      ],
+      "flags": 5,
+      "valid": true,
+      "lease_active": false,
+      "lease_expired": true,
+      "mute_fault": false,
+      "remaining_ms": 0,
+      "uptime_ms": 7900829,
+      "remaining_lower_bound_ms": 0,
+      "snapshot_received_at": 1793435967.2626739
+    },
+    "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\unified_final_stop\\command_0001\\reply.bin",
+    "worker_stopped": true
+  },
+  "final_safe": {
+    "action": "audit",
+    "passed": true,
+    "time": 1793436020.259248,
+    "adda": {
+      "tm": {
+        "uptime_ms": 15611710,
+        "events": 100,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 34,
+        "applied": 33,
+        "failures": 0,
+        "d_valid": 1,
+        "d_event": 98,
+        "d_origin": 1,
+        "d_air_seq": 44,
+        "d_rx_mhz": 1999,
+        "d_tx_mhz": 2189,
+        "s_valid": 1,
+        "s_event": 99,
+        "s_origin": 1,
+        "s_air_seq": 44,
+        "s_rx_mhz": 1999,
+        "s_tx_mhz": 2189,
+        "s_udp_seq": 33,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 100,
+        "a_origin": 1,
+        "a_air_seq": 44,
+        "a_rx_mhz": 1999,
+        "a_tx_mhz": 2189,
+        "a_udp_seq": 33,
+        "a_rc": 0,
+        "a_rx_hz": 1998999998,
+        "a_tx_hz": 2189000000,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 33,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=1 remaining_ms=0 accepted=3 completed=3 failed=0 air_seq=44 udp_seq=33 reply_seq=32 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=3",
+        "CLI_RESULT rc=0"
+      ],
+      "status": [
+        "CONTROLLER auto=0 capture_state=6 capture_valid=1 consumed=1",
+        "STATUS network=0 armed=0 decoded=34 applied=33 pending=0 retries=1 failures=0 gain=0 att=89",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1998",
+        "txlo": "2189",
+        "fs": "30720000",
+        "in": "746522692",
+        "out": "746528764",
+        "clip": "303",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1998999998,
+        "relay_tx_hz_readback": 2189000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    "terminals": [
+      {
+        "identity": {
+          "port": "COM18",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "6",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=6",
+          "linux_boot_id": "4fd611a2-93cb-426b-94b8-3ad44d80c44c",
+          "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+          "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      },
+      {
+        "identity": {
+          "port": "COM17",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "000000000069B",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+          "linux_boot_id": "a2ddea72-31a9-4b00-bdc7-a22722539bbb",
+          "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+          "iio_serial": "",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      }
+    ]
+  }
+}

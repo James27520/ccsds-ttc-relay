@@ -7,9 +7,11 @@ $taskOut=Join-Path ([IO.Path]::GetTempPath()) ('adda_remote_tests_'+[guid]::NewG
 New-Item -ItemType Directory -Path $taskOut | Out-Null
 Push-Location $PSScriptRoot
 try {
- & "$taskHostBin/gcc.exe" -std=c99 -O2 -Wall -Wextra -Wpedantic -Werror -I ../software/protocol -I ../software/demod adda_ps_core.c adda_telemetry_tx.c ../software/protocol/adda_protocol.c ../software/demod/adda_demod.c ../software/demod/adda_receiver.c test_remote_control.c -lm -o "$taskOut/remote.exe"
- if($LASTEXITCODE-ne 0){throw 'remote compile failed'}
- & "$taskOut/remote.exe"
- if($LASTEXITCODE-ne 0){throw 'remote test failed'}
+ foreach($taskTest in @('test_remote_control','test_khz_control')) {
+  & "$taskHostBin/gcc.exe" -std=c99 -O2 -Wall -Wextra -Wpedantic -Werror -I ../software/protocol -I ../software/demod adda_ps_core.c adda_telemetry_tx.c ../software/protocol/adda_protocol.c ../software/demod/adda_demod.c ../software/demod/adda_receiver.c "$taskTest.c" -lm -o "$taskOut/$taskTest.exe"
+  if($LASTEXITCODE-ne 0){throw "$taskTest compile failed"}
+  & "$taskOut/$taskTest.exe"
+  if($LASTEXITCODE-ne 0){throw "$taskTest failed"}
+ }
  Write-Output "Native output=$taskOut; no hardware execution"
 } finally {Pop-Location}

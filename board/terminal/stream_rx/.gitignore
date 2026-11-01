@@ -1,0 +1,6 @@
+/build/
+/stream_rx
+/stream_rx_host.exe
+/__pycache__/
+/.zig-cache/
+/zig-out/

@@ -1,0 +1,30 @@
+--- a/src/relay_nco.v
++++ b/src/relay_nco.v
+@@ -49,14 +49,24 @@
+     );
+ 
+     reg [1:0] quad_d;
++    reg axis_d;
+     always @(posedge clk) begin
+-        if (!rst_n) quad_d <= 2'd0;
+-        else        quad_d <= quad;
++        if (!rst_n) begin
++            quad_d <= 2'd0;
++            axis_d <= 1'b1;
++        end else begin
++            quad_d <= quad;
++            axis_d <= (amp_a == 10'd0);
++        end
+     end
+ 
+     // rom_a = S(amp_a) is the in-quadrant sine, rom_b = S(amp_b) the cosine.
+     // Both are non-negative, so negating them cannot overflow 12-bit signed.
+-    wire signed [11:0] s_a = rom_a;
++    // The ROM samples bin midpoints, so address zero contains 2 rather
++    // than 0. Keep quadrantal axes exact: at zero phase the residual
++    // sine would make a valid (-2048,-2048) sample overflow the DDC.
++    // axis_d travels with the ROM address; no pipeline stage is added.
++    wire signed [11:0] s_a = axis_d ? 12'sd0 : $signed(rom_a);
+     wire signed [11:0] s_b = rom_b;
+ 
+     reg signed [11:0] cos_r, sin_r;

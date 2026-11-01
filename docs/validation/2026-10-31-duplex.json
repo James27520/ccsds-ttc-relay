@@ -1,0 +1,808 @@
+{
+  "date": "2026-10-31",
+  "passed": false,
+  "hardware_duplex_passed": true,
+  "usb_stability_passed": false,
+  "production_decoder_all_windows_passed": false,
+  "result_note": "Hardware concurrent TX/RX and peer payloads confirmed; stable end-to-end acceptance is not complete",
+  "scope": "Finite concurrent bidirectional business through both LDSDR paths; TX-first and RX-first orders",
+  "ui_changed": false,
+  "firmware_changed": false,
+  "wiring_changed": false,
+  "frequency": {
+    "input_center_mhz": 1999.5,
+    "output_center_mhz": 2189.5,
+    "local_tx_lo_mhz": 1999,
+    "local_rx_lo_mhz": 2189.75,
+    "relay_rx_lo_hz": 1998999998,
+    "relay_tx_lo_hz": 2189000000
+  },
+  "sample_rate_hz": 2500000,
+  "symbol_rate": 100000,
+  "local_tx_attenuation_db": 55,
+  "local_rx_gain_db": 30,
+  "relay_tx_attenuation_db": 50,
+  "relay_rx_gain_db": 30,
+  "phases": [
+    {
+      "evidence": "duplex_1999_recovered",
+      "passed": true,
+      "clean_run": false,
+      "overlap_lower_estimate_seconds": 0.895269399996323,
+      "pl_clip_delta": 0,
+      "terminals": {
+        "terminal1": {
+          "identity": {
+            "port": "COM17",
+            "usb_vid": 1027,
+            "usb_pid": 24592,
+            "usb_serial": "000000000069B",
+            "usb_location": "",
+            "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+            "linux_boot_id": "a2ddea72-31a9-4b00-bdc7-a22722539bbb",
+            "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+            "iio_serial": "",
+            "identity_scope": "current process, Linux boot and USB; fixed wired business TX",
+            "physical_role": "user-selected TX1A to LDSDR RX1"
+          },
+          "transmission": {
+            "message_id": "18971914:0000",
+            "session_id": "18971914",
+            "sequence": 0,
+            "text": "T1 to T2 1ff97d08355d",
+            "payload_bytes": 21
+          },
+          "settings": {
+            "ensm_mode": "fdd",
+            "in_voltage_sampling_frequency": "2500000",
+            "out_voltage_sampling_frequency": "2500000",
+            "in_voltage_rf_bandwidth": "3000000",
+            "out_voltage_rf_bandwidth": "3000000",
+            "out_altvoltage0_RX_LO_frequency": "2189749998",
+            "out_altvoltage1_TX_LO_frequency": "1998999998",
+            "out_altvoltage1_TX_LO_powerdown": "1",
+            "out_voltage0_hardwaregain": "-89.000000 dB",
+            "out_voltage1_hardwaregain": "-89.000000 dB"
+          },
+          "captures": [
+            {
+              "phase": "before_source",
+              "sha256": "dcfc8e16cf6e5abd23e1642c6eeeb8221765627ba7902d9486fbe617ca630fc4",
+              "samples": 32768,
+              "path": "duplex_1999_recovered\\terminal1\\rx_before_source.bin",
+              "valid_frames": 0,
+              "windows": 1,
+              "valid_windows": 0,
+              "clip_components": 0,
+              "peer_expected": false
+            },
+            {
+              "phase": "both_on",
+              "sha256": "51692b993a9d33b80fb756c43d5830a52993a9b8cf9820f24e4e72be27f64126",
+              "samples": 2621440,
+              "path": "duplex_1999_recovered\\terminal1\\rx_both_on.bin",
+              "valid_frames": 223,
+              "windows": 80,
+              "valid_windows": 80,
+              "clip_components": 0,
+              "peer_expected": true
+            },
+            {
+              "phase": "one_source_off",
+              "sha256": "84584d8cc3b1f1a4baebb1871544e2e3b359354a9b21eca5e0cf07f9a08b4fed",
+              "samples": 262144,
+              "path": "duplex_1999_recovered\\terminal1\\rx_one_source_off.bin",
+              "valid_frames": 23,
+              "windows": 8,
+              "valid_windows": 8,
+              "clip_components": 0,
+              "peer_expected": true
+            }
+          ]
+        },
+        "terminal2": {
+          "identity": {
+            "port": "COM18",
+            "usb_vid": 1027,
+            "usb_pid": 24592,
+            "usb_serial": "6",
+            "usb_location": "",
+            "hwid": "USB VID:PID=0403:6010 SER=6",
+            "linux_boot_id": "4fd611a2-93cb-426b-94b8-3ad44d80c44c",
+            "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+            "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+            "identity_scope": "current process, Linux boot and USB; fixed wired business TX",
+            "physical_role": "user-selected TX1A to LDSDR RX1"
+          },
+          "transmission": {
+            "message_id": "3b5d3b79:0000",
+            "session_id": "3b5d3b79",
+            "sequence": 0,
+            "text": "T2 to T1 00bd3872929c",
+            "payload_bytes": 21
+          },
+          "settings": {
+            "ensm_mode": "fdd",
+            "in_voltage_sampling_frequency": "2500000",
+            "out_voltage_sampling_frequency": "2500000",
+            "in_voltage_rf_bandwidth": "3000000",
+            "out_voltage_rf_bandwidth": "3000000",
+            "out_altvoltage0_RX_LO_frequency": "2189749998",
+            "out_altvoltage1_TX_LO_frequency": "1998999998",
+            "out_altvoltage1_TX_LO_powerdown": "1",
+            "out_voltage0_hardwaregain": "-89.000000 dB",
+            "out_voltage1_hardwaregain": "-89.000000 dB"
+          },
+          "captures": [
+            {
+              "phase": "before_source",
+              "sha256": "3f2919498bc422948fa876d65261d9971eab1a6827101fe83b49d7bb89214e0e",
+              "samples": 32768,
+              "path": "duplex_1999_recovered\\terminal2\\rx_before_source.bin",
+              "valid_frames": 0,
+              "windows": 1,
+              "valid_windows": 0,
+              "clip_components": 0,
+              "peer_expected": false
+            },
+            {
+              "phase": "both_on",
+              "sha256": "1825f9cab96c11c895de047b6fdc3df06604d9967f86e76a39f32be67a953a15",
+              "samples": 2621440,
+              "path": "duplex_1999_recovered\\terminal2\\rx_both_on.bin",
+              "valid_frames": 223,
+              "windows": 80,
+              "valid_windows": 80,
+              "clip_components": 0,
+              "peer_expected": true
+            },
+            {
+              "phase": "one_source_off",
+              "sha256": "aa3e5cdbb0677bd57bad5ea144ae33e5b1aaeed8da9204684a50b4275cf05e78",
+              "samples": 262144,
+              "path": "duplex_1999_recovered\\terminal2\\rx_one_source_off.bin",
+              "valid_frames": 0,
+              "windows": 8,
+              "valid_windows": 0,
+              "clip_components": 0,
+              "peer_expected": false
+            }
+          ]
+        }
+      },
+      "original_failure": {
+        "error": "RuntimeError('terminal2: RuntimeError(\"停发未完全确认: ClearCommError failed (PermissionError(13, \\'拒绝访问。\\', None, 5)); WriteFile failed (PermissionError(13, \\'拒绝访问。\\', None, 5)); WriteFile failed (PermissionError(13, \\'拒绝访问。\\', None, 5))\")')",
+        "cleanup_errors": [
+          "terminal2: SerialException(\"WriteFile failed (PermissionError(13, '拒绝访问。', None, 5))\")"
+        ],
+        "passed": false
+      }
+    },
+    {
+      "evidence": "duplex_rxfirst_recovered",
+      "passed": false,
+      "clean_run": false,
+      "overlap_lower_estimate_seconds": 9.582155700009025,
+      "pl_clip_delta": 0,
+      "terminals": {
+        "terminal1": {
+          "identity": {
+            "port": "COM17",
+            "usb_vid": 1027,
+            "usb_pid": 24592,
+            "usb_serial": "000000000069B",
+            "usb_location": "",
+            "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+            "linux_boot_id": "a2ddea72-31a9-4b00-bdc7-a22722539bbb",
+            "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+            "iio_serial": "",
+            "identity_scope": "current process, Linux boot and USB; fixed wired business TX",
+            "physical_role": "user-selected TX1A to LDSDR RX1"
+          },
+          "transmission": {
+            "message_id": "68a05882:0000",
+            "session_id": "68a05882",
+            "sequence": 0,
+            "text": "T1 to T2 24d82e9c4019",
+            "payload_bytes": 21
+          },
+          "settings": {
+            "ensm_mode": "fdd",
+            "in_voltage_sampling_frequency": "2500000",
+            "out_voltage_sampling_frequency": "2500000",
+            "in_voltage_rf_bandwidth": "3000000",
+            "out_voltage_rf_bandwidth": "3000000",
+            "out_altvoltage0_RX_LO_frequency": "2189749998",
+            "out_altvoltage1_TX_LO_frequency": "1998999998",
+            "out_altvoltage1_TX_LO_powerdown": "1",
+            "out_voltage0_hardwaregain": "-89.000000 dB",
+            "out_voltage1_hardwaregain": "-89.000000 dB"
+          },
+          "captures": [
+            {
+              "phase": "both_on",
+              "sha256": "a3a52bcd636941d4e28109893a321b8cdfe433658c135c2eb983c77f558a4913",
+              "samples": 2621440,
+              "path": "duplex_rxfirst_recovered\\terminal1\\rx_both_on.bin",
+              "valid_frames": 222,
+              "windows": 80,
+              "valid_windows": 80,
+              "clip_components": 0,
+              "peer_expected": true
+            }
+          ],
+          "rx_first": {
+            "samples": 41943040,
+            "seconds": 16.777216,
+            "full_board_file_sha256": "c0b2ab6c5c79bb77a3f1c0d874cfc4321bb09d7c257876b80cf8c6a316bde2f6",
+            "rx_pid_unchanged": true,
+            "retained_tail_samples": 2621440,
+            "start_tx_seconds": 7.1826695000054315,
+            "trace_samples": 252
+          }
+        },
+        "terminal2": {
+          "identity": {
+            "port": "COM18",
+            "usb_vid": 1027,
+            "usb_pid": 24592,
+            "usb_serial": "6",
+            "usb_location": "",
+            "hwid": "USB VID:PID=0403:6010 SER=6",
+            "linux_boot_id": "4fd611a2-93cb-426b-94b8-3ad44d80c44c",
+            "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+            "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+            "identity_scope": "current process, Linux boot and USB; fixed wired business TX",
+            "physical_role": "user-selected TX1A to LDSDR RX1"
+          },
+          "transmission": {
+            "message_id": "f46c0206:0000",
+            "session_id": "f46c0206",
+            "sequence": 0,
+            "text": "T2 to T1 6b6f70e43f51",
+            "payload_bytes": 21
+          },
+          "settings": {
+            "ensm_mode": "fdd",
+            "in_voltage_sampling_frequency": "2500000",
+            "out_voltage_sampling_frequency": "2500000",
+            "in_voltage_rf_bandwidth": "3000000",
+            "out_voltage_rf_bandwidth": "3000000",
+            "out_altvoltage0_RX_LO_frequency": "2189749998",
+            "out_altvoltage1_TX_LO_frequency": "1998999998",
+            "out_altvoltage1_TX_LO_powerdown": "1",
+            "out_voltage0_hardwaregain": "-89.000000 dB",
+            "out_voltage1_hardwaregain": "-89.000000 dB"
+          },
+          "captures": [
+            {
+              "phase": "both_on",
+              "sha256": "01c36c26fe241f1bc36cccd2dd0d76dffe4b00961f02e705586bcda463b4aab0",
+              "samples": 2621440,
+              "path": "duplex_rxfirst_recovered\\terminal2\\rx_both_on.bin",
+              "valid_frames": 94,
+              "windows": 80,
+              "valid_windows": 75,
+              "clip_components": 0,
+              "peer_expected": true
+            }
+          ],
+          "rx_first": {
+            "samples": 41943040,
+            "seconds": 16.777216,
+            "full_board_file_sha256": "c894235df9fadca8b30ed56b314365e1c1a07ef216a62796f1ea8a7f4ae876b3",
+            "rx_pid_unchanged": true,
+            "retained_tail_samples": 2621440,
+            "start_tx_seconds": 7.279812600005243,
+            "trace_samples": 254
+          }
+        }
+      },
+      "original_failure": {
+        "passed": false,
+        "error": "RuntimeError('terminal2: RuntimeError(\"ClearCommError failed (PermissionError(13, \\'拒绝访问。\\', None, 5))；Cannot configure port, something went wrong. Original message: PermissionError(13, \\'拒绝访问。\\', None, 5)\")')",
+        "cleanup_errors": [
+          "terminal2: RuntimeError('串口恢复未确认，禁止继续发送命令；请关闭并重新连接')"
+        ]
+      },
+      "read_recovery_errors": [
+        {
+          "chunk": 4,
+          "attempt": 0,
+          "error": "RuntimeError(\"ClearCommError failed (PermissionError(13, '拒绝访问。', None, 5))；Cannot configure port, something went wrong. Original message: PermissionError(13, '拒绝访问。', None, 5)\")"
+        },
+        {
+          "chunk": 4,
+          "attempt": 1,
+          "error": "RuntimeError('USB session port is unavailable or ambiguous (port=COM18, matches=0, attempts=3)')"
+        },
+        {
+          "chunk": 4,
+          "attempt": 2,
+          "error": "TimeoutError('板端响应超时，当前操作未确认完成')"
+        },
+        {
+          "chunk": 5,
+          "attempt": 0,
+          "error": "RuntimeError(\"ClearCommError failed (PermissionError(13, '拒绝访问。', None, 5))；Cannot configure port, something went wrong. Original message: PermissionError(13, '拒绝访问。', None, 5)\")"
+        },
+        {
+          "chunk": 5,
+          "attempt": 1,
+          "error": "RuntimeError('USB session port is unavailable or ambiguous (port=COM18, matches=0, attempts=3)')"
+        }
+      ]
+    }
+  ],
+  "final_safe": {
+    "action": "audit",
+    "passed": true,
+    "time": 1793433388.9527946,
+    "adda": {
+      "tm": {
+        "uptime_ms": 12980389,
+        "events": 91,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 31,
+        "applied": 30,
+        "failures": 0,
+        "d_valid": 1,
+        "d_event": 89,
+        "d_origin": 1,
+        "d_air_seq": 41,
+        "d_rx_mhz": 1999,
+        "d_tx_mhz": 2189,
+        "s_valid": 1,
+        "s_event": 90,
+        "s_origin": 1,
+        "s_air_seq": 41,
+        "s_rx_mhz": 1999,
+        "s_tx_mhz": 2189,
+        "s_udp_seq": 30,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 91,
+        "a_origin": 1,
+        "a_air_seq": 41,
+        "a_rx_mhz": 1999,
+        "a_tx_mhz": 2189,
+        "a_udp_seq": 30,
+        "a_rc": 0,
+        "a_rx_hz": 1998999998,
+        "a_tx_hz": 2189000000,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 30,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=1 remaining_ms=0 accepted=1 completed=1 failed=0 air_seq=41 udp_seq=30 reply_seq=29 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=1",
+        "CLI_RESULT rc=0"
+      ],
+      "status": [
+        "CONTROLLER auto=0 capture_state=6 capture_valid=1 consumed=1",
+        "STATUS network=0 armed=0 decoded=31 applied=30 pending=0 retries=1 failures=0 gain=0 att=89",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1998",
+        "txlo": "2189",
+        "fs": "30720000",
+        "in": "1516345412",
+        "out": "1516351484",
+        "clip": "303",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1998999998,
+        "relay_tx_hz_readback": 2189000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    "terminals": [
+      {
+        "identity": {
+          "port": "COM18",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "6",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=6",
+          "linux_boot_id": "4fd611a2-93cb-426b-94b8-3ad44d80c44c",
+          "model": "Analog Devices PlutoSDR Rev.C (Z7010-AD9361)",
+          "iio_serial": "104473023196000bf5ff1a00aae12c3ca8",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      },
+      {
+        "identity": {
+          "port": "COM17",
+          "usb_vid": 1027,
+          "usb_pid": 24592,
+          "usb_serial": "000000000069B",
+          "usb_location": "",
+          "hwid": "USB VID:PID=0403:6010 SER=000000000069B",
+          "linux_boot_id": "a2ddea72-31a9-4b00-bdc7-a22722539bbb",
+          "model": "FISH Ball PlutoSDR Rev.A (Z7020-AD9361)",
+          "iio_serial": "",
+          "identity_scope": "current process, Linux boot and USB session; RX only",
+          "physical_role": "user-selected wired receiver; not permanently authenticated"
+        },
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      }
+    ]
+  },
+  "failures_preserved": [
+    {
+      "evidence": "duplex_1999_a/result.json",
+      "reason": "Test script template replaced TX in the TX_LO attribute; stopped before RF TX; corrected"
+    },
+    {
+      "evidence": "duplex_1999_b/result.json",
+      "reason": "COM18 disappeared during cleanup; original failure preserved; same Linux boot and verified IQ recovered separately"
+    },
+    {
+      "evidence": "duplex_rxfirst_a/result.json",
+      "reason": "8.39 s capture left insufficient retained tail after about 7.2 s guarded serial start; expanded to 16.78 s"
+    },
+    {
+      "evidence": "duplex_rxfirst_b/result.json",
+      "reason": "160 MiB ARM hash exceeded the default command timeout; moved hashing after TX stop with a bounded 60 s timeout"
+    },
+    {
+      "evidence": "duplex_rxfirst_c/result.json",
+      "reason": "Second COM18 loss during stopped-board IQ download; complete acquisition retained and independently recovered"
+    }
+  ],
+  "limitations": [
+    "GUI still switches direction; bench adapter only, not continuous GUI receive implementation",
+    "Original decoder had 5 blank positive windows in RX-first Terminal2 capture; offline refinement is not integrated into production",
+    "One frequency pair for simultaneous operation; other frequency pairs were tested separately by direction",
+    "COM18 repeatedly disconnected after acquisition, including during isolated read recovery; cause not resolved",
+    "Finite cyclic-text experiments; CRC frames include repeats, no end-to-end BER or long-run delivery-rate claim",
+    "RX-first logged finite 16.777216 s acquisition per endpoint; only final 1.048576 s per endpoint was copied to PC and decoded",
+    "DMA state is polled and clock-aligned; it is not a per-sample RF timestamp or exhaustive DMA-overrun proof",
+    "Business and 100.5/90.5 MHz TT&C still time-share Terminal1 RF local oscillators",
+    "RAM candidate PL, inherited timing/CDC review and persistent cold-start acceptance remain open"
+  ],
+  "source_hashes": {
+    "run_duplex_business.py": "69030f3bb252599be20be2a193ef947db4a714c41878f4e2ae2a32fed8f42eb9",
+    "run_duplex_rx_first.py": "fe66985043e5d9e246b4ae5b8e63762f91f7ee4ce0604431e9837eb0e1960698",
+    "decode_duplex_business.py": "32b3b63b665e94cdc0724c850946b21d55c5778c18f1e56e0b304fb2aae44b93",
+    "recover_duplex_iq.py": "2f398b5224a73c49d4d3925872ac241aa406a9440782a3787c7f1aa398eada90",
+    "recover_rxfirst_iq.py": "d77077c22c4ec14b986df8ee84c2205dfda78195f5e4e43d8925d02c1b8e52e8",
+    "diagnose_duplex_carrier.py": "d29ba74556693f10c057fb2789ed4a60a1ce301c08e5a782f153c4d63a7788ab"
+  },
+  "offline_carrier_refinement": {
+    "evidence": "duplex_carrier_refinement.json",
+    "passed": true,
+    "production_changed": false,
+    "deltas_hz": [
+      -120,
+      -100,
+      -80,
+      -60,
+      -40,
+      -20,
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120
+    ],
+    "captures": [
+      {
+        "path": "duplex_rxfirst_recovered/terminal2/rx_both_on.bin",
+        "valid_windows": 80,
+        "valid_frames": 223
+      },
+      {
+        "path": "duplex_1999_recovered/terminal1/rx_before_source.bin",
+        "valid_windows": 0,
+        "valid_frames": 0
+      },
+      {
+        "path": "duplex_1999_recovered/terminal2/rx_before_source.bin",
+        "valid_windows": 0,
+        "valid_frames": 0
+      },
+      {
+        "path": "duplex_1999_recovered/terminal2/rx_one_source_off.bin",
+        "valid_windows": 0,
+        "valid_frames": 0
+      }
+    ],
+    "method": "Square-law estimator followed by bounded residual-frequency trials and CRC selection; no expected payload used during decoding"
+  },
+  "control": [
+    {
+      "evidence": "duplex_enable",
+      "passed": true,
+      "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+      "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+      "port": "COM17",
+      "requested": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 36,
+        "operation": "enable"
+      },
+      "frame_count": 7,
+      "elapsed_seconds": 75.44783299999835,
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 25
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 3,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 299999,
+        "uptime_ms": 3613001,
+        "remaining_lower_bound_ms": 224551,
+        "snapshot_received_at": 1793431679.3724918
+      },
+      "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\duplex_enable\\command_0001\\reply.bin",
+      "worker_stopped": true
+    },
+    {
+      "evidence": "duplex_enable_retry",
+      "passed": true,
+      "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+      "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+      "port": "COM17",
+      "requested": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 37,
+        "operation": "enable"
+      },
+      "frame_count": 8,
+      "elapsed_seconds": 75.61228220000339,
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 26
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 3,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 299999,
+        "uptime_ms": 3814261,
+        "remaining_lower_bound_ms": 224386,
+        "snapshot_received_at": 1793431880.7976122
+      },
+      "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\duplex_enable_retry\\command_0001\\reply.bin",
+      "worker_stopped": true
+    },
+    {
+      "evidence": "duplex_usb_stop",
+      "passed": true,
+      "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+      "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+      "port": "COM17",
+      "requested": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 38,
+        "operation": "stop"
+      },
+      "frame_count": 7,
+      "elapsed_seconds": 75.57161380000616,
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 27
+      },
+      "relay": {
+        "mode": 2,
+        "rx_gain_db": [
+          0,
+          0
+        ],
+        "tx_attenuation_mdb": [
+          89000,
+          89000
+        ],
+        "flags": 1,
+        "valid": true,
+        "lease_active": false,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 0,
+        "uptime_ms": 4025145,
+        "remaining_lower_bound_ms": 0,
+        "snapshot_received_at": 1793432091.606449
+      },
+      "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\duplex_usb_stop\\command_0001\\reply.bin",
+      "worker_stopped": true
+    },
+    {
+      "evidence": "duplex_rxfirst_enable",
+      "passed": true,
+      "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+      "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+      "port": "COM17",
+      "requested": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 39,
+        "operation": "enable"
+      },
+      "frame_count": 8,
+      "elapsed_seconds": 75.6112243000025,
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 28
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 3,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": false,
+        "mute_fault": false,
+        "remaining_ms": 299999,
+        "uptime_ms": 4346628,
+        "remaining_lower_bound_ms": 224387,
+        "snapshot_received_at": 1793432413.1532636
+      },
+      "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\duplex_rxfirst_enable\\command_0001\\reply.bin",
+      "worker_stopped": true
+    },
+    {
+      "evidence": "duplex_rxfirst_reenable",
+      "passed": true,
+      "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+      "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+      "port": "COM17",
+      "requested": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 40,
+        "operation": "enable"
+      },
+      "frame_count": 8,
+      "elapsed_seconds": 75.45571070000005,
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 29
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 7,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 299998,
+        "uptime_ms": 4668155,
+        "remaining_lower_bound_ms": 224542,
+        "snapshot_received_at": 1793432734.2868981
+      },
+      "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\duplex_rxfirst_reenable\\command_0001\\reply.bin",
+      "worker_stopped": true
+    },
+    {
+      "evidence": "duplex_final_stop",
+      "passed": true,
+      "uplink": "terminal1 TX2A -> ADDA ADC1/J5",
+      "downlink": "ADDA DAC1/J6 -> terminal1 RX1A",
+      "port": "COM17",
+      "requested": {
+        "rx_mhz": 1999,
+        "tx_mhz": 2189,
+        "air_seq": 41,
+        "operation": "stop"
+      },
+      "frame_count": 8,
+      "elapsed_seconds": 75.45966300000146,
+      "ack": {
+        "rx_hz": 1998999998,
+        "tx_hz": 2189000000,
+        "udp_seq": 30
+      },
+      "relay": {
+        "mode": 2,
+        "rx_gain_db": [
+          0,
+          0
+        ],
+        "tx_attenuation_mdb": [
+          89000,
+          89000
+        ],
+        "flags": 5,
+        "valid": true,
+        "lease_active": false,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 0,
+        "uptime_ms": 5005444,
+        "remaining_lower_bound_ms": 0,
+        "snapshot_received_at": 1793433071.8419466
+      },
+      "iq_path": "D:\\RelayTools\\work\\six_line_20261031\\duplex_final_stop\\command_0001\\reply.bin",
+      "worker_stopped": true
+    }
+  ]
+}

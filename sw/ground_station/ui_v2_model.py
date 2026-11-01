@@ -9,7 +9,7 @@ import json
 import math
 from pathlib import Path
 
-from .rf_profiles import BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS
+from .rf_profiles import BUSINESS_TX_CENTERS, BUSINESS_RX_CENTERS, business_center_hz
 
 
 MIN_CENTER_MHZ = Decimal('70.5')
@@ -20,16 +20,7 @@ CONTROL_OPERATIONS = {'设置频率': 'frequency', '开启转发': 'enable',
 
 def business_frequency_plan(role, center_mhz):
     """Explicit local profiles, separate from any remote board state."""
-    choices = {'sender': BUSINESS_TX_CENTERS, 'receiver': BUSINESS_RX_CENTERS}
-    if role not in choices:
-        raise ValueError('业务角色须为 sender / receiver')
-    try:
-        center = Decimal(str(center_mhz))
-    except InvalidOperation as error:
-        raise ValueError('业务中心频率无效') from error
-    if not center.is_finite() or center not in tuple(map(Decimal, choices[role])):
-        raise ValueError('本阶段业务中心仅支持 '+ ' / '.join(choices[role])+' MHz')
-    center_hz = int(center*1_000_000)
+    center_hz = business_center_hz(role, center_mhz, legacy=True)
     # Preserve the original 1000.5 MHz / 1000.75 MHz RX operating offset.
     offset_hz = 500_000 if role == 'sender' else -250_000
     return dict(center_hz=center_hz, lo_hz=center_hz-offset_hz, offset_hz=offset_hz)
@@ -66,10 +57,34 @@ def format_mhz(hz):
     return format(Decimal(hz) / 1_000_000, 'f').rstrip('0').rstrip('.')
 
 
-def command_request(input_mhz, output_mhz, sequence, operation='frequency'):
+def online_frequency_plan(input_mhz, output_mhz):
+    return dict(input_hz=business_center_hz('sender', input_mhz),
+                output_hz=business_center_hz('receiver', output_mhz))
+
+
+def request_lo_hz(request, axis):
+    value = request.get(axis+'_hz') if request.get('encoding') == 'n256_khz_v1' else request.get(axis+'_mhz')
+    if type(value) is not int:
+        raise ValueError('指令频率必须使用整数单位')
+    return value if request.get('encoding') == 'n256_khz_v1' else value*1000000
+
+
+def request_tolerance_hz(request):
+    return 10 if request.get('encoding') == 'n256_khz_v1' else 10000
+
+
+def command_request(input_mhz, output_mhz, sequence, operation='frequency', *, encoding=None):
     """Encode only exactly representable legacy LO values; never round."""
     if operation not in CONTROL_OPERATIONS.values():
         raise ValueError('未知遥控操作')
+    if encoding is not None:
+        from sw.tools.telecontrol_protocol import normalize_hz_request
+        if operation in ('stop', 'status'):
+            return normalize_hz_request(air_seq=sequence, operation=operation, encoding=encoding)
+        plan = online_frequency_plan(input_mhz, output_mhz)
+        return normalize_hz_request(rx_hz=plan['input_hz']-500000,
+                                    tx_hz=plan['output_hz']-500000,
+                                    air_seq=sequence, operation=operation, encoding=encoding)
     plan = frequency_plan(input_mhz, output_mhz)
     incoming, outgoing = plan['input_hz']-500_000, plan['output_hz']-500_000
     if incoming % 1_000_000 or outgoing % 1_000_000:
@@ -129,7 +144,7 @@ def device_choices(ports, aliases):
         role = alias.get('role')
         if role == 'management':
             continue
-        prefix = {'sender': '发送板（上次识别）', 'receiver': '接收板（上次识别）'}.get(role)
+        prefix = {'sender': '终端1板卡（上次识别）', 'receiver': '终端2板卡（上次识别）'}.get(role)
         name = f'{prefix or "未识别 USB 串口"} · {port["port"]}'
         devices[name] = dict(port, role=role)
     return dict(sorted(devices.items(), key=lambda item: (item[1].get('role') not in ('sender', 'receiver'), item[0])))

@@ -13,6 +13,7 @@ import time
 import uuid
 
 from .transport import discover_devices
+from sw.tools.telecontrol_protocol import frequency_fields
 
 TM1_FIELDS = (
     'uptime_ms events network armed pending decoded applied failures '
@@ -20,21 +21,29 @@ TM1_FIELDS = (
     's_valid s_event s_origin s_air_seq s_rx_mhz s_tx_mhz s_udp_seq s_count s_rc '
     'a_valid a_event a_origin a_air_seq a_rx_mhz a_tx_mhz a_udp_seq a_rc a_rx_hz a_tx_hz spi_valid'
 ).split()
+TM2_FIELDS = (
+    'uptime_ms events network armed pending decoded applied failures '
+    'd_valid d_event d_origin d_air_seq d_version d_rx_raw d_tx_raw '
+    's_valid s_event s_origin s_air_seq s_version s_rx_raw s_tx_raw s_udp_seq s_count s_rc '
+    'a_valid a_event a_origin a_air_seq a_version a_rx_raw a_tx_raw a_udp_seq a_rc a_rx_hz a_tx_hz spi_valid'
+).split()
 
 
 def parse_tm1(line):
-    """Validate the entire versioned line before exposing any state fields."""
+    """Dispatch TM1/TM2, retaining the exact legacy TM1 result dictionary."""
     if not isinstance(line, str) or len(line) > 1023:
         raise ValueError('TM1行类型或长度不符')
     line = line.rstrip('\r\n')
-    match = re.fullmatch(r'(TM1 [\x20-\x7e]+) crc16=([0-9A-F]{4})', line)
+    match = re.fullmatch(r'(TM[12] [\x20-\x7e]+) crc16=([0-9A-F]{4})', line)
     if not match or binascii.crc_hqx(match[1].encode('ascii'), 0xffff) != int(match[2], 16):
         raise ValueError('TM1格式或CRC校验失败，未更新状态')
     pairs = match[1][4:].split(' ')
-    if len(pairs) != len(TM1_FIELDS):
+    extended = match[1].startswith('TM2 ')
+    fields = TM2_FIELDS if extended else TM1_FIELDS
+    if len(pairs) != len(fields):
         raise ValueError('TM1字段不完整')
     values = {}
-    for key, pair in zip(TM1_FIELDS, pairs):
+    for key, pair in zip(fields, pairs):
         field = re.fullmatch(re.escape(key) + r'=(-?(?:0|[1-9][0-9]*))', pair)
         if not field:
             raise ValueError('TM1字段顺序或整数格式不符：' + key)
@@ -43,9 +52,9 @@ def parse_tm1(line):
             lower, upper = -(1 << 31), (1 << 31)-1
         elif key in ('a_rx_hz', 'a_tx_hz'):
             lower, upper = 0, (1 << 64)-1
-        elif key.endswith('_mhz') or key.endswith('_udp_seq'):
+        elif key.endswith(('_mhz', '_raw', '_udp_seq')):
             lower, upper = 0, 65535
-        elif key.endswith('_air_seq'):
+        elif key.endswith(('_air_seq', '_version')):
             lower, upper = 0, 255
         elif key.endswith('_origin'):
             lower, upper = 0, 4
@@ -56,12 +65,29 @@ def parse_tm1(line):
         if not lower <= value <= upper:
             raise ValueError('TM1数值越界：' + key)
         values[key] = value
-    if values['spi_valid'] != 0 or (values['a_valid'] and values['a_rc'] != 0):
+    if values['spi_valid'] != 0 or (not extended and values['a_valid'] and values['a_rc'] != 0):
         raise ValueError('TM1状态语义不符')
     for prefix in ('d', 's', 'a'):
         if values[prefix+'_valid'] and values[prefix+'_origin'] == 0:
             raise ValueError('有效TM1记录缺少来源')
+        if extended:
+            if not values[prefix+'_valid']:
+                if any(value for key, value in values.items() if key.startswith(prefix+'_')):
+                    raise ValueError('无效TM2记录必须清零')
+                continue
+            decoded = frequency_fields(values[prefix+'_version'], values[prefix+'_rx_raw'],
+                                       values[prefix+'_tx_raw'])
+            for key, value in decoded.items():
+                if prefix == 'a' and key in ('rx_hz', 'tx_hz'):
+                    continue  # Actual ACK Hz must never be replaced by the requested value.
+                values[prefix+'_'+key] = value
     return values
+
+
+def parse_tm2(line):
+    if not isinstance(line, str) or not line.startswith('TM2 '):
+        raise ValueError('TM2格式不符')
+    return parse_tm1(line)
 
 
 class TelemetrySerial:
@@ -116,9 +142,9 @@ class TelemetrySerial:
         return lines
 
     def query(self):
-        lines = [x for x in self._command('telemetry') if x.startswith('TM1 ')]
+        lines = [x for x in self._command('telemetry') if x.startswith(('TM1 ', 'TM2 '))]
         if len(lines) != 1:
-            raise RuntimeError('未收到唯一TM1遥测帧')
+            raise RuntimeError('未收到唯一TM1/TM2遥测帧')
         return parse_tm1(lines[0])
 
     def close(self):

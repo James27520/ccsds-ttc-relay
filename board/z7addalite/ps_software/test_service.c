@@ -213,6 +213,40 @@ static void test_diagnostic_quiet_gate(void)
     assert(act_command_line(&e.ctrl,"remotenettest status 900 1001 9 0")==0 && e.udp==1);
     assert(e.core.pending_origin==APS_UART_NETTEST && !e.core.decoded_frames);
 }
+static void test_standby_lifetime_and_sequence_window(void)
+{
+    unsigned i,before;uint32_t at;char line[384];
+    setup(UINT32_MAX-100000u);assert(asv_start_standby(&e.service,e.now)==0);
+    /* Cross a 32-bit clock wrap, 600 seconds and the former 16-command limit. */
+    for(i=0;i<40u;++i){accept(i);ack();at=e.now;tick(at+3000u);tick(at+23000u);}
+    assert(e.service.active && e.service.standby && e.service.accepted==40u);
+    assert(asv_status(&e.service,e.now,line,sizeof(line))>0 && strstr(line,"standby=1 wanted=1"));
+    before=e.udp;frame(38);act_poll(&e.ctrl);act_poll(&e.ctrl);assert(e.udp==before);
+    accept(0); /* Old reservation expired, subsequent commands distinguish it. */
+    assert(e.service.accepted==41u && e.udp==before+1u);
+    ack();at=e.now;tick(at+3000);tick(at+23000);
+    assert(e.service.active && e.submits==41u);
+    assert(asv_stop(&e.service,ASV_USER,e.now)==0);tick(e.now+2000);
+    assert(!e.service.active && !e.service.wanted);tick(e.now+700000);
+    assert(!e.service.active && e.submits==41u);
+}
+static void test_standby_network_resume_without_replay_or_fault_clear(void)
+{
+    unsigned before,clears;
+    setup(0);assert(asv_start_standby(&e.service,0)==0);accept(9);
+    e.core.network_ready=0;tick(1);
+    assert(!e.service.active && e.service.wanted && !e.core.transaction.pending);
+    before=e.udp;e.core.network_ready=1;tick(2000);
+    assert(e.service.active && e.service.standby && e.udp==before && !e.submits);
+    frame(9);act_poll(&e.ctrl);act_poll(&e.ctrl);assert(e.udp==before);
+    accept(10);ack();tick(e.now+23000);
+    clears=e.clears;e.diag=1;tick(e.now+1);tick(e.now+2000);
+    assert(!e.service.active && !e.service.wanted && e.clears==clears);
+    /* An explicit off while waiting for the network cancels automatic resume. */
+    setup(0);assert(asv_start_standby(&e.service,0)==0);
+    e.core.network_ready=0;tick(1);assert(asv_stop(&e.service,ASV_USER,2)==0);
+    e.core.network_ready=1;tick(2000);assert(!e.service.active && !e.service.wanted);
+}
 int main(void)
 {
     test_start_and_gate();test_immutable_400_replies();test_udp_timeout_no_success_reply();
@@ -221,6 +255,8 @@ int main(void)
     test_retired_reply_is_never_used_for_failed_next_transaction();
     test_binary_failure_reply_and_long_burst_guard();
     test_diagnostic_quiet_gate();
+    test_standby_lifetime_and_sequence_window();
+    test_standby_network_resume_without_replay_or_fault_clear();
     setup(0);assert(!e.ctrl.filter);frame(99);e.cap.state=AC_READY;e.cap.valid=1;e.cap.desired_mode=TC_MODE_NORMAL;
     assert(act_command_line(&e.ctrl,"decode")==0 && e.core.decoded_frames==1 && !e.udp);
     puts("PASS autonomous service: mock ADC/controller/UDP ACK, immutable bounded replies, replay/stop/fault/lease; no hardware");

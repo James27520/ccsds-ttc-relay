@@ -12,10 +12,11 @@ import time
 
 from .relay import RelayConsole
 from .rf_live import RFTelemetryController, idle_dac
-from .tc_hardware import CommandSource, ControlAdda, request_values
+from .tc_hardware import CommandSource, ControlAdda, request_values, waveform_values
 from .tc_evidence import assess_transaction
 from .rf_session import probe_pair
 from sw.tools.telecontrol_waveform import command_iq
+from sw.tools.telecontrol_protocol import wire_fields
 
 
 def wait_for(read, condition, timeout, label):
@@ -31,6 +32,9 @@ def wait_for(read, condition, timeout, label):
 
 def manual_command(a, source, relay, requested, record):
     """One normal snapshot, source stopped before C decode; never auto on."""
+    requested = request_values(**requested)
+    version, rx_raw, tx_raw, seq = wire_fields(requested)
+    operation = requested.get('operation', 'frequency')
     before = a.acquire_control()
     for prefix in ('d', 's', 'a'):
         if before[prefix+'_valid'] and before[prefix+'_air_seq'] == requested['air_seq']:
@@ -47,18 +51,26 @@ def manual_command(a, source, relay, requested, record):
         raise RuntimeError('ADC未产生未消费的正常快照')
     source.stop()
     decode_lines = a.control('decode')
-    expected = ('DECODED source=ADC_NORMAL rx={rx_mhz} tx={tx_mhz} '
-                'air_seq={air_seq} rc=0').format(**requested)
+    if version & 0x80:
+        expected = (f'DECODED source=ADC_NORMAL version={version} rx_offset_khz={rx_raw} '
+                    f'tx_offset_khz={tx_raw} rx_lo_hz={requested["rx_hz"]} '
+                    f'tx_lo_hz={requested["tx_hz"]} air_seq={seq} rc=0')
+    else:
+        expected = ('DECODED source=ADC_NORMAL rx={rx_mhz} tx={tx_mhz} '
+                    'air_seq={air_seq} rc=0').format(**requested)
     if expected not in decode_lines:
         raise RuntimeError('本次ADC_NORMAL解码与新指令不符')
     applied = wait_for(a.query, lambda s: s['pending'] == 0 and s['applied'] != before['applied'],
                        5, '未获得新的匹配ACK')
     if applied['applied'] != before['applied']+1 or applied['failures'] != before['failures']:
         raise RuntimeError('控制计数异常，不计为闭环成功')
-    spi = relay.diagnostics(atten=89, gain=0, exact_frequency=False)
-    for name in ('rx', 'tx'):
-        if abs(spi['relay_'+name+'_hz_readback']-requested[name+'_mhz']*1000000) > 10000:
-            raise RuntimeError('独立SPI频率与指令不一致')
+    spi = relay.diagnostics(atten=50 if operation == 'enable' else 89,
+                            gain=30 if operation == 'enable' else 0, exact_frequency=False)
+    if operation in ('frequency', 'enable'):
+        for name in ('rx', 'tx'):
+            target = requested[name+'_hz'] if version & 0x80 else requested[name+'_mhz']*1000000
+            if abs(spi['relay_'+name+'_hz_readback']-target) > (10 if version & 0x80 else 10000):
+                raise RuntimeError('独立SPI频率与指令不一致')
     a.release_control()  # After ACK only; keeps all three evidence records.
     wait_for(a.tmstatus, lambda s: s['pending'] == s['stopping'] == 0, 3, 'DAC停止握手未完成')
     idle_dac(a.tmstatus())
@@ -117,7 +129,7 @@ def receive_reply(out, source_port, adda_port, source_identity, adda_identity, b
 
 
 def execute(out, source_port, adda_port, relay_port, requested, *, wiring_confirmed=False, probe=False):
-    request_values(**requested)
+    requested = request_values(**requested)
     if len({source_port.casefold(), adda_port.casefold(), relay_port.casefold()}) != 3:
         raise ValueError('三个DEBUG端口必须各不相同')
     if not probe and wiring_confirmed is not True:
@@ -155,8 +167,7 @@ def execute(out, source_port, adda_port, relay_port, requested, *, wiring_confir
                 adda.acquire_control()
                 report['waveform'] = source.prepare(requested, wiring_confirmed=True)
                 (out/'source_waveform.bin').write_bytes(
-                    command_iq(
-                        requested['rx_mhz'],requested['tx_mhz'],requested['air_seq'],.1).tobytes())
+                    command_iq(amplitude=.1, **waveform_values(requested)).tobytes())
                 report['control'] = manual_command(adda, source, relay, requested, record)
                 report['dac_sequence'] = adda.tmstatus()['seq']
                 adda.verify_binding()

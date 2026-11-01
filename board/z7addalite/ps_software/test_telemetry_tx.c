@@ -19,7 +19,7 @@ static int write_reg(void *c,uint32_t address,uint32_t v)
 }
 static void barrier(void *c){++((struct mock *)c)->barriers;}
 static struct aps_command_record record(uint32_t event,enum aps_origin origin,uint8_t seq,uint16_t rx,uint16_t tx)
-{struct aps_command_record r;memset(&r,0,sizeof(r));r.valid=1;r.event=event;r.origin=origin;r.command.seq=seq;r.command.rx_mhz=rx;r.command.tx_mhz=tx;return r;}
+{struct aps_command_record r;memset(&r,0,sizeof(r));r.valid=1;r.event=event;r.origin=origin;r.command.version=1;r.command.seq=seq;r.command.rx_mhz=rx;r.command.tx_mhz=tx;return r;}
 int main(int argc,char **argv)
 {
     struct aps_state s;struct atm_tx tx;struct mock m;struct atm_io io;

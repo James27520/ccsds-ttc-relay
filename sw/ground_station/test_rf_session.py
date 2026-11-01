@@ -21,6 +21,37 @@ STATUS = ['CONTROLLER auto=0 capture_state=0 capture_valid=0 consumed=0',
           'STATUS network=1 armed=0 pending=0']
 
 
+class UsbIdentityTests(unittest.TestCase):
+    def test_enumeration_failures_are_bounded_and_duplicates_fail_immediately(self):
+        valid = types.SimpleNamespace(device='COM18', vid=0x0403, pid=0x6010)
+        missing_vid = types.SimpleNamespace(device='COM18', vid=None, pid=0x6010)
+        cases = [([], 'matches=0', 3), ([valid, valid], 'matches=2', 1),
+                 ([missing_vid], 'vid=None', 3)]
+        for ports, reason, attempts in cases:
+            with self.subTest(reason=reason), patch('serial.tools.list_ports.comports', return_value=ports) as enumerate_ports, patch.object(rf.time,'sleep') as sleep:
+                with self.assertRaisesRegex(RuntimeError, 'port=COM18.*'+reason):
+                    rf._usb_identity('COM18')
+                self.assertEqual(enumerate_ports.call_count, attempts)
+                self.assertEqual(sleep.call_count, attempts-1)
+
+    def test_transient_missing_metadata_can_recover_but_changed_device_is_returned_for_binding_rejection(self):
+        incomplete = types.SimpleNamespace(device='COM18',vid=None,pid=None)
+        changed = types.SimpleNamespace(device='COM18',vid=0x403,pid=0x6010,
+                                       serial_number='different',location='1-3',hwid='changed')
+        with patch('serial.tools.list_ports.comports',side_effect=[[],[incomplete],[changed]]) as enumerate_ports, patch.object(rf.time,'sleep'):
+            result=rf._usb_identity('COM18')
+        self.assertEqual(enumerate_ports.call_count,3)
+        self.assertEqual(result['usb_serial'],'different')
+
+    def test_complete_usb_identity_is_preserved(self):
+        port = types.SimpleNamespace(device='COM18', vid=0x0403, pid=0x6010,
+                                     serial_number='6', location='1-2', hwid='test USB')
+        with patch('serial.tools.list_ports.comports', return_value=[port]):
+            self.assertEqual(rf._usb_identity('COM18'), dict(
+                port='COM18', usb_vid=0x0403, usb_pid=0x6010,
+                usb_serial='6', usb_location='1-2', hwid='test USB'))
+
+
 class PairTests(unittest.TestCase):
     def setUp(self):
         rf._BINDINGS.clear()
@@ -35,6 +66,7 @@ class PairTests(unittest.TestCase):
         self.patches = [
             patch.object(rf, '_usb_identity', side_effect=lambda p: copy.deepcopy(self.usb[p])),
             patch.object(rf, '_open_usb', side_effect=self.open_usb),
+            patch.object(Console, 'prepare_shell'),
             patch.object(Console, 'run', autospec=True, side_effect=self.console_run),
             patch.object(TelemetrySerial, '_exchange', autospec=True, side_effect=self.cli)]
         for p in self.patches:

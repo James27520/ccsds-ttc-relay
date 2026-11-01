@@ -15,7 +15,7 @@ from ._tk_test_support import dispose_tk_test
 from .ui_v2 import ReviewSession, main
 from .ui_v2_model import (command_request, device_choices, frequency_plan,
                          format_mhz, load_historical_transaction, text_bytes, business_frequency_plan,
-                         relay_snapshot_view)
+                         relay_snapshot_view, request_lo_hz)
 
 
 PORTS = [dict(port='COM_A', description='USB A', vid=1027, pid=24592, serial='sender-unique'),
@@ -99,11 +99,11 @@ class ReviewDataTests(unittest.TestCase):
         aliases = ALIASES + [dict(ports[3], role='management')]
         choices = device_choices(ports, aliases)
         self.assertEqual(len(choices), 3)
-        self.assertIn('发送板（上次识别） · COM_A', choices)
+        self.assertIn('终端1板卡（上次识别） · COM_A', choices)
         self.assertIn('未识别 USB 串口 · UNKNOWN', choices)
         duplicate = dict(PORTS[0], port='DUPLICATE')
         choices = device_choices(PORTS+[duplicate], ALIASES)
-        self.assertNotIn('发送板（上次识别） · COM_A', choices)
+        self.assertNotIn('终端1板卡（上次识别） · COM_A', choices)
         self.assertEqual(choices['未识别 USB 串口 · COM_A']['role'], None)
 
     def test_text_limit_is_utf8_bytes(self):
@@ -146,9 +146,9 @@ class ReviewWindowTests(unittest.TestCase):
 
     def test_three_windows_share_only_pc1_selection_and_never_receive_a_draft(self):
         sender, receiver, control = [self.session.show(role) for role in ('sender', 'receiver', 'control')]
-        sender.selection.set('发送板（上次识别） · COM_A')
+        sender.selection.set('终端1板卡（上次识别） · COM_A')
         self.assertEqual(control.selection.get(), sender.selection.get())
-        self.assertEqual(receiver.selection.get(), '接收板（上次识别） · COM_B')
+        self.assertEqual(receiver.selection.get(), '终端2板卡（上次识别） · COM_B')
         sender.message_input.insert('1.0', '实际内容')
         self.root.update()
         self.assertEqual(sender.byte_count.get(), '12 / 32 字节')
@@ -157,48 +157,46 @@ class ReviewWindowTests(unittest.TestCase):
         self.assertEqual(receiver.received_text.get(), '等待接收文本')
         self.assertEqual(receiver.history.get_children(), ())
         self.assertEqual(sender.history.get_children(), ())
-        for widget in (sender.send_button, receiver.receive_button, control.command_send_button,
+        for widget in (sender.send_button, receiver.send_button, control.command_send_button,
                        sender.connect_button, receiver.connect_button, control.connect_button):
             self.assertTrue(widget.instate(['disabled']))
 
     def test_parameter_change_invalidates_prepared_request(self):
         control = self.session.show('control')
         control.generate_command()
-        self.assertEqual(control.draft['request']['tx_mhz'], 2179)
+        self.assertEqual(control.draft['request']['tx_hz'], 2179000000)
         control.output_frequency.set('1000.5')
         self.assertIsNone(control.draft)
         self.assertIn('重新生成', control.request_note.get())
 
     def test_operation_change_invalidates_and_encodes_distinct_commands(self):
         control = self.session.show('control')
-        for name, operation, version in (('开启转发', 'enable', 0x21), ('停止转发', 'stop', 0x22),
-                                         ('查询状态', 'status', 0x23)):
+        for name, operation, version in (('开启转发', 'enable', 0xa1), ('停止转发', 'stop', 0xa2),
+                                         ('查询状态', 'status', 0xa3)):
             control.operation.set(name)
             self.assertIsNone(control.draft)
             control.generate_command()
             self.assertEqual(control.draft['request']['operation'], operation)
             self.assertEqual(bytes.fromhex(control.draft['body_hex'])[0], version)
             self.assertIn(name, control.history.item(control.history.get_children()[0], 'values')[1])
-        self.assertIn('不续租', control.operation_note.get())
-        self.assertIn('不调谐', control.mapping.get())
+        self.assertIn('不续期', control.operation_note.get())
+        self.assertIn('不携带调谐', control.mapping.get())
         control.preview_report()
         self.assertIn('模拟操作：查询状态', control.reply_body.get())
         self.assertIn('未确认远端模式', control.reply_body.get())
 
-    def test_sequences_are_internal_and_fractional_plans_are_not_encoded(self):
+    def test_sequences_are_internal_and_sub_khz_plans_are_rejected(self):
         control = self.session.show('control')
-        control.input_frequency.set('1234.5')
+        control.input_frequency.set('1988.123')
         control.generate_command()
         first = control.draft['request']['air_seq']
         control.generate_command()
         self.assertEqual(control.draft['request']['air_seq'], (first+1) % 256)
         self.assertFalse(hasattr(control, 'sequence'))
-        control.input_frequency.set('1234.567891')
+        control.input_frequency.set('1988.123001')
         control.generate_command()
-        self.assertIsNone(control.draft['request'])
-        self.assertIsNone(control.draft['body_hex'])
-        self.assertEqual(control.draft['plan']['input_hz'], 1234567891)
-        self.assertIn('不能编码', control.request_note.get())
+        self.assertIsNone(control.draft)
+        self.assertIn('1 kHz', control.request_note.get())
 
     def test_refresh_preserves_identity_but_never_rebinds_a_replaced_port(self):
         original = self.session.source_selection.get()
@@ -225,7 +223,8 @@ class ReviewWindowTests(unittest.TestCase):
         self.assertIsNone(control.simulation)
         self.assertEqual(control.reply_body.get(), '')
         control.preview_report()
-        self.assertIsNone(control.draft['body_hex'])
+        self.assertIsNone(control.draft)
+        control.output_frequency.set('2184.567')
         with tempfile.TemporaryDirectory() as directory:
             path = history_fixture(directory)
             self.assertTrue(control.load_record(path))
@@ -318,7 +317,7 @@ class OnlineControlTests(unittest.TestCase):
 
     def result(self, request, **changes):
         event = dict(type='result', passed=True, requested=request,
-                     ack=dict(rx_hz=request['rx_mhz']*1_000_000, tx_hz=request['tx_mhz']*1_000_000),
+                     ack=dict(rx_hz=request_lo_hz(request, 'rx'), tx_hz=request_lo_hz(request, 'tx')),
                      frame_count=3, report_path='FAKE_REPORT.json', iq_path='FAKE_CAPTURE.iq')
         event.update(changes)
         self.control._handle_online_event(event)
@@ -359,7 +358,7 @@ class OnlineControlTests(unittest.TestCase):
         self.result(request, matched=True, remote_rc=0, relay=self.relay(),
                     ack=dict(rx_hz=901000000, tx_hz=1000000000))
         self.assertIn('查询回报', self.control.reply_title.get())
-        self.assertIn('实际本振 RX 901 / TX 1000 MHz', self.control.reply_body.get())
+        self.assertIn('实际本振 RX 901.000000 / TX 1000.000000 MHz', self.control.reply_body.get())
         self.assertEqual(self.session.sender_plan_origin, '本地计划')
         self.assertEqual(self.session.sender_center_plan, '1989.5')
         self.assertIsNone(self.control.active_request)
@@ -490,32 +489,50 @@ class OnlineControlTests(unittest.TestCase):
         self.assertIsNone(self.control.historical)
         self.assertEqual(self.control.reply_title.get(), '等待执行回报')
 
-    def test_only_measured_integer_lo_plans_can_be_sent(self):
+    def test_range_plans_and_independent_pairs_can_be_sent(self):
         self.connected()
-        for rx, tx in (('1989.5', '2179.5'), ('1990.5', '2180.5')):
+        for rx, tx in (('1989.5', '2179.5'), ('1990.5', '2180.5'),
+                       ('1988.123', '2184.567'), ('1980.100', '2199.900'),
+                       ('2009.900', '2170.100')):
             self.control.input_frequency.set(rx)
             self.control.output_frequency.set(tx)
             self.control.generate_command()
             self.assertIsNotNone(self.control.draft['body_hex'])
             self.assertFalse(self.control.command_send_button.instate(['disabled']))
-        for rx in ('1234.5', '900.6', '900.567891'):
+        for rx in ('1234.5', '1988.123001', '1980.099', '2009.901'):
             self.control.input_frequency.set(rx)
             self.control.generate_command()
-            self.assertIsNone(self.control.draft['body_hex'])
+            self.assertIsNone(self.control.draft)
             self.assertTrue(self.control.command_send_button.instate(['disabled']))
             self.control.send_online()
         for rx, tx in (('1989.5', '2180.5'), ('1990.5', '2179.5')):
             self.control.input_frequency.set(rx)
             self.control.output_frequency.set(tx)
             self.control.generate_command()
-            self.assertIsNone(self.control.draft['body_hex'])
-            self.assertTrue(self.control.command_send_button.instate(['disabled']))
-            self.control.send_online()
+            self.assertIsNotNone(self.control.draft['body_hex'])
+            self.assertFalse(self.control.command_send_button.instate(['disabled']))
         self.control.input_frequency.set('invalid')
         self.control.generate_command()
         self.assertIsNone(self.control.draft)
         self.assertTrue(self.control.command_send_button.instate(['disabled']))
         self.assertFalse(any(action == 'send' for action, _ in self.controller.calls))
+
+    def test_stop_and_query_ignore_invalid_frequency_drafts(self):
+        self.connected()
+        self.control.input_frequency.set('invalid')
+        self.control.output_frequency.set('2200')
+        for name in ('停止转发', '查询状态'):
+            self.control.operation.set(name)
+            self.control.generate_command()
+            self.assertIsNotNone(self.control.draft['body_hex'])
+            self.assertFalse(self.control.command_send_button.instate(['disabled']))
+            self.assertTrue(all(entry.instate(['disabled']) for entry in self.control.frequency_entries))
+            self.assertEqual(bytes.fromhex(self.control.draft['body_hex'])[1:5], b'\0'*4)
+
+    def test_adjacent_khz_ack_cannot_be_accepted(self):
+        request = self.sent()
+        self.result(request, ack=dict(rx_hz=request['rx_hz']+1000, tx_hz=request['tx_hz']))
+        self.assertEqual(self.control.reply_title.get(), '执行失败')
 
     def test_send_is_explicit_once_with_frozen_request_and_true_result(self):
         request = self.sent()
@@ -621,7 +638,7 @@ class OnlineControlTests(unittest.TestCase):
         self.assertEqual(self.controller.calls[-1], ('disconnect', {}))
         self.control._handle_online_event(dict(type='status', state='disconnected', message='released'))
         self.connected()
-        self.session.source_selection.set('接收板（上次识别） · COM_B')
+        self.session.source_selection.set('终端2板卡（上次识别） · COM_B')
         self.assertIsNone(self.control.online_identity)
         self.assertEqual(self.controller.calls[-1], ('disconnect', {}))
 
@@ -754,7 +771,7 @@ class OnlineControlTests(unittest.TestCase):
         self.assertIsNone(self.control.window)
         self.assertTrue(self.control.closed)
         self.assertNotIn(removed_trace, [command for _, command in self.session.source_selection.trace_info()])
-        self.session.source_selection.set('接收板（上次识别） · COM_B')
+        self.session.source_selection.set('终端2板卡（上次识别） · COM_B')
         self.assertIn('COM_B', sender.device_detail.get())
         collected = []
         worker = threading.Thread(target=lambda: collected.append(gc.collect()))

@@ -4,6 +4,9 @@
 #include "adda_telemetry_tx.h"
 #define ASV_LEASE_MS 600000u
 #define ASV_TRANSACTION_LIMIT 16u
+/* Standby has no listening deadline. Duplicate reservations remain bounded;
+ * this is not cryptographic replay protection. */
+#define ASV_SEQUENCE_HOLD_MS 600000u
 #define ASV_REPLY_DELAY_MS 3000u
 #define ASV_REPLY_PERIOD_MS 50u
 #define ASV_REPLY_LIMIT 400u
@@ -17,6 +20,8 @@ struct asv_service {
     unsigned active,state,reason,accepted,completed,failed,reply_sent,used_count;
     uint32_t started_ms,ack_ms,last_reply_ms,reply_seq,baseline_applied,baseline_failures;
     uint8_t used[32],burst[ATM2_BURST_BYTES];
+    uint32_t seen_ms[256],retry_ms;
+    unsigned standby,wanted;
     size_t burst_length;
     unsigned reply_failed;
     struct ap_command command;
@@ -24,6 +29,7 @@ struct asv_service {
 };
 void asv_init(struct asv_service *,struct act_controller *,struct atm_tx *);
 int asv_start(struct asv_service *,uint32_t now);
+int asv_start_standby(struct asv_service *,uint32_t now);
 int asv_stop(struct asv_service *,enum asv_reason,uint32_t now);
 /* Main must poll network and atm_tx_poll before this fast cooperative step,
  * and call act_poll afterwards. Service filter pauses auto before UDP begins. */

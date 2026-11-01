@@ -27,9 +27,22 @@ _RX_KEYS = _USB_KEYS + ('linux_boot_id', 'model', 'iio_serial')
 
 def _usb_identity(port):
     from serial.tools import list_ports
-    matches = [p for p in list_ports.comports() if p.device == port]
+    # Windows can briefly return an incomplete enumeration while several
+    # endpoints are being probed. Retry the read-only lookup for at most 100 ms.
+    # Duplicate ports are ambiguous immediately; boot/model/USB continuity is
+    # still checked by the caller before any board write. Never retry RF work.
+    for attempt in range(3):
+        matches = [p for p in list_ports.comports() if p.device == port]
+        if len(matches) > 1 or (len(matches) == 1 and
+                               matches[0].vid is not None and matches[0].pid is not None):
+            break
+        if attempt < 2:
+            time.sleep(.05)
     if len(matches) != 1 or matches[0].vid is None or matches[0].pid is None:
-        raise RuntimeError('USB session port is unavailable or ambiguous')
+        detail = f'port={port}, matches={len(matches)}, attempts={attempt+1}'
+        if len(matches) == 1:
+            detail += f', vid={matches[0].vid!r}, pid={matches[0].pid!r}'
+        raise RuntimeError('USB session port is unavailable or ambiguous ('+detail+')')
     p = matches[0]
     return dict(port=p.device, usb_vid=p.vid, usb_pid=p.pid,
                 usb_serial=p.serial_number or '',
@@ -69,6 +82,7 @@ class SessionRxConsole(Console):
         self._fingerprint = _usb_identity(port)
         self.port = _open_usb(port, 3)
         try:
+            self.prepare_shell()
             self.info = self._identify()
             self._fingerprint = {k: self.info[k] for k in _RX_KEYS}
         except BaseException:

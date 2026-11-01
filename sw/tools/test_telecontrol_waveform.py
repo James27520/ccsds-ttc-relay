@@ -1,5 +1,6 @@
 """Offline protocol, periodic waveform and file contract tests."""
 import contextlib
+import binascii
 import hashlib
 import io
 import json
@@ -10,10 +11,56 @@ import unittest
 
 import numpy as np
 
-import telecontrol_waveform as w
+try:
+    from . import telecontrol_waveform as w
+except ImportError:
+    import telecontrol_waveform as w
 
 
 class WaveformTests(unittest.TestCase):
+    def test_khz_golden_vector_crc_frame_and_legacy_operation_vectors(self):
+        body = w.build_body(rx_hz=1991845000, tx_hz=2192956000, seq=37)
+        self.assertEqual(body.hex(), '813930a05b250cf5')
+        self.assertEqual(int.from_bytes(body[-2:], 'big'), binascii.crc_hqx(body[:6], 0xffff))
+        bits, _ = w.build_cadu(body)
+        self.assertEqual(len(bits), 160)
+        self.assertEqual(np.packbits(bits).tobytes().hex(), '1acffc1d6f35361c647e3550724117084338067e')
+        for op, golden in [('frequency', '018403e80307579e'), ('enable', '218403e803076296'),
+                           ('stop', '228403e80307ac76'), ('status', '238403e80307e9d6')]:
+            self.assertEqual(w.build_body(900, 1000, 7, op).hex(), golden)
+
+    def test_khz_edges_independent_pair_and_stop_ignored_fields(self):
+        for rx_offset, tx_offset in [(100, 29900), (29900, 100), (101, 12345)]:
+            body = w.build_body(rx_hz=1979500000+rx_offset*1000,
+                                tx_hz=2169500000+tx_offset*1000, seq=255, operation='enable')
+            self.assertEqual(struct.unpack('<BHHB', body[:6]), (0xa1, rx_offset, tx_offset, 255))
+        for operation, version in [('stop', 0xa2), ('status', 0xa3)]:
+            body = w.build_body(seq=0, operation=operation, encoding='n256_khz_v1',
+                                rx_hz='invalid draft', tx_hz=float('nan'))
+            self.assertEqual(struct.unpack('<BHHB', body[:6]), (version, 0, 0, 0))
+        for bad in (1979599000, 2009401000, 1991845001, 1991845000.0, True):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                w.build_body(rx_hz=bad, tx_hz=2192956000, seq=1)
+        for changes in (dict(encoding='unknown'), dict(rx=900), dict(seq=True)):
+            values = dict(rx_hz=1991845000, tx_hz=2192956000, seq=1)
+            values.update(changes)
+            with self.assertRaises(ValueError):
+                w.build_body(**values)
+
+    def test_khz_cli_manifest_retains_exact_hz_and_no_mhz_offsets(self):
+        with tempfile.TemporaryDirectory() as root:
+            out = Path(root)/'khz'
+            with contextlib.redirect_stdout(io.StringIO()):
+                w.main(['--mode', 'cmd', '--rx-hz', '1991845000', '--tx-hz', '2192956000',
+                        '--seq', '37', '--out', str(out)])
+            manifest = json.loads((out/'manifest.json').read_text())
+            self.assertEqual(manifest['body_hex'], '813930a05b250cf5')
+            self.assertEqual(manifest['encoding'], 'n256_khz_v1')
+            self.assertEqual(manifest['rx_hz'], 1991845000)
+            self.assertEqual(manifest['tx_offset_khz'], 23456)
+            self.assertNotIn('rx_mhz', manifest)
+            self.assertEqual(len((out/'iq_s16le.bin').read_bytes()), 16000)
+
     def test_golden_vectors(self):
         vectors = [
             (100, 2450, 0, "01640092090077ab", "1acffc1dbcd9014c82bf4b2c0b3894c10ddfdc50"),

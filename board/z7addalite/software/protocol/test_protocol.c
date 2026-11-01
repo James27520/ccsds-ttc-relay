@@ -252,12 +252,92 @@ static void test_transaction(void)
     printf("transaction PASS commit only after success, exact retries, stale/conflict/error handling, both sequence wraps\n");
 }
 
+static uint64_t read_be64(const uint8_t *p)
+{
+    uint64_t n=0u;unsigned i;
+    for(i=0;i<8u;++i)n=(n<<8)|p[i];
+    return n;
+}
+
+static void test_khz_commands(void)
+{
+    /* Independent struct/binascii and bitwise convolution vectors. Same body
+     * size, ASM, randomizer and untailed code as the original three goldens. */
+    static const uint8_t versions[4]={0x81u,0xa1u,0xa2u,0xa3u};
+    static const char *bodies[4]={"813930a05b250cf5","a13930a05b2539fd","a2000000002510bf","a30000000025551f"};
+    static const char *frames[4]={"1acffc1d6f35361c647e3550724117084338067e","1acffc1d620bf61c647e3550724117084d7ec21d",
+        "1acffc1d620589cdb9bf9b8285283a784090955b","1acffc1d6206c67db9bf9b8285283a78745cff39"};
+    static const uint16_t invalid[5]={0u,99u,29901u,30000u,65535u};
+    struct ap_command c={0x81u,12345u,23456u,37u},parsed;
+    struct ap_frame_result f;struct ap_transaction state;
+    struct ap_ack a={0,0x123u,UINT64_C(1991845000),UINT64_C(2192956000)};
+    struct ap_relay_status r={0x21u,3u,1u,30u,30u,50000u,50000u,299990u,42u};
+    uint8_t body[8],expected[34],bits[160],reference[160],packet[34];unsigned i,j;
+    CHECK(ap_command_validate(NULL)==AP_EARG && ap_command_operation(NULL)==0u);
+    CHECK(ap_command_rx_hz(NULL)==0u && ap_command_tx_hz(NULL)==0u);
+    for(i=0;i<4u;++i){
+        c.version=versions[i];c.rx_mhz=(uint16_t)(i<2u?12345u:0u);c.tx_mhz=(uint16_t)(i<2u?23456u:0u);
+        CHECK(ap_command_operation(&c)==(uint8_t)(versions[i]&0x7fu));
+        from_hex(bodies[i],expected);CHECK(ap_body_build(&c,body)==AP_OK && !memcmp(body,expected,8u));
+        CHECK(ap_body_parse(body,8u,&parsed)==AP_OK && command_equal(&c,&parsed));
+        from_hex(frames[i],expected);unpack(expected,20u,reference);
+        CHECK(ap_frame_encode(&c,bits)==AP_OK && !memcmp(bits,reference,160u));
+        CHECK(ap_find_frame(bits,160u,0u,&f)==AP_OK && command_equal(&c,&f.command));
+        body[7]^=1u;CHECK(ap_body_parse(body,8u,&parsed)==AP_ECRC);
+        if(i>=2u){
+            CHECK(ap_command_rx_hz(&c)==AP_RX_BASE_HZ && ap_command_tx_hz(&c)==AP_TX_BASE_HZ);
+            CHECK(ap_control_packet(&c,0x123u,packet,sizeof(packet))==AP_OK && packet[7]==(versions[i]&0x7fu));
+            CHECK(read_be64(packet+16u)==AP_RX_BASE_HZ && read_be64(packet+24u)==AP_TX_BASE_HZ);
+            c.rx_mhz=1u;CHECK(ap_command_validate(&c)==AP_ERANGE);c.rx_mhz=0u;c.tx_mhz=100u;
+            CHECK(ap_command_validate(&c)==AP_ERANGE);
+        }
+    }
+    for(i=0;i<2u;++i){
+        c.version=versions[i];c.rx_mhz=100u;c.tx_mhz=29900u;
+        CHECK(ap_command_validate(&c)==AP_OK);
+        CHECK(ap_command_rx_hz(&c)==UINT64_C(1979600000) && ap_command_tx_hz(&c)==UINT64_C(2199400000));
+        c.rx_mhz=29900u;c.tx_mhz=100u;CHECK(ap_command_validate(&c)==AP_OK); /* independent cross-pair */
+        for(j=0;j<5u;++j){
+            c.rx_mhz=invalid[j];c.tx_mhz=100u;CHECK(ap_body_build(&c,body)==AP_ERANGE);
+            c.rx_mhz=100u;c.tx_mhz=invalid[j];CHECK(ap_body_build(&c,body)==AP_ERANGE);
+        }
+        c.rx_mhz=12345u;c.tx_mhz=23456u;
+        CHECK(ap_command_rx_hz(&c)==UINT64_C(1991845000) && ap_command_tx_hz(&c)==UINT64_C(2192956000));
+        ++c.rx_mhz;CHECK(ap_command_rx_hz(&c)==UINT64_C(1991846000));--c.rx_mhz;
+    }
+    c.version=0x80u;CHECK(ap_command_validate(&c)==AP_EVERSION && ap_command_rx_hz(&c)==0u);
+    c.version=0x81u;
+    from_hex("0101c12300110000000076b924880000000082b5da60005903b4",expected);
+    CHECK(ap_rf_packet(&c,0x123u,0u,89u,packet)==AP_OK && !memcmp(packet,expected,26u));
+    ap_transaction_init(&state,0x123u);CHECK(ap_transaction_begin(&state,&c,0u,89u)==AP_OK);
+    CHECK(state.packet_length==26u && !state.control_sequence_used);
+    CHECK(ap_transaction_ack(&state,&a,11u)==AP_ERANGE && state.pending);
+    ++a.rx_hz;a.rx_hz+=10u;CHECK(ap_transaction_ack(&state,&a,10u)==AP_EMISMATCH && state.pending);
+    --a.rx_hz;CHECK(ap_transaction_ack(&state,&a,10u)==AP_OK);a.rx_hz-=10u;
+    c.version=0xa1u;++c.seq;
+    CHECK(ap_transaction_begin(&state,&c,0u,89u)==AP_OK && state.packet_length==34u && state.packet[7]==0x21u);
+    CHECK(read_be64(state.packet+16u)==a.rx_hz && read_be64(state.packet+24u)==a.tx_hz);
+    ++a.seq;CHECK(ap_transaction_control_ack(&state,&a,&r,11u)==AP_ERANGE);
+    a.tx_hz+=1000u;CHECK(ap_transaction_control_ack(&state,&a,&r,10u)==AP_EMISMATCH && state.pending);
+    a.tx_hz-=990u;CHECK(ap_transaction_control_ack(&state,&a,&r,10u)==AP_OK);
+    for(i=2u;i<4u;++i){
+        c.version=versions[i];c.rx_mhz=c.tx_mhz=0u;++c.seq;
+        CHECK(ap_transaction_begin(&state,&c,0u,89u)==AP_OK);++a.seq;
+        a.rx_hz=UINT64_C(800000000);a.tx_hz=UINT64_C(1000000000);
+        r.operation=ap_command_operation(&c);r.mode=2u;r.flags=1u;r.rx1_gain=r.rx2_gain=0u;
+        r.tx1_mdB=r.tx2_mdB=89000u;r.remaining_ms=0u;
+        CHECK(ap_transaction_control_ack(&state,&a,&r,10u)==AP_OK); /* no requested LO association */
+    }
+    puts("kHz PASS four fixed vectors, guards, independent offsets, exact Hz UDP, ACK precision and zero-field stop/status");
+}
+
 int main(void)
 {
     test_gold_and_channel();
     test_validation_and_search();
     test_rf_and_ack();
     test_transaction();
+    test_khz_commands();
     printf("PASS %u assertions; digital frame/control layer only, no network or hardware\n", checks);
     return 0;
 }

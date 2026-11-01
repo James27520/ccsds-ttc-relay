@@ -245,7 +245,14 @@ class TelemetryWindow:
                                                   foreground=COLORS["teal"] if real_adc else "#8B611D")
             variables["state"].set("有记录" + (" · 测试来源" if origin in (2, 3, 4) else ""))
             variables["detail"].set(f"事件 {data.get(prefix + '_event', '—')}    空口序号 {data.get(prefix + '_air_seq', '—')}")
-            variables["frequency"].set(f"请求 RX {data.get(prefix + '_rx_mhz', '—')} MHz  /  TX {data.get(prefix + '_tx_mhz', '—')} MHz")
+            if data.get(prefix+'_version', 0) in (0xa2, 0xa3):
+                frequency = '本操作不携带调谐请求'
+            elif prefix+'_requested_rx_hz' in data:
+                frequency = (f"请求 RX {data[prefix+'_requested_rx_hz']/1e6:.6f} MHz  /  "
+                             f"TX {data[prefix+'_requested_tx_hz']/1e6:.6f} MHz")
+            else:
+                frequency = f"请求 RX {data.get(prefix + '_rx_mhz', '—')} MHz  /  TX {data.get(prefix + '_tx_mhz', '—')} MHz"
+            variables["frequency"].set(frequency)
             if prefix == "s":
                 variables["extra"].set(f"UDP 序号 {data.get('s_udp_seq', '—')}    尝试计数 {data.get('s_count', '—')}    rc {data.get('s_rc', '—')}")
             elif prefix == "a":
@@ -274,7 +281,8 @@ class TelemetryWindow:
         if self.received_at is not None:
             age = max(0, now - self.received_at)
             stale = age > 6
-            self.freshness_var.set(f"TM1 最后更新：{datetime.fromtimestamp(self.received_at):%H:%M:%S} · {age:.1f} 秒前" +
+            protocol = 'TM2' if 'd_version' in self.snapshot else 'TM1'
+            self.freshness_var.set(f"{protocol} 最后更新：{datetime.fromtimestamp(self.received_at):%H:%M:%S} · {age:.1f} 秒前" +
                                    (" · 已过期（超过 6 秒），以下为历史状态" if stale else " · " + ("已连接" if self.connected else "已断开，保留历史")))
             self.freshness_label.configure(foreground=COLORS["danger"] if stale else COLORS["muted"])
         if self.relay_received_at is not None:

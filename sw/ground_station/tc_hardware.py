@@ -13,9 +13,16 @@ from .transport import Console
 from .rf_session import SessionRxConsole, SessionAdda
 from .rf_profiles import CONTROL_RELAY_PAIRS
 from sw.tools.telecontrol_waveform import command_iq, make_manifest, OPERATIONS
+from sw.tools.telecontrol_protocol import N256_ENCODING, normalize_hz_request
 
 
-def request_values(rx_mhz, tx_mhz, air_seq, operation='frequency'):
+def request_values(rx_mhz=None, tx_mhz=None, air_seq=None, operation='frequency', *,
+                   rx_hz=None, tx_hz=None, encoding=None):
+    if encoding is not None or rx_hz is not None or tx_hz is not None:
+        if rx_mhz is not None or tx_mhz is not None:
+            raise ValueError('不能混用MHz和Hz频率字段')
+        return normalize_hz_request(rx_hz=rx_hz, tx_hz=tx_hz, air_seq=air_seq,
+            operation=operation, encoding=N256_ENCODING if encoding is None else encoding)
     if (type(rx_mhz) is not int or type(tx_mhz) is not int or
             (rx_mhz, tx_mhz) not in CONTROL_RELAY_PAIRS or
             type(air_seq) is not int or not 0 <= air_seq <= 255):
@@ -26,6 +33,17 @@ def request_values(rx_mhz, tx_mhz, air_seq, operation='frequency'):
     if operation != 'frequency':
         result['operation'] = operation
     return result
+
+
+def waveform_values(requested):
+    """Map either validated request interface to the offline waveform API."""
+    request = request_values(**requested)
+    values = dict(seq=request['air_seq'], operation=request.get('operation', 'frequency'))
+    if 'encoding' in request:
+        values.update(rx_hz=request['rx_hz'], tx_hz=request['tx_hz'], encoding=request['encoding'])
+    else:
+        values.update(rx=request['rx_mhz'], tx=request['tx_mhz'])
+    return values
 
 
 class ControlAdda(SessionAdda):
@@ -92,12 +110,16 @@ class CommandSource(SessionRxConsole):
     and creates a private waveform/guard in RAM while TX is still off. start()
     must be invoked separately. The inherited ordinary Console gate is intact.
     """
+    tx_channel = 1  # Legacy manual bench uses TX1A; six-wire ground radio uses TX2A.
+
     def __init__(self, *args, **kwargs):
+        if self.tx_channel not in (1, 2):
+            raise ValueError('Unsupported physical TX channel')
         self.owned = self.prepared = False
         self.remote = '/tmp/tc_roundtrip_'+uuid.uuid4().hex[:12]
         super().__init__(*args, **kwargs)
         self.info['identity_scope'] = 'current process, Linux boot and USB; explicit fixed TC TX profile'
-        self.info['physical_role'] = 'user-selected TX1A to ADDA ADC1; wiring confirmation required'
+        self.info['physical_role'] = f'user-selected TX{self.tx_channel}A to ADDA ADC1; wiring confirmation required'
 
     def write(self, path, value, tolerance=0):
         if not self.owned or self._closed:
@@ -107,22 +129,23 @@ class CommandSource(SessionRxConsole):
             'out_altvoltage1_TX_LO_powerdown': {'1'},
             'out_voltage_sampling_frequency': {'2500000'},
             'out_voltage_rf_bandwidth': {'3000000'},
-            'out_voltage0_rf_port_select': {'A'},
-            'out_voltage0_hardwaregain': {'-30', '-89'},
+            f'out_voltage{self.tx_channel-1}_rf_port_select': {'A'},
+            'out_voltage0_hardwaregain': {'-89'},
             'out_voltage1_hardwaregain': {'-89'},
         }
+        allowed[f'out_voltage{self.tx_channel-1}_hardwaregain'].add('-30')
         if not path.startswith(self.phy+'/') or str(value) not in allowed.get(path[len(self.phy)+1:], set()):
             raise ValueError('超出本阶段固定发射工作点')
         self.verify_binding()
         return Console.write(self, path, value, tolerance)
 
     def prepare(self, requested, *, wiring_confirmed=False):
-        request_values(**requested)
+        requested = request_values(**requested)
         if wiring_confirmed is not True:
-            raise ValueError('需要先确认TX1A到ADC1/J5的接线')
-        operation = requested.get('operation', 'frequency')
-        iq = command_iq(requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], .1, operation)
-        manifest = make_manifest('cmd', iq, .1, requested['rx_mhz'], requested['tx_mhz'], requested['air_seq'], operation)
+            raise ValueError(f'需要先确认TX{self.tx_channel}A到ADC1/J5的接线')
+        values = waveform_values(requested)
+        iq = command_iq(amplitude=.1, **values)
+        manifest = make_manifest('cmd', iq, .1, **values)
         self._prepare_waveform(iq.tobytes(), manifest, lo_hz=100000000,
                                attenuation_db=30, block_samples=len(iq))
         self.record(kind='tc_source_prepared', requested=requested, manifest=self.manifest)
@@ -172,7 +195,7 @@ class CommandSource(SessionRxConsole):
         for name, value in [('out_altvoltage1_TX_LO_frequency', lo_hz),
                             ('out_voltage_sampling_frequency', 2500000),
                             ('out_voltage_rf_bandwidth', 3000000),
-                            ('out_voltage0_rf_port_select', 'A')]:
+                            (f'out_voltage{self.tx_channel-1}_rf_port_select', 'A')]:
             check_cancel()
             self.configure_if_changed(name, value, 10 if 'frequency' in name else 0)
         self.manifest = manifest
@@ -208,20 +231,30 @@ class CommandSource(SessionRxConsole):
         self.require_idle()
         if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '1':
             raise RuntimeError('启发前TX必须关闭')
+        if self.tx_channel not in (1, 2):
+            raise ValueError('Unsupported physical TX channel')
+        first = (self.tx_channel-1)*2
+        channels = (first, first+1)
+        # Verify scan format and the unused physical output before starting DMA.
+        for index in channels:
+            if (self.read(f'{self.tx}/scan_elements/out_voltage{index}_index') != str(index) or
+                    self.read(f'{self.tx}/scan_elements/out_voltage{index}_type').lower() != 'le:s16/16>>0'):
+                raise RuntimeError('TX I/Q scan format does not match selected physical output')
+        unused = 2-self.tx_channel
+        if float(self.read(f'{self.phy}/out_voltage{unused}_hardwaregain').split()[0]) != -89:
+            raise RuntimeError('Unused TX output is not muted')
         digest = self.run('sha256sum '+self.remote+'/waveform.bin').split()[0]
         if digest != self.manifest['sha256']:
             raise RuntimeError('板端指令波形摘要变化')
-        self.run(f'iio_writedev -u local: -b {self.block_samples} -c cf-ad9361-dds-core-lpc voltage0 voltage1 '
+        self.run(f'iio_writedev -u local: -b {self.block_samples} -c cf-ad9361-dds-core-lpc voltage{first} voltage{first+1} '
                  f'< {self.remote}/waveform.bin > {self.remote}/writer.log 2>&1 & p=$!; '
                  't=$(awk \'{print $22}\' /proc/$p/stat); '
                  f'if test -n "$t"; then echo "$p $t" > {self.remote}/owned; '
                  'else kill -INT "$p" 2>/dev/null; exit 1; fi')
-        self.run(f'sleep .2; test "$(cat {self.tx}/buffer/enable)" = 1 && '
-                 f'test "$(cat {self.tx}/scan_elements/out_voltage0_en)" = 1 && '
-                 f'test "$(cat {self.tx}/scan_elements/out_voltage1_en)" = 1 && '
-                 f'test "$(cat {self.tx}/scan_elements/out_voltage2_en)" = 0 && '
-                 f'test "$(cat {self.tx}/scan_elements/out_voltage3_en)" = 0')
-        self.write(self.phy+'/out_voltage0_hardwaregain', -self.attenuation_db)
+        scan_checks = ' && '.join(f'test "$(cat {self.tx}/scan_elements/out_voltage{i}_en)" = {int(i in channels)}'
+                                  for i in range(4))
+        self.run(f'sleep .2; test "$(cat {self.tx}/buffer/enable)" = 1 && '+scan_checks)
+        self.write(f'{self.phy}/out_voltage{self.tx_channel-1}_hardwaregain', -self.attenuation_db)
         self.run(f'sh {self.remote}/guard.sh </dev/null > {self.remote}/guard.log 2>&1 & p=$!; '
                  't=$(awk \'{print $22}\' /proc/$p/stat); '
                  f'test -n "$t" && echo "$p $t" > {self.remote}/guard_owned')
@@ -240,7 +273,8 @@ class CommandSource(SessionRxConsole):
                  f'test $(( $(cat {self.remote}/deadline) - $(cut -d. -f1 /proc/uptime) )) -gt 10')
         if self.read(self.phy+'/out_altvoltage1_TX_LO_powerdown') != '0':
             raise RuntimeError('指令源本振开启未确认')
-        self.record(kind='guarded_source_started', guard_seconds=30, attenuation_db=self.attenuation_db)
+        self.record(kind='guarded_source_started', guard_seconds=30, attenuation_db=self.attenuation_db,
+                    tx_channel=self.tx_channel, physical_output=f'TX{self.tx_channel}A')
 
     def stop(self):
         if not self.owned:

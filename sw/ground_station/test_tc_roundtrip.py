@@ -87,7 +87,7 @@ class OwnershipTests(unittest.TestCase):
         s.block_samples=4000;s.attenuation_db=30
         s.manifest={'sha256':'abcdef'}
         s.verify_binding=Mock();s.require_idle=Mock();s.run=Mock(return_value='abcdef  /tmp/test/waveform.bin')
-        s.read=Mock(side_effect=['1','bad guard identity']);s.write=Mock()
+        s.read=Mock(side_effect=['1','0','le:s16/16>>0','1','le:s16/16>>0','-89','bad guard identity']);s.write=Mock()
         with self.assertRaisesRegex(RuntimeError,'保护身份'):s.start()
         self.assertFalse(any(c.args[0].endswith('TX_LO_powerdown') for c in s.write.call_args_list))
 
@@ -96,6 +96,34 @@ class OwnershipTests(unittest.TestCase):
         s.owned=True;s._closed=False;s.phy='/phy';s.verify_binding=Mock()
         with self.assertRaises(ValueError):s.write('/phy/out_altvoltage1_TX_LO_powerdown',0)
         s.verify_binding.assert_not_called()
+
+    def test_six_wire_tx2_rejects_tx1_level_and_uses_only_tx2_scan_pair(self):
+        from .tc_live import AutonomousRadio
+        s=AutonomousRadio.__new__(AutonomousRadio)
+        s.owned=True;s._closed=False;s.phy='/phy';s.verify_binding=Mock()
+        with self.assertRaises(ValueError):s.write('/phy/out_voltage0_hardwaregain',-30)
+        with patch('sw.ground_station.tc_hardware.Console.write') as write:
+            s.write('/phy/out_voltage1_hardwaregain',-30)
+            write.assert_called_once_with(s,'/phy/out_voltage1_hardwaregain',-30,0)
+        s.prepared=True;s.remote='/tmp/test';s.tx='/tx';s.block_samples=4000;s.attenuation_db=30
+        s.manifest={'sha256':'abcdef'};s.require_idle=Mock();s.write=Mock()
+        s.run=Mock(return_value='abcdef  /tmp/test/waveform.bin')
+        s.read=Mock(side_effect=['1','2','le:s16/16>>0','3','le:s16/16>>0','-89','bad guard identity'])
+        with self.assertRaisesRegex(RuntimeError,'保护身份'):s.start()
+        commands=[c.args[0] for c in s.run.call_args_list]
+        self.assertTrue(any('cf-ad9361-dds-core-lpc voltage2 voltage3 ' in c for c in commands))
+        self.assertFalse(any('cf-ad9361-dds-core-lpc voltage0 voltage1 ' in c for c in commands))
+        scan=next(c for c in commands if c.startswith('sleep .2;'))
+        for index in range(4):self.assertIn(f'out_voltage{index}_en)" = {int(index>=2)}',scan)
+        s.write.assert_called_once_with('/phy/out_voltage1_hardwaregain',-30)
+
+    def test_tx2_rejects_wrong_scan_format_before_starting_writer(self):
+        from .tc_live import AutonomousRadio
+        s=AutonomousRadio.__new__(AutonomousRadio)
+        s.prepared=True;s.phy='/phy';s.tx='/tx';s.verify_binding=Mock();s.require_idle=Mock()
+        s.read=Mock(side_effect=['1','0']);s.run=Mock()
+        with self.assertRaisesRegex(RuntimeError,'scan format'):s.start()
+        s.run.assert_not_called()
 
     def test_failed_mute_keeps_guard_armed(self):
         s=CommandSource.__new__(CommandSource)

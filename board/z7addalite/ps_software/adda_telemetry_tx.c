@@ -7,8 +7,7 @@ static int record_valid(const struct aps_command_record *r)
 {
     return r->valid<=1u && (!r->valid ||
       (r->origin>=APS_ADC_NORMAL && r->origin<=APS_UART_NETTEST &&
-       r->command.rx_mhz>=70u && r->command.rx_mhz<=6000u &&
-       r->command.tx_mhz>=70u && r->command.tx_mhz<=6000u));
+       ap_command_validate(&r->command)==AP_OK));
 }
 static void put_record(uint8_t *p,const struct aps_command_record *r)
 {
@@ -17,9 +16,9 @@ static void put_record(uint8_t *p,const struct aps_command_record *r)
     put16(p+6,r->command.rx_mhz);put16(p+8,r->command.tx_mhz);
 }
 static int extended(const struct aps_state *s)
-{return (s->last_decoded.valid && s->last_decoded.command.version>=0x21u) ||
- (s->last_send.record.valid && s->last_send.record.command.version>=0x21u) ||
- (s->last_ack.record.valid && s->last_ack.record.command.version>=0x21u);}
+{return (s->last_decoded.valid && s->last_decoded.command.version!=1u) ||
+ (s->last_send.record.valid && s->last_send.record.command.version!=1u) ||
+ (s->last_ack.record.valid && s->last_ack.record.command.version!=1u);}
 int atm_pack(const struct aps_state *s,uint32_t sequence,uint32_t uptime,
              uint8_t *out,size_t capacity)
 {
@@ -43,7 +42,7 @@ int atm_pack(const struct aps_state *s,uint32_t sequence,uint32_t uptime,
     if(s->last_send.record.valid){put16(p+52,s->last_send.transaction_seq);p[54]=(uint8_t)s->last_send.count;put32(p+56,(uint32_t)s->last_send.rc);}
     put_record(p+60,&s->last_ack.record);
     if(s->last_ack.record.valid){put16(p+70,s->last_ack.reply.seq);put32(p+72,(uint32_t)s->last_ack.reply.rc);put64(p+76,s->last_ack.reply.rx_hz);put64(p+84,s->last_ack.reply.tx_hz);}
-    if(v2 && s->last_ack.record.valid && s->last_ack.record.command.version>=0x21u){
+    if(v2 && s->last_ack.record.valid && ap_command_operation(&s->last_ack.record.command)!=1u){
       const struct ap_relay_status *r=&s->last_ack.status;
       p[92]=r->mode;p[93]=r->rx1_gain;p[94]=r->rx2_gain;p[95]=r->flags;
       put32(p+96,r->tx1_mdB);put32(p+100,r->tx2_mdB);put32(p+104,r->remaining_ms);put32(p+108,r->uptime_ms);

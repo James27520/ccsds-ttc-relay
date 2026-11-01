@@ -10,6 +10,8 @@ import time
 import uuid
 
 MAX_RESPONSE_BYTES = 1024 * 1024
+UPLOAD_BAUD = 460800
+UPLOAD_CHUNK_BYTES = 1024
 
 
 def _board_identity(info, usb_serial):
@@ -50,17 +52,7 @@ class Console:
         self.port.port = port
         self.port.open()
         try:
-            self.port.write(b'\n')
-            time.sleep(.2)
-            initial = self.port.read(self.port.in_waiting).decode('utf-8', 'replace')
-            # Root login on the supplied boards needs no password. A password
-            # prompt is not answered or logged by this application.
-            if re.search(r'login:\s*$', initial):
-                self.port.write(b'root\n')
-                time.sleep(.3)
-                initial = self.port.read(self.port.in_waiting).decode('utf-8', 'replace')
-            if re.search(r'[Pp]assword:\s*$', initial):
-                raise RuntimeError("板端需要登录，请先在DEBUG终端完成登录后再连接")
+            self.prepare_shell()
             info = self.run('iio_info -u local:', timeout=12)
             if 'ad9361-phy' not in info or 'cf-ad9361-lpc' not in info:
                 raise RuntimeError("该端口不是支持的Pluto Linux SDR；请核对设备")
@@ -83,6 +75,65 @@ class Console:
         except Exception:
             self.port.close()
             raise
+
+    def prepare_shell(self, timeout=25):
+        """Complete a bounded Pluto console login before issuing shell commands.
+
+        Only the supplied Pluto image's public factory login is supported.
+        Credentials and login output are never included in session logs. This
+        is used on initial open only, not to conceal a reboot of a bound board.
+        No bootloader command, reset or RF setting is sent here.
+        """
+        started = time.monotonic()
+        data = bytearray()
+        nudged = user_sent = password_sent = cancelled_password = False
+        factory_pluto = False
+        while time.monotonic() - started < timeout:
+            packet = self.port.read(max(1, min(self.port.in_waiting, 8192)))
+            data.extend(packet)
+            if len(data) > 65536:
+                del data[:-16384]
+            text = data.decode('utf-8', 'replace')
+            if re.search(r'(?:^|[\r\n])Pluto>[ \t]*$', text):
+                self._console_synchronized = False
+                raise RuntimeError('板卡停留在启动引导界面（U-Boot），Linux 未运行；请恢复板卡启动后再连接')
+            if re.search(r'(?:^|[\r\n])(?:root@[^ \r\n]+:[^\r\n]*|[~/][^\r\n]*|\[[^\r\n]+\])?[#\$][ \t]+$', text):
+                self.record(kind='console_ready', login_performed=user_sent)
+                return
+            login = re.search(r'(?:^|[\r\n])([^\r\n ]+) login:[ \t]*$', text)
+            if login:
+                if user_sent:
+                    raise RuntimeError('板端登录未成功；请检查板卡登录配置后再连接')
+                factory_pluto = login[1].lower() == 'pluto'
+                self.port.write(b'root\n')
+                user_sent = True
+                nudged = True
+                data.clear()
+                continue
+            if re.search(r'(?:^|[\r\n])[Pp]assword:[ \t]*$', text):
+                if not user_sent and not cancelled_password:
+                    # Previous clients may have sent a command as a username.
+                    # Cancel that login instead of supplying a password to it.
+                    self.port.write(b'\x03\n')
+                    cancelled_password = True
+                    nudged = True
+                    data.clear()
+                    continue
+                if not factory_pluto or password_sent:
+                    raise RuntimeError('板端需要非默认登录；请先在串口终端完成登录后再连接')
+                self.port.write(b'analog\n')
+                password_sent = True
+                data.clear()
+                continue
+            if 'Login incorrect' in text:
+                raise RuntimeError('板端默认登录失败；请先在串口终端完成登录后再连接')
+            # Do not press a key during observed boot output (it may stop
+            # autoboot). An idle console needs only one newline for its prompt.
+            if not data and not nudged and time.monotonic()-started >= .25:
+                self.port.write(b'\n')
+                nudged = True
+        self._console_synchronized = False
+        raise TimeoutError('板端尚未进入可用的 Linux 命令行；请等待启动完成后重新连接')
 
     def run(self, command, timeout=8):
         if not getattr(self, '_console_synchronized', True):
@@ -120,6 +171,9 @@ class Console:
         self.record(kind='console', command=command[:160], rc=rc,
                     output=output[:2000], output_chars=len(output))
         if rc is None:
+            if re.search(r'(?:^|[\r\n])Pluto>[ \t]*(?:[\r\n]|$)', output):
+                self._console_synchronized = False
+                raise RuntimeError('板卡停留在启动引导界面（U-Boot），Linux 未运行；请恢复板卡启动后再连接')
             self.port.write(b'\x03\n')
             time.sleep(.1)
             raise TimeoutError("板端响应超时，当前操作未确认完成")
@@ -223,10 +277,10 @@ class Console:
             "( gs_stty=$(stty -g) || exit 1; "
             "trap 'stty \"$gs_stty\"' EXIT HUP INT TERM; "
             "stty -echo -opost || exit 1; printf '\\nUP_READY_%s\\n'; sleep 0.3; "
-            "stty 921600 raw -echo min 0 time 30 && sleep 0.3 && printf '\\nUP_BEGIN_%s\\n' && "
+            "stty %d raw -echo min 0 time 30 && sleep 0.3 && printf '\\nUP_BEGIN_%s\\n' && "
             "head -c %d > %s; gs_rc=$?; "
             "printf '\\nUP_END_%s_%%s\\n' \"$gs_rc\"; sleep 0.3 )\n"
-        ) % (token, token, len(data), path, token)
+        ) % (token, UPLOAD_BAUD, token, len(data), path, token)
         payload = command.encode('ascii')
         if len(payload) > 900:
             raise ValueError('Fast upload command exceeds 900-byte bound')
@@ -237,7 +291,7 @@ class Console:
             if self.port.write(payload) != len(payload):
                 raise RuntimeError('高速上传命令未完整写入')
             remaining = self._read_marker(rb'\nUP_READY_'+tag+rb'\n', 3)
-            self.port.baudrate = 921600
+            self.port.baudrate = UPLOAD_BAUD
             self._read_marker(rb'\nUP_BEGIN_'+tag+rb'\n', 3, remaining)
             # Bound each write below the board's 3-second raw read timeout.
             # A blocked UI callback must never resume raw data after tty restore.
@@ -248,16 +302,21 @@ class Console:
             last_write_started = started
             if progress:
                 progress(0.)
-            for start in range(0, len(data), 4096):
+            for start in range(0, len(data), UPLOAD_CHUNK_BYTES):
                 if time.monotonic()-last_write_started >= 2:
                     raise TimeoutError('高速上传包间隔超过2秒，已停止发送剩余数据')
-                chunk = data[start:start+4096]
+                chunk = data[start:start+UPLOAD_CHUNK_BYTES]
                 last_write_started = time.monotonic()
                 written = self.port.write(chunk)
                 if isinstance(written, int) and 0 <= written <= len(chunk):
                     sent += written
                 if written != len(chunk):
                     raise RuntimeError('高速上传数据未完整写入')
+                # USB write acceptance is not a board UART drain. Continuous
+                # RX load exposed short uploads at 921600; allow each bounded
+                # chunk its wire time plus a scheduling gap without an unbounded
+                # flush. Retain the raw-input deadline and end-to-end hash gate.
+                time.sleep(len(chunk)*10/UPLOAD_BAUD + .004)
                 if progress:
                     progress((start+len(chunk))/len(data))
             remaining = self._read_marker(rb'\nUP_END_'+tag+rb'_', 8)
@@ -291,7 +350,7 @@ class Console:
             self.port.write_timeout = previous_write_timeout
         except Exception as exc:
             error = exc if error is None else RuntimeError(str(error)+'；'+str(exc))
-        self.record(kind='upload', mode='fast', baudrate=921600,
+        self.record(kind='upload', mode='fast', baudrate=UPLOAD_BAUD,
                     restored_baudrate=115200 if restored else None,
                     bytes=len(data), bytes_sent_confirmed=sent, sha256=digest,
                     seconds=time.monotonic()-started, success=error is None,

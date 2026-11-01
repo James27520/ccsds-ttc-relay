@@ -33,6 +33,16 @@ class LeaseTests(unittest.TestCase):
 
 
 class AdapterTests(unittest.TestCase):
+    def test_receive_clock_preserves_matching_shared_clock_and_applies_change(self):
+        c=BusinessReceiver.__new__(BusinessReceiver)
+        c.phy='/phy';c.read=Mock(return_value='2500000');c.write=Mock();c.record=Mock()
+        c.configure_clock('in_voltage_sampling_frequency',2500000)
+        c.write.assert_not_called()
+        c.read.return_value='30720000'
+        c.configure_clock('in_voltage_sampling_frequency',2500000)
+        c.write.assert_called_once_with('/phy/in_voltage_sampling_frequency',2500000)
+        with self.assertRaises(ValueError):c.configure_clock('out_voltage0_hardwaregain',0)
+
     def test_business_whitelist_does_not_allow_host_tx_enable_or_tc_frequency(self):
         s=BusinessSource.__new__(BusinessSource)
         s.owned=True;s._closed=False;s.phy='/phy';s.verify_binding=Mock()
@@ -129,6 +139,8 @@ class FakeBoard:
         if path.endswith('TX_LO_frequency'):self.tx_lo=int(value)
         if path.endswith('RX_LO_frequency'):self.rx_lo=int(value)
         return str(value)
+    def configure_clock(self,name,value):
+        return self.write(self.phy+'/'+name,value)
     def run(self,command,**kwargs):
         self.calls.append(command)
         if 'echo $((' in command:return str(self.remaining)

@@ -97,6 +97,18 @@ class BusinessSource(CommandSource):
 
 
 class BusinessReceiver(SessionRxConsole):
+    def configure_clock(self, name, value):
+        """Preserve an already matching shared RX/TX clock configuration."""
+        if name not in ('in_voltage_sampling_frequency', 'in_voltage_rf_bandwidth'):
+            raise ValueError('Unsupported receive clock attribute')
+        path = self.phy+'/'+name
+        current = self.read(path)
+        if current == str(value):
+            self.record(kind='rf_configuration_unchanged', attribute=name,
+                        requested=value, readback=current)
+            return current
+        return self.write(path, value)
+
     def verify_stream_binding(self):
         """Full identity is bound at connect/configure; recheck boot/USB/mapping.
 
@@ -217,7 +229,11 @@ class BusinessController(StationController):
             for name, value in [('in_voltage_sampling_frequency', FS), ('in_voltage_rf_bandwidth', 3000000),
                                 (f'in_voltage{channel}_gain_control_mode', 'manual'), (f'in_voltage{channel}_hardwaregain', 30),
                                 (f'in_voltage{channel}_rf_port_select', 'A_BALANCED')]:
-                self._check_cancel(); c.write(c.phy+'/'+name, value)
+                self._check_cancel()
+                if name in ('in_voltage_sampling_frequency', 'in_voltage_rf_bandwidth'):
+                    c.configure_clock(name, value)
+                else:
+                    c.write(c.phy+'/'+name, value)
             got = c.write(c.phy+'/out_altvoltage0_RX_LO_frequency', plan['lo_hz'], 10)
             self._verify_rx_channel()
             self.settings = dict(rx_lo_mhz_requested=plan['lo_hz']/1e6,rx_lo_hz_readback=int(got),

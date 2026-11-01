@@ -1,5 +1,15 @@
 # Z7ADDALite PS 接收与转发
 
+2026-11-01增加常驻指令监听：配套candidate04 PL构建时同时传入 `--tm-tx-enabled --service-standby`。应用启动后启用以太网，链路就绪时自动监听ADC_NORMAL；也可显式执行 `network on`、`service standby`。此模式不受原600秒/16笔服务上限影响；`service status`的 `active=1 standby=1 wanted=1` 表示已进入常驻监听，`remaining_ms=0`表示没有整体监听期限。单笔DAC回报仍有3秒延迟、20秒窗口和400次上限，转发板开启租期仍为5分钟。监听本身不会开启转发或发送旧指令。
+
+断网会中止未完成事务并停下DAC；链路恢复后，仅原本处于常驻模式的服务自动恢复监听，保留近期序号记录。`service off`及采样、解码、DAC硬件故障保持停止，不自动清除故障。常驻模式空口序号保留600秒，之后允许轮转复用；这不是密码学防重放。UDP单boot序号上限保持不变。旧 `service on`仍是600秒/16笔的有限台架模式。当前加载方式为JTAG/RAM，未写启动介质；单独重启遥控板后的UDP序号协商尚未实现，须维护工具恢复后使用。实测记录见[常驻监听与接收恢复](../../../docs/standby-recovery-validation.md)。
+
+1 kHz 空口扩展使用 `0x81/0xa1/0xa2/0xa3`，正文和帧长不变，精确定义见[协议说明](../software/protocol/README.md)。PS 根据基础操作码选择旧 RF_SET/文本 ACK 或远端控制/二进制 ACK，精确 LO Hz 全程使用 uint64；新改频和开启只接受 ±10 Hz 内的回读。新停止/查询要求零偏移，不检查当前频点。旧 MHz 命令和 UART `nettest/remotenettest` 诊断语法保留。
+
+任一有效记录为新版本时使用 ATM2：版本字节及原 uint16 字段位置不变，字段值为偏移；`0x81` 的 relay 状态区全零（不可用），实际 ACK Hz 仍在原 BE64 位置。记录有效性通过协议校验器检查版本/偏移，不再按固定 MHz 范围判断。
+
+UART `telemetry` 对含新版本的快照输出 `TM2`，旧快照 `TM1` 保持逐字段兼容。TM2 顶层顺序为 `uptime_ms events network armed pending decoded applied failures`；每个 `d/s/a` 记录顺序为 `valid event origin air_seq version rx_raw tx_raw`，分别带前缀；发送记录随后为 `s_udp_seq s_count s_rc`，ACK 记录随后为 `a_udp_seq a_rc a_rx_hz a_tx_hz`，最后 `spi_valid=0 crc16=HHHH` 与 CRLF。所有值除 CRC 外均为十进制，CRC 覆盖规则和 1024 字节缓冲上限同 TM1。raw 含义按各记录版本判定，允许新旧记录混合；TM2 保留匹配的负二进制 ACK。新命令日志标为 `version rx_offset_khz tx_offset_khz rx_lo_hz tx_lo_hz`，防止偏移误标 MHz。`build_remote_tests.ps1` 同时运行旧远控与 `test_khz_control.c` 的完整 native 帧→UDP→ACK→ATM2/TM2 检查。
+
 新增遥控操作 `0x21/0x22/0x23`，对应开启租期、静音停止、只读查询；详见[wire约定](../../../docs/remote-relay-control.md)。ADC_NORMAL 开启固定为30 dB RX增益、50 dB TX衰减、300000 ms租期；原`0x01`仍只改频。新操作发送34字节UDP，严格匹配50字节binary ACK的peer/操作/序号；成功还必须通过实际回读检查。匹配负ACK保存为失败状态并可下行，不增加成功计数。ATM1/UART TM1保持旧格式，新操作使用ATM2（112字节payload、484字节有限burst）。服务发送窗口按实际burst长度预留结束时间。首次发送新协议后UDP序号单boot不再回卷，16383用尽必须重新初始化双方。
 
 显式台架诊断入口为`remotenettest <enable|stop|status> <rx_mhz> <tx_mhz> <air_seq> <lease_ms>`。必须network ready、arm off、auto off、service inactive且capture不在进行中；enable租期2000..300000 ms，stop/status必须为0。仅此UART诊断入口可覆盖开启租期，电平仍固定30/50；来源始终为`UART_NETTEST`，没有空口解码记录。匹配ACK另输出完整`REMOTE_ACK source=... operation=... air_seq=... udp_seq=... rc=... flags=... mode=... rx1_gain=... rx2_gain=... tx1_mdB=... tx2_mdB=... remaining_ms=... uptime_ms=... rx_hz=... tx_hz=...`行，数值仅在flags bit0置位时视为有效硬件回读。`build_remote_tests.ps1`与扩展的`build_service_tests.ps1`验证协议、短租期诊断隔离、负ACK和ATM2突发边界；这些native测试不访问硬件。

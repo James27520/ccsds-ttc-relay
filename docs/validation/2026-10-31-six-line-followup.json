@@ -1,0 +1,451 @@
+{
+  "date": "2026-10-31",
+  "scope": "Fixed six SMA, time-shared merged GUI roundtrip and muted LO transition diagnosis",
+  "artifact_root": "D:\\RelayTools\\work\\six_line_20261031",
+  "no_firmware_reload": true,
+  "no_sma_change": true,
+  "business": [
+    {
+      "directory": "gui_reverse_followup_rx",
+      "direction": "reverse",
+      "captures": 79,
+      "crc_frames": 15,
+      "messages": {
+        "c0ccaa50:0000": "终端2：回信成功"
+      },
+      "iq_clip_components": 0,
+      "decode_sha256": "e9be214241902a0e5584dc3e64793736ebd242e1b75914e9183345565d871446"
+    },
+    {
+      "directory": "gui_roundtrip_rx",
+      "direction": "forward",
+      "captures": 41,
+      "crc_frames": 19,
+      "messages": {
+        "54ca83fc:0000": "终端1：收到回信"
+      },
+      "iq_clip_components": 0,
+      "decode_sha256": "878ef5c9694e957496a09b9fa444488b539fee91daa1cde73eda7edef3b62c41"
+    }
+  ],
+  "business_total_crc_frames": 34,
+  "business_total_captures": 120,
+  "telemetry": [
+    {
+      "directory": "gui_return_enable",
+      "request": {
+        "rx_mhz": 1990,
+        "tx_mhz": 2180,
+        "air_seq": 20,
+        "operation": "enable"
+      },
+      "crc_frames": 8,
+      "ack": {
+        "rx_hz": 1990000000,
+        "tx_hz": 2180000000,
+        "udp_seq": 9
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 7,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 299998,
+        "uptime_ms": 4016538,
+        "remaining_lower_bound_ms": 224298,
+        "snapshot_received_at": 1793424409.0900798
+      },
+      "decode_sha256": "d59cfd5b2e29c6d3b74f20152a40f6db0f297d71f622a37ad0c6f87bb0684cd4"
+    },
+    {
+      "directory": "gui_return_retry_enable",
+      "request": {
+        "rx_mhz": 1990,
+        "tx_mhz": 2180,
+        "air_seq": 21,
+        "operation": "enable"
+      },
+      "crc_frames": 8,
+      "ack": {
+        "rx_hz": 1990000000,
+        "tx_hz": 2180000000,
+        "udp_seq": 10
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 7,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 299999,
+        "uptime_ms": 4435692,
+        "remaining_lower_bound_ms": 224488,
+        "snapshot_received_at": 1793424828.233514
+      },
+      "decode_sha256": "ae60352a5cb28198c8c9ff40c9b1a9ac64bdba199d0a7bbd43fa4fb5acd41e31"
+    },
+    {
+      "directory": "gui_roundtrip_enable",
+      "request": {
+        "rx_mhz": 1990,
+        "tx_mhz": 2180,
+        "air_seq": 22,
+        "operation": "enable"
+      },
+      "crc_frames": 8,
+      "ack": {
+        "rx_hz": 1990000000,
+        "tx_hz": 2180000000,
+        "udp_seq": 11
+      },
+      "relay": {
+        "mode": 1,
+        "rx_gain_db": [
+          30,
+          30
+        ],
+        "tx_attenuation_mdb": [
+          50000,
+          50000
+        ],
+        "flags": 7,
+        "valid": true,
+        "lease_active": true,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 299999,
+        "uptime_ms": 4805047,
+        "remaining_lower_bound_ms": 224451,
+        "snapshot_received_at": 1793425197.7305954
+      },
+      "decode_sha256": "7b4418bb762321b3db27514053a70e7ffed8b80da205ee48718f64d0d593b643"
+    },
+    {
+      "directory": "gui_followup_stop",
+      "request": {
+        "rx_mhz": 1990,
+        "tx_mhz": 2180,
+        "air_seq": 23,
+        "operation": "stop"
+      },
+      "crc_frames": 8,
+      "ack": {
+        "rx_hz": 1990000000,
+        "tx_hz": 2180000000,
+        "udp_seq": 12
+      },
+      "relay": {
+        "mode": 2,
+        "rx_gain_db": [
+          0,
+          0
+        ],
+        "tx_attenuation_mdb": [
+          89000,
+          89000
+        ],
+        "flags": 5,
+        "valid": true,
+        "lease_active": false,
+        "lease_expired": true,
+        "mute_fault": false,
+        "remaining_ms": 0,
+        "uptime_ms": 5017107,
+        "remaining_lower_bound_ms": 0,
+        "snapshot_received_at": 1793425409.577431
+      },
+      "decode_sha256": "8505a7865c84784b6e4956c7186c8f4ce754d07d41c1823a2f16ab5d8098cce9"
+    }
+  ],
+  "telemetry_total_crc_frames": 32,
+  "clip_probe": {
+    "directory": "clip_registers_01",
+    "source_tx_lo_change_hz": [
+      100000000,
+      1990000000
+    ],
+    "source_lo_powerdown_readback": 1,
+    "source_tx_attenuation_db": [
+      89,
+      89
+    ],
+    "source_tx_rx_dma": [
+      0,
+      0
+    ],
+    "changes": [
+      {
+        "before": "before_out_altvoltage1_TX_LO_frequency",
+        "after": "after_out_altvoltage1_TX_LO_frequency",
+        "delta": 102245
+      }
+    ],
+    "relay_audits": {
+      "gui_return_ready": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "444252158",
+        "out": "444252151",
+        "clip": "803938",
+        "rc": "0"
+      },
+      "gui_return_during": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "2844008446",
+        "out": "2844008439",
+        "clip": "803938",
+        "rc": "0"
+      },
+      "gui_forward_prepared_followup": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "1414279166",
+        "out": "1414279159",
+        "clip": "803938",
+        "rc": "0"
+      },
+      "gui_roundtrip_connecting": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "1732456446",
+        "out": "1732456439",
+        "clip": "803938",
+        "rc": "0"
+      },
+      "gui_roundtrip_tx_prepared": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "2575314942",
+        "out": "2575314935",
+        "clip": "907813",
+        "rc": "0"
+      },
+      "gui_roundtrip_stable": {
+        "mode": "1",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "30",
+        "txatt": "50",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "3910238206",
+        "out": "3910238199",
+        "clip": "907813",
+        "rc": "0"
+      }
+    },
+    "conclusion": "Growth localized to muted TX LO retune; physical mechanism and elimination are not established"
+  },
+  "usb_issue": {
+    "errors": [
+      {
+        "time": 1793424473.8491702,
+        "type": "status",
+        "direction": "reverse",
+        "rx_channel": 2,
+        "state": "error",
+        "message": "USB session port is unavailable or ambiguous；清理未完全确认：Receiver binding is closed or invalidated",
+        "category": "hardware"
+      }
+    ],
+    "recheck_samples": 100,
+    "recheck_failures": 0,
+    "recovery": "Explicit reconnect and a new send; no identity-check bypass or automatic RF retry",
+    "code_change": "Report port/match count/missing VID/PID on identity failure; gate unchanged",
+    "tests": {
+      "command": "python -m unittest sw.ground_station.test_rf_session sw.ground_station.test_business_live -q",
+      "count": 36,
+      "passed": true
+    }
+  },
+  "final_state": {
+    "passed": true,
+    "relay": {
+      "status": {
+        "mode": "2",
+        "ddc": "00000000",
+        "duc": "00000000",
+        "gain": "800",
+        "dc": "0",
+        "rxgain": "0",
+        "txatt": "89",
+        "rxlo": "1990",
+        "txlo": "2180",
+        "fs": "30720000",
+        "in": "3832475646",
+        "out": "3832475639",
+        "clip": "907813",
+        "rc": "0"
+      },
+      "spi": {
+        "relay_rx_hz_readback": 1990000000,
+        "relay_tx_hz_readback": 2180000000,
+        "relay_tx_atten_db_readback": 89,
+        "relay_rx_gain_db_readback": 0
+      }
+    },
+    "adda": {
+      "tm": {
+        "uptime_ms": 5021559,
+        "events": 37,
+        "network": 0,
+        "armed": 0,
+        "pending": 0,
+        "decoded": 13,
+        "applied": 12,
+        "failures": 0,
+        "d_valid": 1,
+        "d_event": 35,
+        "d_origin": 1,
+        "d_air_seq": 23,
+        "d_rx_mhz": 1990,
+        "d_tx_mhz": 2180,
+        "s_valid": 1,
+        "s_event": 36,
+        "s_origin": 1,
+        "s_air_seq": 23,
+        "s_rx_mhz": 1990,
+        "s_tx_mhz": 2180,
+        "s_udp_seq": 12,
+        "s_count": 1,
+        "s_rc": 0,
+        "a_valid": 1,
+        "a_event": 37,
+        "a_origin": 1,
+        "a_air_seq": 23,
+        "a_rx_mhz": 1990,
+        "a_tx_mhz": 2180,
+        "a_udp_seq": 12,
+        "a_rc": 0,
+        "a_rx_hz": 1990000000,
+        "a_tx_hz": 2180000000,
+        "spi_valid": 0
+      },
+      "dac": {
+        "enabled": 1,
+        "seq": 12,
+        "pending": 0,
+        "stopping": 0,
+        "status": 40,
+        "diag": 0,
+        "dac_verified": 1,
+        "dac_finished": 1,
+        "dac_diagnostic": 271188240
+      },
+      "service": [
+        "SERVICE active=0 state=0 reason=1 remaining_ms=0 accepted=2 completed=2 failed=0 air_seq=23 udp_seq=12 reply_seq=11 reply_sent=400 reply_limit=400 reply_remaining_ms=0 used=2",
+        "CLI_RESULT rc=0"
+      ],
+      "status": [
+        "CONTROLLER auto=0 capture_state=7 capture_valid=0 consumed=0",
+        "STATUS network=0 armed=0 decoded=13 applied=12 pending=0 retries=1 failures=0 gain=0 att=89",
+        "CLI_RESULT rc=0"
+      ]
+    },
+    "terminals": [
+      {
+        "port": "COM18",
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      },
+      {
+        "port": "COM17",
+        "state": {
+          "powerdown": "1",
+          "tx1_gain": "-89.000000 dB",
+          "tx2_gain": "-89.000000 dB",
+          "tx_dma": "0",
+          "rx_dma": "0"
+        }
+      }
+    ]
+  },
+  "screenshots": [
+    {
+      "path": "screenshots/terminal1_reverse_received.png",
+      "sha256": "73dcc27285d06d462d3833b5b88c1d5f4f5e4068d80fce5b6d48f2360f59c032"
+    },
+    {
+      "path": "screenshots/terminal1_bidirectional.png",
+      "sha256": "ec830a4da0521c1052c813d3bb4fc608cde038b6bf8d53f215d132474b490447"
+    },
+    {
+      "path": "screenshots/terminal2_bidirectional.png",
+      "sha256": "24cd4ace778758be3b4457857bb135acddd9cf4afabedf3c320366d839f5045e"
+    }
+  ],
+  "remaining": [
+    "Eliminate muted frequency-transition PL clipping; no analog instrument measurement yet",
+    "Occasional USB enumeration and long-capture stability remain under investigation",
+    "Persistent cold boot and second physical PC migration not yet accepted",
+    "No concurrent six-frequency, continuous BER or standard NTN air-interface claim"
+  ]
+}

@@ -6,7 +6,8 @@ import struct
 import unittest
 
 from .tc_evidence import assess_transaction
-from .telemetry import TM1_FIELDS
+from .telemetry import TM1_FIELDS, TM2_FIELDS, parse_tm1
+from sw.tools.telecontrol_protocol import normalize_hz_request, wire_fields
 
 
 def atm1_frame(frozen, sequence=17, uptime=2200):
@@ -46,7 +47,65 @@ def evidence():
     return [request, before, frozen, spi, report, 17]
 
 
+def khz_evidence(operation='frequency', network=0):
+    """Independent ATM2/TM2 wire fixture, with requested vs actual Hz distinct."""
+    request = normalize_hz_request(rx_hz=1991845000, tx_hz=2192956000,
+                                   air_seq=37, operation=operation)
+    version, rx_raw, tx_raw, seq = wire_fields(request)
+    before = evidence()[1]
+    values = dict.fromkeys(TM2_FIELDS, 0)
+    values.update(uptime_ms=2000, events=23, network=network, decoded=4, applied=3,
+                  s_udp_seq=87, s_count=1, a_udp_seq=87,
+                  a_rx_hz=1991845004, a_tx_hz=2192955997)
+    for prefix, event in [('d', 21), ('s', 22), ('a', 23)]:
+        values.update({prefix+'_'+key: value for key, value in dict(valid=1, event=event,
+                      origin=1, air_seq=seq, version=version, rx_raw=rx_raw, tx_raw=tx_raw).items()})
+    line = 'TM2 '+' '.join(f'{key}={values[key]}' for key in TM2_FIELDS)
+    frozen = parse_tm1(line+f' crc16={binascii.crc_hqx(line.encode(), 0xffff):04X}')
+    payload = bytearray(112)
+    payload[:8] = b'ATM2'+bytes([2, network | 0x38, version, version])
+    struct.pack_into('>6I', payload, 8, 17, 2200, 23, 4, 3, 0)
+    for offset, event in [(32, 21), (42, 22), (60, 23)]:
+        struct.pack_into('>IBBHH', payload, offset, event, 1, seq, rx_raw, tx_raw)
+    struct.pack_into('>HBBi', payload, 52, 87, 1, version, 0)
+    struct.pack_into('>HiQQ', payload, 70, 87, 0, values['a_rx_hz'], values['a_tx_hz'])
+    if operation != 'frequency':
+        active = operation == 'enable'
+        struct.pack_into('>4B4I', payload, 92, 1 if active else 2, 30 if active else 0,
+                         30 if active else 0, 3 if active else 1,
+                         50000 if active else 89000, 50000 if active else 89000,
+                         299000 if active else 0, 100000)
+    frame = dict(payload_hex=payload.hex(), crc16=binascii.crc_hqx(payload, 0xffff))
+    spi = dict(relay_rx_hz_readback=1991845003, relay_tx_hz_readback=2192955998)
+    return [request, before, frozen, spi, dict(frames=[frame]), 17]
+
+
 class TransactionEvidenceTests(unittest.TestCase):
+    def test_khz_uart_rf_and_independent_spi_roundtrip(self):
+        for operation in ('frequency', 'enable', 'stop', 'status'):
+            with self.subTest(operation=operation):
+                values = khz_evidence(operation)
+                result = assess_transaction(*values)
+                self.assertTrue(result['passed'])
+                self.assertEqual(result['ack']['rx_hz'], 1991845004)
+                self.assertEqual(result['transaction']['encoding'], 'n256_khz_v1')
+                self.assertNotIn('rx_mhz', result['transaction'])
+        values = khz_evidence()
+        values[3]['relay_rx_hz_readback'] += 11
+        with self.assertRaisesRegex(ValueError, 'frequency correlation'):
+            assess_transaction(*values)
+
+    def test_khz_raw_provenance_and_actual_hz_cannot_be_forged_by_summary(self):
+        for key, value in [('d_rx_raw', 12346), ('a_rx_hz', 1991845011), ('a_version', 0xa1)]:
+            values = khz_evidence()
+            values[2][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                assess_transaction(*values)
+        values = khz_evidence()
+        values[4]['frames'] = evidence()[4]['frames']
+        with self.assertRaisesRegex(ValueError, 'ATM2'):
+            assess_transaction(*values)
+
     def test_real_atm1_layout_duplicate_physical_frames_are_one_transaction(self):
         values = evidence()
         result = assess_transaction(*values)

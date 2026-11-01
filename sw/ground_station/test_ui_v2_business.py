@@ -48,8 +48,12 @@ class BusinessWindowTests(unittest.TestCase):
         port = 'COM_A' if page.role == 'sender' else 'COM_B'
         self.event(page, 'identity', identity=dict(port=port, model='fake local SDR', usb_serial='verified-fake'))
 
-    def ready(self, page):
-        self.connect(page)
+    def ready(self, page, *, already_connecting=False):
+        if already_connecting:
+            port = 'COM_A' if page.role == 'sender' else 'COM_B'
+            self.event(page, 'identity', identity=dict(port=port, model='fake local SDR', usb_serial='verified-fake'))
+        else:
+            self.connect(page)
         self.event(page, 'status', state='ready', message='connected, await configure')
         self.assertFalse(page.business_configured)
         values = dict(configured=True)
@@ -120,16 +124,31 @@ class BusinessWindowTests(unittest.TestCase):
         self.rx(page)
         self.assertEqual(page.received_text.get(), 'RF received only')
 
-    def test_switch_is_blocked_when_connected_or_control_owns_pc1(self):
-        self.ready(self.sender)
-        page = self.sender
-        page.switch_business_direction()
-        self.assertIsNone(page.replacement_direction)
-        self.assertTrue(page.direction_button.instate(['disabled']))
-        self.event(page, 'status', state='disconnected', message='released')
-        self.control.local_claimed = True
-        page.switch_business_direction()
-        self.assertIsNone(page.replacement_direction)
+
+
+
+    def test_previous_worker_callbacks_cannot_enter_new_receive_session(self):
+        old = self.sender.controller
+        old_queue = self.sender.events
+        page = self.reverse('sender')
+        self.assertIsNot(page.events, old_queue)
+        self.ready(page)
+        page.receive_business()
+        old.emit(dict(type='rx', direction='reverse', rx_channel=2,
+            messages=[dict(text='stale', message_id='old:1', crc_valid=True)]))
+        old.emit(dict(type='closed'))
+        page._drain_online_events()
+        self.assertEqual(page.history.get_children(), ())
+        self.assertEqual(old_queue.qsize(), 2)
+        self.assertIs(self.session.windows['sender'], page)
+        page.controller.emit(dict(type='rx', direction='reverse', rx_channel=2,
+            messages=[dict(text='new actual event', message_id='new:1', crc_valid=True)]))
+        page._drain_online_events()
+        self.assertEqual(page.received_text.get(), 'new actual event')
+
+
+
+
 
     def test_reverse_reply_never_populates_pc1_without_actual_rx_event(self):
         rx = self.reverse('sender'); tx = self.reverse('receiver')
@@ -372,10 +391,12 @@ class BusinessWindowTests(unittest.TestCase):
         control=offline.show('control');sender=offline.show('sender')
         control.input_frequency.set('1990.5');control.generate_command()
         control.preview_report()
-        self.assertEqual(sender.tx_rf.get(),'1989.5')
+        self.assertEqual(sender.sender_frequency.get(), '—')
+        self.assertFalse(hasattr(sender, 'tx_frequency_combo'))
         with tempfile.TemporaryDirectory() as directory:
             self.assertTrue(control.load_record(history_fixture(directory)))
-        self.assertEqual(sender.tx_rf.get(),'1989.5')
+        self.assertEqual(sender.sender_frequency.get(), '—')
+        self.assertFalse(hasattr(sender, 'tx_frequency_combo'))
         self.assertEqual(offline.sender_center_plan,'1989.5')
         for role in tuple(offline.windows):offline.close(role)
 
@@ -501,7 +522,7 @@ class BusinessWindowTests(unittest.TestCase):
             self.root.update()
             bottom=page.window.winfo_rooty()+page.window.winfo_height()
             action=page.send_button if page.role=='sender' else page.receive_button
-            for widget in (action,page.business_stop_button,page.history):
+            for widget in (action, page.business_stop_button, page.history):
                 self.assertTrue(widget.winfo_ismapped())
                 self.assertLess(widget.winfo_rooty()+widget.winfo_height(),bottom)
             self.assertGreaterEqual(action.winfo_height(),action.winfo_reqheight())
@@ -510,13 +531,15 @@ class BusinessWindowTests(unittest.TestCase):
             self.assertGreaterEqual(action.winfo_height(),action.winfo_reqheight())
             page.toggle_details()
 
-    def test_real_receiver_snapshot_still_has_visible_spectrum_at_minimum_size(self):
+    def test_real_receiver_snapshot_has_spectrum_in_details_at_minimum_size(self):
         self.ready(self.receiver)
         self.receiver.receive_business()
         self.event(self.receiver,'status',state='receiving',message='采集本地真实 IQ')
         self.rx()
         self.receiver.window.geometry('1040x800')
+        self.receiver.toggle_details()
         self.root.update()
+        self.assertTrue(self.receiver.spectrum.winfo_ismapped())
         self.assertGreaterEqual(self.receiver.spectrum.winfo_height(),80)
 
     def test_cli_business_is_explicit_and_can_be_combined_with_control(self):
@@ -526,6 +549,183 @@ class BusinessWindowTests(unittest.TestCase):
                 main(argv)
                 self.assertIs(factory.call_args.kwargs['online_business'],business)
                 self.assertIs(factory.call_args.kwargs['online_control'],control)
+
+
+class SharedTerminalWindowTests(unittest.TestCase):
+    """Current shared-worker interactions replacing obsolete direction handoffs."""
+    def setUp(self):
+        self.root = tk.Tk()
+        self.root.withdraw()
+        self.backends = {}
+
+        def factory(role, emit, log_dir=None):
+            backend = FakeBusinessController(role, emit, log_dir)
+            self.backends[role] = backend
+            return backend
+
+        self.session = ReviewSession(self.root, port_provider=lambda: PORTS, aliases=ALIASES,
+            online_business=True, online_control=True, terminal_controller_factory=factory)
+        self.sender, self.receiver, self.control = [self.session.show(role)
+            for role in ('sender', 'receiver', 'control')]
+
+    def tearDown(self):
+        dispose_tk_test(self)
+
+    def flush(self):
+        if self.session._terminal_poll_id:
+            self.root.after_cancel(self.session._terminal_poll_id)
+            self.session._terminal_poll_id = None
+        self.session._drain_terminal_events()
+        for page in tuple(self.session.windows.values()):
+            page._drain_online_events()
+
+    def emit(self, role='sender', **event):
+        self.backends[role].emit(event)
+        self.flush()
+
+    def ready(self, page=None):
+        page = page or self.sender
+        port = 'COM_A' if page.role == 'sender' else 'COM_B'
+        page.connect_business()
+        self.emit(page.role, type='identity', identity=dict(port=port))
+        self.emit(page.role, type='settings', values=dict(configured=True,
+            tx_lo_hz_readback=1989000000, rx_lo_hz_readback=2179750000,
+            expected_rf_hz=2179500000))
+        self.emit(page.role, type='terminal_state', connected=True, source=dict(port=port),
+            rx_active=True, tx_active=False, tc_active=False)
+
+    def text(self, value):
+        self.sender.message_input.delete('1.0', 'end')
+        self.sender.message_input.insert('1.0', value)
+        self.sender._text_changed()
+
+    def test_tc_pause_and_recovery_use_same_connection_without_handoff(self):
+        self.ready()
+        self.text('draft')
+        controller = self.sender.controller
+        calls = list(self.backends['sender'].calls)
+        self.emit(type='terminal_state', connected=True,
+            rx_active=False, tx_active=False, tc_active=True)
+        self.assertIn('测控', self.sender.mode_label.get())
+        self.assertFalse(self.sender.send_button.instate(['disabled']))
+        self.sender.send_business()
+        self.assertEqual(self.backends['sender'].calls[-1][0], 'send')
+        self.assertIn('排队中', self.sender.history.item(self.sender.history.get_children()[0], 'values')[3])
+        calls = list(self.backends['sender'].calls)
+        self.assertIsNone(self.session.other_owner('sender'))
+        self.emit(type='terminal_state', connected=True,
+            rx_active=True, tx_active=False, tc_active=False)
+        self.assertIs(self.sender.controller, controller)
+        self.assertIn('自动接收', self.sender.mode_label.get())
+        self.assertEqual(self.backends['sender'].calls, calls)
+        self.assertEqual(self.sender.message_input.get('1.0', 'end-1c'), 'draft')
+        self.assertFalse(self.sender.send_button.instate(['disabled']))
+
+    def test_shared_owner_control_never_disconnects_t1(self):
+        self.ready()
+        self.control.cancel_online('disconnect')
+        self.assertEqual(self.backends['sender'].calls[-1], ('cancel_tc', {}))
+        self.emit(type='terminal_state', connected=True,
+            rx_active=True, tx_active=False, tc_active=False)
+        self.assertTrue(self.sender.local_claimed)
+        self.assertEqual(self.control.online_state, 'connected')
+        self.assertIsNone(self.session.other_owner('control'))
+
+    def test_one_window_keeps_draft_and_distinct_send_receive_records(self):
+        self.ready()
+        page = self.sender
+        window = page.window
+        self.text('outbound')
+        page.send_business()
+        self.emit(type='tx', text='outbound', message_id='fixture:tx1',
+            request_id=self.backends['sender'].calls[-1][1]['request_id'])
+        self.text('next draft')
+        self.emit(type='rx', messages=[dict(text='actual reply', message_id='fixture:rx1', crc_valid=True)])
+        self.emit(type='rx', messages=[dict(text='actual reply', message_id='fixture:rx1', crc_valid=True)])
+        self.assertIs(page.window, window)
+        self.assertEqual(page.received_text.get(), 'actual reply')
+        self.assertEqual(page.message_input.get('1.0', 'end-1c'), 'next draft')
+        self.assertEqual(page.sent_count.get(), '已发 1 条')
+        self.assertEqual(page.received_count.get(), '实收 1 条')
+        rows = [page.history.item(item, 'values') for item in page.history.get_children()]
+        self.assertEqual(len(rows), 3)  # Physical duplicate is recorded, but is not another message.
+        self.assertEqual({row[3][:4] for row in rows}, {'↓ 实收', '↑ 发出'})
+        self.assertEqual(self.receiver.history.get_children(), ())
+
+    def test_device_change_requires_manual_connect_and_rejects_old_identity(self):
+        self.ready()
+        self.emit(type='terminal_state', connected=False,
+            rx_active=False, tx_active=False, tc_active=False)
+        self.sender.selection.set(self.receiver.selection.get())
+        calls = list(self.backends['sender'].calls)
+        self.emit(type='identity', identity=dict(port='COM_A'))
+        self.assertFalse(self.sender.local_claimed)
+        self.assertIsNone(self.sender.online_identity)
+        self.assertEqual(self.backends['sender'].calls, calls)
+        self.sender.connect_business()
+        self.assertEqual(self.backends['sender'].calls[-1],
+            ('connect', dict(port='COM_B', tx_center=1989.5, rx_center=2179.5)))
+
+    def test_failed_tc_recovers_rx_without_creating_another_worker(self):
+        self.ready()
+        controller = self.sender.controller
+        self.control.generate_command()
+        self.control.send_online()
+        self.assertEqual(self.backends['sender'].calls[-1][0], 'telecontrol')
+        self.emit(type='status', channel='control', state='error', category='timeout', message='timeout')
+        self.assertIsNone(self.control.active_request)
+        self.emit(type='terminal_state', connected=True,
+            rx_active=True, tx_active=False, tc_active=False)
+        self.assertIs(self.sender.controller, controller)
+        self.assertEqual(len(self.backends), 2)
+        self.assertIn('自动接收', self.sender.mode_label.get())
+        self.assertEqual(self.control.online_state, 'connected')
+        self.assertIn('结果未知', self.control.reply_title.get())
+        self.assertFalse(any(action in ('close', 'disconnect') for action, _ in self.backends['sender'].calls))
+
+    def test_close_control_during_tc_detaches_page_and_retains_business(self):
+        self.ready()
+        self.control.generate_command()
+        self.control.send_online()
+        self.emit(type='terminal_state', connected=True,
+            rx_active=False, tx_active=False, tc_active=True)
+        self.session.close('control')
+        self.control._drain_online_events()
+        self.assertNotIn('control', self.session.windows)
+        self.assertIn('sender', self.session.windows)
+        self.assertNotIn(('close', {}), self.backends['sender'].calls)
+        self.assertEqual(self.backends['sender'].calls[-1], ('cancel_tc', {}))
+        self.emit(type='terminal_state', connected=True,
+            rx_active=True, tx_active=False, tc_active=False)
+        self.assertTrue(self.sender.local_claimed)
+
+    def test_closing_idle_control_does_not_cancel_business_transmission(self):
+        self.ready()
+        self.emit(type='terminal_state', connected=True,
+            rx_active=False, tx_active=True, tc_active=False)
+        before = list(self.backends['sender'].calls)
+        self.session.close('control')
+        self.control._drain_online_events()
+        self.assertNotIn('control', self.session.windows)
+        self.assertEqual(self.backends['sender'].calls, before)
+        self.assertTrue(self.sender.tx_active)
+        self.assertTrue(self.sender.local_claimed)
+
+    def test_remote_confirmed_plan_does_not_retune_t2_or_transport_text(self):
+        self.ready()
+        self.ready(self.receiver)
+        self.assertFalse(hasattr(self.receiver, 'expected_rf'))
+        self.assertFalse(hasattr(self.receiver, 'rx_apply_button'))
+        before = list(self.backends['receiver'].calls)
+        self.control.generate_command()
+        self.assertEqual(self.backends['receiver'].calls, before)
+        self.emit(type='result', channel='control', passed=True, requested={'air_seq': 999})
+        self.assertEqual(self.backends['receiver'].calls, before)
+        self.emit(type='confirmed_plan', tx_center=1990500000, rx_center=2179500000)
+        self.assertEqual(self.backends['receiver'].calls, before)
+        self.assertEqual(self.receiver.local_tx_center.get(), '1989.5')
+        self.assertEqual(self.receiver.local_rx_center.get(), '2179.5')
+        self.assertEqual(self.receiver.history.get_children(), ())
 
 
 if __name__=='__main__':

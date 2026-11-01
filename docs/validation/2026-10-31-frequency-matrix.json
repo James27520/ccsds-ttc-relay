@@ -1,0 +1,224 @@
+{
+  "date": "2026-10-31",
+  "passed": true,
+  "wiring": "fixed six SMA, no antenna",
+  "scope": "three new pairs, real RF TC and time-shared forward/reverse texts, pre-candidate PL",
+  "points": [
+    {
+      "relay_rx_mhz": 1982,
+      "relay_tx_mhz": 2172,
+      "business_input_mhz": 1982.5,
+      "business_output_mhz": 2172.5,
+      "commands": [
+        {
+          "operation": "frequency",
+          "sequence": 25,
+          "crc_frames": 8,
+          "ack": {
+            "rx_hz": 1981999998,
+            "tx_hz": 2172000000,
+            "udp_seq": 14
+          },
+          "evidence": "matrix_1982_2172_frequency",
+          "iq_sha256": "75aab635e0e6305b4d9d5b0235d3419f89c6028761ede2f68c23da4edfc80d0d"
+        },
+        {
+          "operation": "enable",
+          "sequence": 26,
+          "crc_frames": 7,
+          "ack": {
+            "rx_hz": 1981999998,
+            "tx_hz": 2172000000,
+            "udp_seq": 15
+          },
+          "evidence": "matrix_1982_2172_enable",
+          "iq_sha256": "2876edbae769958f068326b066f84a0c9b0708274ae6834ca8732c2b13d3fbab"
+        }
+      ],
+      "directions": [
+        {
+          "direction": "forward",
+          "evidence": "matrix_1982_2172_forward",
+          "captures": 13,
+          "crc_frames": 15,
+          "message_id": "cea7aca5:0000",
+          "text": "FWD 1982.5 febbdf77",
+          "carrier_hz_range": [
+            2172500218.294344,
+            2172500226.216337
+          ],
+          "source_on_seconds": 29.871298789978027,
+          "verified_blank_windows": 3,
+          "sample_clip_components": 0,
+          "stable_pl_clip_delta": 0,
+          "prepare_pl_clip_delta": 127537
+        },
+        {
+          "direction": "reverse",
+          "evidence": "matrix_1982_2172_reverse",
+          "captures": 13,
+          "crc_frames": 18,
+          "message_id": "00a5de0d:0000",
+          "text": "REV 1982.5 ba87a7dc",
+          "carrier_hz_range": [
+            2172499663.2960377,
+            2172499670.3825197
+          ],
+          "source_on_seconds": 32.679426193237305,
+          "verified_blank_windows": 3,
+          "sample_clip_components": 0,
+          "stable_pl_clip_delta": 0,
+          "prepare_pl_clip_delta": 0
+        }
+      ]
+    },
+    {
+      "relay_rx_mhz": 1999,
+      "relay_tx_mhz": 2189,
+      "business_input_mhz": 1999.5,
+      "business_output_mhz": 2189.5,
+      "commands": [
+        {
+          "operation": "frequency",
+          "sequence": 27,
+          "crc_frames": 8,
+          "ack": {
+            "rx_hz": 1998999998,
+            "tx_hz": 2189000000,
+            "udp_seq": 16
+          },
+          "evidence": "matrix_1999_2189_frequency",
+          "iq_sha256": "a314133376a5a2f21cb0d8a741fadf997410ab4e0f62778b85ee3dfa0e6568c9"
+        },
+        {
+          "operation": "enable",
+          "sequence": 28,
+          "crc_frames": 8,
+          "ack": {
+            "rx_hz": 1998999998,
+            "tx_hz": 2189000000,
+            "udp_seq": 17
+          },
+          "evidence": "matrix_1999_2189_enable",
+          "iq_sha256": "0257e469e3e6cb46f88cdac472eb19384f2fb7eb17d0066d43139bb51bd6300e"
+        }
+      ],
+      "directions": [
+        {
+          "direction": "forward",
+          "evidence": "matrix_1999_2189_forward",
+          "captures": 13,
+          "crc_frames": 15,
+          "message_id": "317fc318:0000",
+          "text": "FWD 1999.5 27ced534",
+          "carrier_hz_range": [
+            2189500206.6215787,
+            2189500216.556376
+          ],
+          "source_on_seconds": 29.813671112060547,
+          "verified_blank_windows": 3,
+          "sample_clip_components": 0,
+          "stable_pl_clip_delta": 0,
+          "prepare_pl_clip_delta": 143826
+        },
+        {
+          "direction": "reverse",
+          "evidence": "matrix_1999_2189_reverse",
+          "captures": 13,
+          "crc_frames": 18,
+          "message_id": "1c7e75d6:0000",
+          "text": "REV 1999.5 8e4ab63a",
+          "carrier_hz_range": [
+            2189499669.7303114,
+            2189499673.316947
+          ],
+          "source_on_seconds": 32.57393145561218,
+          "verified_blank_windows": 3,
+          "sample_clip_components": 0,
+          "stable_pl_clip_delta": 0,
+          "prepare_pl_clip_delta": 0
+        }
+      ]
+    },
+    {
+      "relay_rx_mhz": 2007,
+      "relay_tx_mhz": 2197,
+      "business_input_mhz": 2007.5,
+      "business_output_mhz": 2197.5,
+      "commands": [
+        {
+          "operation": "frequency",
+          "sequence": 29,
+          "crc_frames": 7,
+          "ack": {
+            "rx_hz": 2007000000,
+            "tx_hz": 2196999998,
+            "udp_seq": 18
+          },
+          "evidence": "matrix_2007_2197_frequency",
+          "iq_sha256": "5534c216a12b0ed8d17ddee031e0588de35daa757a958c0a3646c3524f40a221"
+        },
+        {
+          "operation": "enable",
+          "sequence": 30,
+          "crc_frames": 7,
+          "ack": {
+            "rx_hz": 2007000000,
+            "tx_hz": 2196999998,
+            "udp_seq": 19
+          },
+          "evidence": "matrix_2007_2197_enable",
+          "iq_sha256": "c30ecabddd7a329254339ed349528d53cedfb234aa363cd40849a29d91cb9a74"
+        }
+      ],
+      "directions": [
+        {
+          "direction": "forward",
+          "evidence": "matrix_2007_2197_forward",
+          "captures": 13,
+          "crc_frames": 14,
+          "message_id": "5b9e4d75:0000",
+          "text": "FWD 2007.5 9361c2f8",
+          "carrier_hz_range": [
+            2197500215.142334,
+            2197500226.0022535
+          ],
+          "source_on_seconds": 29.777395963668823,
+          "verified_blank_windows": 3,
+          "sample_clip_components": 0,
+          "stable_pl_clip_delta": 0,
+          "prepare_pl_clip_delta": 142402
+        },
+        {
+          "direction": "reverse",
+          "evidence": "matrix_2007_2197_reverse",
+          "captures": 13,
+          "crc_frames": 18,
+          "message_id": "a0bc3bbc:0000",
+          "text": "REV 2007.5 04123cdb",
+          "carrier_hz_range": [
+            2197499651.4094515,
+            2197499670.193915
+          ],
+          "source_on_seconds": 32.60473990440369,
+          "verified_blank_windows": 3,
+          "sample_clip_components": 0,
+          "stable_pl_clip_delta": 0,
+          "prepare_pl_clip_delta": 0
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "tc_transactions": 6,
+    "tc_crc_frames": 45,
+    "business_iq_captures": 78,
+    "business_crc_frames": 98,
+    "unique_messages": 6
+  },
+  "limitations": [
+    "13.1072 ms snapshots with host-side gaps, not continuous BER or packet delivery rate",
+    "prepare-phase PL clip growth remains on baseline hardware, separate from zero sample clipping and stable business intervals",
+    "single PC, no simultaneous full-duplex or radiated NTN compliance test"
+  ]
+}

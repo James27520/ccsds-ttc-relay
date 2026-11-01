@@ -10,6 +10,10 @@ import json
 from pathlib import Path
 
 import numpy as np
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from sw.tools.telecontrol_protocol import frequency_fields
 
 
 class Command(ct.Structure):
@@ -64,8 +68,8 @@ def analyze_samples(samples, lib):
                   square_law_carrier_hz=stats.carrier_hz,
                   timing_trials=stats.timing_trials)
     if rc == 1:
-        result.update(command=dict(version=frame.command.version, rx_mhz=frame.command.rx_mhz,
-                                   tx_mhz=frame.command.tx_mhz, seq=frame.command.seq),
+        fields = frequency_fields(frame.command.version, frame.command.rx_mhz, frame.command.tx_mhz)
+        result.update(command=dict(version=frame.command.version, seq=frame.command.seq, **fields),
                       body_hex=bytes(frame.body).hex(), asm_errors=frame.asm_errors,
                       inverted=frame.inverted, path_metric=frame.path_metric,
                       crc_valid=True)

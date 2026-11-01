@@ -34,6 +34,15 @@ class TelemetryWindowTests(unittest.TestCase):
     def snapshot(self, **values):
         self.monitor._handle_event(dict(type="telemetry", received_at=time.time(), snapshot=values))
 
+    def test_khz_request_is_not_mislabeled_as_mhz_offset(self):
+        from .test_tc_evidence import khz_evidence
+        self.snapshot(**khz_evidence()[2])
+        self.assertIn('1991.845000', self.monitor.stage_vars['a']['frequency'].get())
+        self.assertIn('1991845004 Hz', self.monitor.stage_vars['a']['extra'].get())
+        self.assertIn('TM2', self.monitor.freshness_var.get())
+        self.snapshot(**khz_evidence('status')[2])
+        self.assertIn('不携带调谐', self.monitor.stage_vars['a']['frequency'].get())
+
     def test_monitor_actions_are_read_only_and_never_use_station_port(self):
         controller = self.monitor.controller
         self.assertEqual(controller.calls, [("discover", {})])

@@ -8,8 +8,9 @@ import binascii
 import math
 import re
 
-from .telemetry import TM1_FIELDS, parse_tm1
+from .telemetry import TM1_FIELDS, TM2_FIELDS, parse_tm1
 from sw.tools.telemetry_downlink import parse_frame
+from sw.tools.telecontrol_protocol import normalize_hz_request, wire_fields
 
 _U32 = (1 << 32)-1
 _HZ_TOLERANCE = 10000
@@ -78,6 +79,8 @@ def assess_transaction(requested, before, frozen, spi, rf_report, dac_sequence):
     """
     for value in (requested, before, frozen, spi, rf_report, dac_sequence):
         _json_finite(value)
+    if type(requested) is dict and ('encoding' in requested or 'rx_hz' in requested or 'tx_hz' in requested):
+        return _assess_hz_transaction(requested, before, frozen, spi, rf_report, dac_sequence)
     if type(requested) is not dict or set(requested) != {'rx_mhz', 'tx_mhz', 'air_seq'}:
         raise ValueError('requested must specify rx_mhz, tx_mhz and air_seq')
     request = {key: _integer(requested[key], 0 if key == 'air_seq' else 70,
@@ -156,4 +159,86 @@ def assess_transaction(requested, before, frozen, spi, rf_report, dac_sequence):
                 decoded=frozen['decoded'], applied=frozen['applied'], failures=frozen['failures'],
                 rf_uptime_ms=snapshot['uptime_ms'], ack=ack, spi=independent,
                 spi_source='independent_relay_diagnostics',
+                acquisition_authentication='caller must retain actual IQ and acquisition logs')
+
+
+def _checked_tm2(value):
+    if type(value) is not dict or any(type(value.get(key)) is not int for key in TM2_FIELDS):
+        raise ValueError('Complete TM2 UART evidence required')
+    prefix = 'TM2 '+' '.join(f'{key}={value[key]}' for key in TM2_FIELDS)
+    checked = parse_tm1(prefix+f' crc16={binascii.crc_hqx(prefix.encode("ascii"), 0xffff):04X}')
+    if value != checked:
+        raise ValueError('TM2 derived fields do not match raw command')
+    return checked
+
+
+def _assess_hz_transaction(requested, before, frozen, spi, rf_report, dac_sequence):
+    request = normalize_hz_request(**requested)
+    version, rx_raw, tx_raw, seq = wire_fields(request)
+    operation = request['operation']
+    before = _checked_tm2(before) if 'd_version' in before else _tm1(before, 'before')
+    frozen = _checked_tm2(frozen)
+    sequence = _integer(dac_sequence, 0, _U32, 'dac_sequence')
+    if (any(frozen[key] for key in ('network', 'armed', 'pending')) or
+            frozen['uptime_ms'] < before['uptime_ms'] or
+            frozen['applied'] != before['applied']+1 or
+            frozen['decoded'] < before['decoded']+1 or frozen['failures'] != before['failures']):
+        raise ValueError('Expected one fresh completed TM2 transaction')
+    for prefix in ('d', 's', 'a'):
+        expected = dict(valid=1, origin=1, air_seq=seq, version=version, rx_raw=rx_raw, tx_raw=tx_raw)
+        if any(frozen[prefix+'_'+key] != value for key, value in expected.items()):
+            raise ValueError('TM2 command provenance differs from request')
+    if not (before['events'] < frozen['d_event'] < frozen['s_event'] < frozen['a_event'] == frozen['events']):
+        raise ValueError('TM2 events are not fresh and ordered')
+    if (frozen['s_udp_seq'] != frozen['a_udp_seq'] or frozen['s_rc'] or frozen['a_rc'] or
+            not 1 <= frozen['s_count'] <= 255 or not 0 <= frozen['s_udp_seq'] <= 0x3fff):
+        raise ValueError('TM2 UDP transaction failed')
+    if type(spi) is not dict:
+        raise ValueError('Independent SPI diagnostics are missing')
+    independent, ack = {}, dict(udp_seq=frozen['a_udp_seq'], rc=0)
+    for axis in ('rx', 'tx'):
+        actual = _integer(spi.get('relay_'+axis+'_hz_readback'), 70_000_000, 6_000_000_000, axis)
+        acknowledged = frozen['a_'+axis+'_hz']
+        if operation in ('frequency', 'enable') and (abs(actual-request[axis+'_hz']) > 10 or
+                abs(acknowledged-request[axis+'_hz']) > 10 or abs(actual-acknowledged) > 10):
+            raise ValueError('Independent SPI / ACK frequency correlation failed: '+axis)
+        independent[axis+'_hz'], ack[axis+'_hz'] = actual, acknowledged
+    if type(rf_report) is not dict or type(rf_report.get('frames')) is not list or not rf_report['frames']:
+        raise ValueError('Actual RF frame evidence is missing')
+    unique = {}
+    for frame in rf_report['frames']:
+        if type(frame) is not dict or type(frame.get('payload_hex')) is not str or not re.fullmatch(
+                '[0-9a-fA-F]{224}', frame['payload_hex']):
+            raise ValueError('TM2 request requires 112-byte ATM2 RF evidence')
+        payload = bytes.fromhex(frame['payload_hex'])
+        crc = _integer(frame.get('crc16'), 0, 65535, 'CRC16')
+        snapshot = parse_frame(b'\xaa\xaa\x70'+payload+crc.to_bytes(2, 'big'))
+        if (snapshot['sequence'] != sequence or
+                not frozen['uptime_ms'] <= snapshot['uptime_ms'] <= frozen['uptime_ms']+120_000):
+            raise ValueError('RF snapshot is stale or has wrong DAC sequence')
+        for key in _SCALARS[:-1]:  # ATM2 relay status is separate from UART independent SPI evidence.
+            if snapshot[key] != frozen[key]:
+                raise ValueError('RF snapshot differs from frozen state: '+key)
+        for prefix, name in (('d', 'decoded_record'), ('s', 'send_record'), ('a', 'ack_record')):
+            record = snapshot[name]
+            raw_fields = dict(valid=int(record['valid']), event=record['event'], origin=record['origin'],
+                air_seq=record['air_seq'], version=record['command_version'],
+                rx_raw=record.get('rx_offset_khz'), tx_raw=record.get('tx_offset_khz'))
+            for field in ('udp_seq', 'rc', 'count') if prefix == 's' else (('udp_seq', 'rc', 'rx_hz', 'tx_hz') if prefix == 'a' else ()):
+                raw_fields[field] = record[field]
+            if any(frozen[prefix+'_'+key] != value for key, value in raw_fields.items()):
+                raise ValueError('RF record differs from frozen TM2 command')
+        if operation != 'frequency' and not snapshot['relay']['valid']:
+            raise ValueError('RF reply lacks valid relay status')
+        unique[payload] = snapshot
+    if len(unique) != 1:
+        raise ValueError('Single finite request must contain one unique ATM2 snapshot')
+    snapshot = next(iter(unique.values()))
+    return dict(passed=True, rf_source='actual_iq_crc_checked',
+                transaction=dict(request, udp_seq=frozen['s_udp_seq'], decoded_event=frozen['d_event'],
+                                 send_event=frozen['s_event'], ack_event=frozen['a_event']),
+                physical_frame_count=len(rf_report['frames']), unique_snapshot_count=1,
+                dac_sequence=sequence, frozen_events=frozen['events'], decoded=frozen['decoded'],
+                applied=frozen['applied'], failures=frozen['failures'], rf_uptime_ms=snapshot['uptime_ms'],
+                ack=ack, spi=independent, spi_source='independent_relay_diagnostics',
                 acquisition_authentication='caller must retain actual IQ and acquisition logs')

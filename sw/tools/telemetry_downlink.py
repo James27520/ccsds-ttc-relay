@@ -12,8 +12,10 @@ from pathlib import Path
 import struct
 try:
     from . import rf_text_link as phy
+    from .telecontrol_protocol import frequency_fields
 except ImportError:
     import rf_text_link as phy
+    from telecontrol_protocol import frequency_fields
 
 PAYLOAD_BYTES, FRAME_BYTES, BURST_BYTES = 96, 101, 420
 PAYLOAD2_BYTES, FRAME2_BYTES, BURST2_BYTES = 112, 117, 484
@@ -42,16 +44,17 @@ def parse_payload(payload):
                                         ('ack_record', 60, 5, 32, 55)]:
         valid = bool(flags & (1 << valid_bit))
         event, origin, air_seq, rx, tx = struct.unpack_from('>IBBHH', payload, offset)
-        if not valid:
-            if any(payload[offset:offset+size]):
-                raise ValueError('Invalid record must be zeroed')
-        elif origin not in range(1, 5) or not 70 <= rx <= 6000 or not 70 <= tx <= 6000:
-            raise ValueError('Invalid record provenance/frequency')
-        record = dict(valid=valid, event=event, origin=origin, origin_name=ORIGINS[origin],
-                      air_seq=air_seq, rx_mhz=rx, tx_mhz=tx)
         version = payload[version_at] if extended else (1 if valid else 0)
-        if (valid and version not in (1, 0x21, 0x22, 0x23)) or (not valid and version):
-            raise ValueError('Invalid operation provenance')
+        if not valid:
+            if any(payload[offset:offset+size]) or version:
+                raise ValueError('Invalid record must be zeroed')
+            frequencies = dict(rx_mhz=0, tx_mhz=0)
+        else:
+            if origin not in range(1, 5):
+                raise ValueError('Invalid record provenance')
+            frequencies = frequency_fields(version, rx, tx)
+        record = dict(valid=valid, event=event, origin=origin, origin_name=ORIGINS[origin],
+                      air_seq=air_seq, **frequencies)
         record['command_version'] = version
         result[name] = record
     transaction, count, rc = struct.unpack_from('>HBxi', payload, 52)
@@ -102,18 +105,23 @@ def decode_capture(raw, *, sample_rate_hz=2_500_000, symbol_rate=100_000,
     """Blind PHY decode; no expected telemetry, UART state, or TX fixture input."""
     report = phy.decode(raw, sample_rate_hz=sample_rate_hz, symbol_rate=symbol_rate,
                         expected_offset_hz=expected_offset_hz, search_hz=search_hz)
-    snapshots = []
+    snapshots, accepted, rejected = [], [], []
     for frame in report['frames']:
         if not frame.get('crc_valid'):
             continue
         try:
-            snapshot = parse_payload(bytes.fromhex(frame['payload_hex']))
-        except (ValueError, KeyError):
+            data = bytes.fromhex(frame['payload_hex'])
+            snapshot = parse_frame(b'\xaa\xaa'+bytes([len(data)])+data+frame['crc16'].to_bytes(2, 'big'))
+        except (ValueError, KeyError, OverflowError) as error:
+            rejected.append(dict(frame, rejection_reason=str(error)))
             continue
+        accepted.append(frame)
         snapshot.update(first_symbol_sample=frame['first_symbol_sample'],
                         carrier_offset_hz=frame['carrier_offset_hz'], crc_valid=True)
         snapshots.append(snapshot)
     report.update(format=report_format(snapshots), ccsds=False, telemetry=snapshots,
+                  frames=accepted, valid_frame_count=len(accepted),
+                  rejected_frames=rejected, rejected_frame_count=len(rejected),
                   valid_telemetry_count=len(snapshots),
                   repetition_note='Repeated identical snapshots are not independent events')
     return report
@@ -149,7 +157,9 @@ def decode_capture_windows(raw, *, sample_rate_hz=2_500_000, symbol_rate=100_000
                             valid_telemetry_count=report['valid_telemetry_count'],
                             carrier_offset_hz=report['carrier_offset_hz'],
                             rms_codes=report['rms_codes']))
-        for frame in report['frames']:
+        # Keep rejected PHY candidates for diagnostics too; an accidental CRC
+        # match with no valid ATM schema must not veto genuine telemetry frames.
+        for frame in report['frames'] + report['rejected_frames']:
             frame = dict(frame)
             frame['first_symbol_sample'] += start
             frame['sample_end_exclusive'] += start
@@ -159,13 +169,15 @@ def decode_capture_windows(raw, *, sample_rate_hz=2_500_000, symbol_rate=100_000
                        for old in frames):
                 frames.append(frame)
     frames.sort(key=lambda f: f['first_symbol_sample'])
-    snapshots, unique = [], set()
+    snapshots, unique, accepted, rejected = [], set(), [], []
     for frame in frames:
         try:
             payload = bytes.fromhex(frame['payload_hex'])
             snapshot = parse_frame(b'\xaa\xaa'+bytes([len(payload)])+payload+frame['crc16'].to_bytes(2, 'big'))
-        except (ValueError, KeyError, OverflowError):
+        except (ValueError, KeyError, OverflowError) as error:
+            rejected.append(dict(frame, rejection_reason=str(error)))
             continue
+        accepted.append(frame)
         snapshot.update(first_symbol_sample=frame['first_symbol_sample'],
                         carrier_offset_hz=frame['carrier_offset_hz'], crc_valid=True)
         snapshots.append(snapshot)
@@ -175,7 +187,8 @@ def decode_capture_windows(raw, *, sample_rate_hz=2_500_000, symbol_rate=100_000
                 symbol_rate=symbol_rate, expected_offset_hz=expected_offset_hz,
                 clip_components=int(np.count_nonzero((iq == -2048) | (iq == 2047))),
                 rms_codes=float(np.sqrt(np.mean(np.sum(iq.astype(float)**2, axis=1)))),
-                frames=frames, telemetry=snapshots, valid_frame_count=len(frames),
+                frames=accepted, telemetry=snapshots, valid_frame_count=len(accepted),
+                rejected_frames=rejected, rejected_frame_count=len(rejected),
                 valid_telemetry_count=len(snapshots), unique_snapshot_count=len(unique),
                 windows=windows, ber=None,
                 repetition_note='Overlapping detections merged; identical snapshots are not independent events',

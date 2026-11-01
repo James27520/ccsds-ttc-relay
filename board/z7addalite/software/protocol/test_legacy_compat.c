@@ -15,6 +15,11 @@ int main(void)
         return 1;
     bytes[24] ^= 1u;
     if (relay_parse_rf_packet(bytes, sizeof(bytes), &parsed) != -3) return 2;
-    puts("PASS unchanged relay_rf_packet.h accepts exact generated 26B RF_SET and rejects CRC mutation");
+    command.version=0x81u;command.rx_mhz=12345u;command.tx_mhz=23456u;
+    if (ap_rf_packet(&command, 0x124u, 0u, 89u, bytes) != AP_OK ||
+        relay_parse_rf_packet(bytes, sizeof(bytes), &parsed) != 0 ||
+        parsed.seq != 0x124u || parsed.rx_hz != UINT64_C(1991845000) ||
+        parsed.tx_hz != UINT64_C(2192956000))return 3;
+    puts("PASS unchanged relay_rf_packet.h accepts legacy and exact kHz 26B RF_SET, rejects CRC mutation");
     return 0;
 }

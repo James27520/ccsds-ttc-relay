@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-31",
+  "scope": "unchanged six SMA links; production terminal FIFO and UI connection follow-up",
+  "overall_hardware_acceptance": false,
+  "software": {
+    "full_suite": {
+      "passed": 380,
+      "log": "D:/RelayTools/work/terminal_finish_20261031/unit_tests_release.txt",
+      "elapsed_seconds": 86.803,
+      "scope": "final source after queue, control close race, visible connection errors and bootloader diagnostics"
+    },
+    "after_bootloader_message_change": {
+      "passed": 63,
+      "overlaps_full_suite": true,
+      "new_cases": 2,
+      "log": "D:\\RelayTools\\work\\terminal_finish_20261031\\startup_error_tests.txt"
+    }
+  },
+  "ui_connection": {
+    "terminal1": {
+      "port": "COM17",
+      "clicked_connect": true,
+      "auto_rx_observed": true
+    },
+    "terminal2": {
+      "port": "COM18",
+      "clicked_connect": true,
+      "auto_rx_observed": true
+    },
+    "screenshots": "D:\\RelayTools\\work\\terminal_finish_20261031\\ui_connection",
+    "note": "These captures precede later hardware failures; not current ready-state evidence.",
+    "later_bootloader_error_log": "C:/Users/Lu/CCSDSGroundStation/sessions/20261031_171422_terminal_sender_1c3404c9/events.jsonl",
+    "startup_error_visible_verified": true,
+    "startup_error_screenshot": "D:/RelayTools/work/terminal_finish_20261031/ui_connection/terminal1_startup_error.png"
+  },
+  "queue_policy": {
+    "capacity": 8,
+    "fifo": true,
+    "minimum_tx_dwell_seconds": 2,
+    "success_release": "matched enable/status RF reply, remote forwarding active with valid lease, local RX restored",
+    "failure_cancel_disconnect": "retain retry; explicit retry only",
+    "old_sent_replay": false,
+    "sender_status": "sent means verified local TX, not peer delivery",
+    "peer_ack_protocol": false
+  },
+  "real_rf": {
+    "frequency_mhz": [
+      1999.5,
+      2189.5
+    ],
+    "burst": {
+      "combined_script_passed": false,
+      "reason": "terminal2 USB disconnected during third queued send",
+      "messages": [
+        {
+          "role": "receiver",
+          "text": "r burst0 0 1793437226",
+          "id": "e2b6d95f:0000",
+          "peer_received": true
+        },
+        {
+          "role": "sender",
+          "text": "s burst0 0 1793437226",
+          "id": "3cc7f9f6:0000",
+          "peer_received": true
+        },
+        {
+          "role": "receiver",
+          "text": "r burst1 0 1793437226",
+          "id": "e2b6d95f:0001",
+          "peer_received": true
+        },
+        {
+          "role": "sender",
+          "text": "s burst1 0 1793437226",
+          "id": "3cc7f9f6:0001",
+          "peer_received": true
+        }
+      ],
+      "unique_peer_received": 4
+    },
+    "tc_queue_attempt": {
+      "accepted_during_tc": 2,
+      "matched_enable_reply_frames": 7,
+      "automatic_release_verified": false,
+      "abort": "terminal2 unavailable, then terminal1 cleanup failed and bootloader observed",
+      "pending_retained_as_retry": 2
+    },
+    "controlled_decoder_fault_and_manual_recovery": "not reached; software tests only"
+  },
+  "blockers": [
+    {
+      "board": "terminal2",
+      "observed": "intermittent USB disappearance / ClearCommError; no cable intervention per user request"
+    },
+    {
+      "board": "terminal1",
+      "observed": "Linux session lost; Pluto U-Boot prompt; boot from existing SD and one isolated reload/iminfo both report Bad Data CRC for kernel",
+      "cause": "not established",
+      "kernel_name": "Linux-5.15.0-20952-ge14e351533f9",
+      "local_vendor_image": "CRC valid but different size/version; not substituted"
+    }
+  ],
+  "final_state": {
+    "relay": "mode2, both TX attenuation 89dB, RX gain0, clip303 unchanged; independent readback",
+    "adda": "service/network off, armed0, pending0, DAC finished",
+    "terminals": "complete final readback unavailable; terminal1 in bootloader, terminal2 USB unavailable",
+    "all_four_safe_audit_passed": false,
+    "audit": "D:/RelayTools/work/six_line_20261031/finish_final_state.json"
+  },
+  "no_flash_or_sd_write": true,
+  "evidence_root": "D:\\RelayTools\\work\\terminal_finish_20261031",
+  "remaining": [
+    "3-message-per-direction batch without transport failure",
+    "successful TC queue release and peer CRC receipts",
+    "cancel retained queue, explicit retry, peer CRC receipts",
+    "controlled decoder termination, reconnect, explicit retry, peer CRC receipts"
+  ],
+  "source_sha256_lf": {
+    "terminal_backend.py": "84286bd19b3e241685a806975d85be5119ffce7617593f008673ac945893dd42",
+    "terminal_ui.py": "52b3f429d2ace56cdd4f13ada4e87ee0b1495d6a9dcf4259496da0a867522b53",
+    "ui_v2.py": "1be16a25885b89af38a333f487efa443edf5dbe1562c713d5417354959e4f86b",
+    "transport.py": "5d87b9229b97505ceb3ea888eb460e6b1cd47686fa4c388e6cf8137dbd3f6d3b"
+  }
+}

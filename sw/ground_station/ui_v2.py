@@ -2,7 +2,7 @@
 
 Run: python -m sw.ground_station.ui_v2 --all
 Add --online-control to enable the control window's finite hardware transactions.
-Add --online-business for local text TX/RX. PC1 roles require an explicit handoff.
+Add --online-business for local text TX/RX. Control shares terminal 1's connection.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from tkinter import filedialog, ttk
 
 from .ui_v2_model import (command_request, device_choices, format_mhz, frequency_plan,
                          load_device_aliases, load_historical_transaction, simulated_reply, text_bytes,
-                         business_frequency_plan,
+                         business_frequency_plan, online_frequency_plan, request_lo_hz, request_tolerance_hz,
                          CONTROL_OPERATIONS, relay_snapshot_view)
 from .rf_profiles import DEMO_TX_CENTERS, DEMO_RX_CENTERS, DEMO_HINT, is_demo_request
 
@@ -33,9 +33,9 @@ PALE = '#EAF5F3'
 BLUE = '#2D64B3'
 AMBER = '#8E671D'
 ROLES = {
-    'sender': ('电脑1 · 文本发送', '文本发送', '把一段新文本送往电脑2。', '01  /  业务发送'),
-    'receiver': ('电脑2 · 文本接收', '文本接收', '查看经过外部硬件链路实际收到的内容。', '02  /  业务接收'),
-    'control': ('电脑1 · 改频控制', '改频控制', '下达转发频率指令，核对执行回报。', '03  /  卫星测控'),
+    'sender': ('终端1 · 双向通信', '终端1', '与终端2交换文本。', '终端1  ⇄  终端2'),
+    'receiver': ('终端2 · 双向通信', '终端2', '与终端1交换文本。', '终端2  ⇄  终端1'),
+    'control': ('终端1 · 转发板测控', '转发板测控', '设置远端转发板，核对射频回报。', '远端设备  /  LDSDR'),
 }
 
 
@@ -65,15 +65,56 @@ def card(parent, title=None, subtitle=None, padding=18):
     return body
 
 
-class ReviewSession:
-    """Shares only local device selection across the two PC1 windows.
+class TerminalFacade:
+    """One page's subscription to a session-owned terminal worker."""
+    def __init__(self, session, key, role, emit):
+        self.session, self.key, self.role, self.emit = session, key, role, emit
+        self.closed = False
+        self.tc_pending = None
 
-    Received text never comes from another window. Enabled windows own separate
-    backends; PC1 sender/control share selection and require explicit handoff.
-    """
+    def observe(self, event, serial):
+        pending = self.tc_pending
+        if self.role != 'control' or pending is None or serial <= pending['after']:
+            return
+        if event.get('channel') == 'control':
+            if (event.get('type') == 'result' and event.get('requested') == pending['requested']
+                    or event.get('type') == 'status' and event.get('state') == 'error'):
+                pending['outcome'] = True
+        if event.get('type') == 'terminal_state':
+            if event.get('tc_active'):
+                pending['active'] = True
+            elif pending['active'] or pending['outcome'] or not event.get('connected'):
+                self.tc_pending = None
+
+    def submit(self, action, **kwargs):
+        if self.closed:
+            return
+        backend = self.session._terminals[self.key]['backend']
+        if action == 'close':
+            self.closed = True
+            self.session._detach_terminal(self)
+        elif self.role == 'control':
+            if action == 'send':
+                after = self.session._terminal_event_marker()
+                result = backend.submit('telecontrol', **kwargs)
+                self.tc_pending = dict(after=after, requested=dict(kwargs.get('requested', {})),
+                                       active=False, outcome=False)
+                return result
+            elif action in ('stop', 'cancel_tc', 'disconnect'):
+                # A control page can cancel its transaction, never disconnect T1.
+                backend.submit('cancel_tc')
+        else:
+            return backend.submit(action, **kwargs)
+
+    def close(self):
+        self.submit('close')
+
+
+class ReviewSession:
+    """Owns one local terminal worker per board and page subscriptions."""
     def __init__(self, root, port_provider=None, aliases=None, *, online_control=False,
                  controller_factory=None, log_dir=None, online_business=False,
-                 business_controller_factory=None):
+                 business_controller_factory=None, terminal_controller_factory=None):
         self.root = root
         self.source_selection = tk.StringVar(root)
         self.receiver_selection = tk.StringVar(root)
@@ -87,11 +128,134 @@ class ReviewSession:
         self.sender_plan_origin = '本地计划'
         self.online_control = online_control
         self.online_business = online_business
+        self.terminal_controller_factory = terminal_controller_factory
+        # Only explicit legacy factory injection keeps the old controller/UI contract.
+        # Normal desktop launches and new terminal factories always share workers.
+        self.unified_terminal = (terminal_controller_factory is not None or
+                                 (controller_factory is None and business_controller_factory is None))
+        self._terminals = {}
+        self._terminal_events = queue.Queue()
+        self._terminal_event_lock = threading.Lock()
+        self._terminal_event_serial = 0
+        self._terminal_poll_id = None
         self.business_controller_factory = business_controller_factory
         self.controller_factory, self.log_dir = controller_factory, log_dir
         self.port_provider = port_provider or self._ports
         self._style()
         self.refresh_devices()
+
+    def _terminal_event_marker(self):
+        with self._terminal_event_lock:
+            return self._terminal_event_serial
+
+    def _enqueue_terminal_event(self, key, event):
+        with self._terminal_event_lock:
+            self._terminal_event_serial += 1
+            self._terminal_events.put((key, self._terminal_event_serial, event))
+
+    def terminal_controller(self, role, emit):
+        if role not in ('sender', 'receiver', 'control'):
+            raise ValueError('unknown terminal role')
+        if not self.unified_terminal:
+            if role == 'control':
+                return self.controller_factory(emit, log_dir=self.log_dir)
+            if self.business_controller_factory is not None:
+                return self.business_controller_factory(role, emit, log_dir=self.log_dir)
+        key = 'sender' if role == 'control' else role
+        entry = self._terminals.get(key)
+        if entry is None:
+            factory = self.terminal_controller_factory
+            if factory is None:
+                from .terminal_backend import TerminalController
+                factory = TerminalController
+            entry = dict(backend=None, owners=[], waiting=[], state=None, identity=None, settings=None, control_identity=None, tx_queue={})
+            self._terminals[key] = entry
+            try:
+                entry['backend'] = factory(key,
+                    lambda event: self._enqueue_terminal_event(key, event), log_dir=self.log_dir)
+            except Exception:
+                self._terminals.pop(key, None)
+                raise
+        facade = TerminalFacade(self, key, role, emit)
+        entry['owners'].append(facade)
+        if role == 'control' and entry['control_identity'] is not None:
+            emit(entry['control_identity'])
+        elif entry['identity'] is not None and role != 'control':
+            emit(entry['identity'])
+        if entry['settings'] is not None and role != 'control':
+            emit(entry['settings'])
+        if role != 'control':
+            for event in entry['tx_queue'].values():
+                emit(dict(event))
+        if entry['state'] is not None:
+            emit(entry['state'])
+        if self._terminal_poll_id is None:
+            self._terminal_poll_id = self.root.after(30, self._drain_terminal_events)
+        return facade
+
+    def _detach_terminal(self, facade):
+        # Consume already-produced completion events before deciding whether a
+        # close still owns a transaction. This also avoids cancelling business
+        # TX merely because the periodic Tk poll has not seen TC completion yet.
+        if self._terminal_poll_id is not None:
+            self.root.after_cancel(self._terminal_poll_id)
+            self._terminal_poll_id = None
+        self._drain_terminal_events()
+        entry = self._terminals.get(facade.key)
+        if entry is None:
+            facade.emit(dict(type='closed'))
+            return
+        entry['owners'].remove(facade)
+        if facade.role == 'control' and (facade.tc_pending is not None or
+                                         (entry['state'] or {}).get('tc_active')):
+            entry['backend'].submit('cancel_tc')
+        if entry['owners']:
+            facade.emit(dict(type='closed'))
+        else:
+            entry['waiting'].append(facade)
+            entry['backend'].submit('close')
+
+    def _drain_terminal_events(self):
+        # Fan out display events on Tk's thread. Each terminal owns its RF plan;
+        # a remote result never silently submits a local retune.
+        self._terminal_poll_id = None
+        while True:
+            try:
+                key, serial, event = self._terminal_events.get_nowait()
+            except queue.Empty:
+                break
+            entry = self._terminals.get(key)
+            if entry is None:
+                continue
+            kind = event.get('type')
+            if kind == 'tx_queue' and isinstance(event.get('request_id'), str):
+                entry['tx_queue'][event['request_id']] = dict(event)
+                if len(entry['tx_queue']) > 500:
+                    oldest_sent = next((request_id for request_id, item in entry['tx_queue'].items()
+                                        if item.get('state') == 'sent'), None)
+                    if oldest_sent is not None:
+                        entry['tx_queue'].pop(oldest_sent)
+            if kind == 'terminal_state':
+                entry['state'] = dict(event)
+                if not event.get('connected'):
+                    entry['identity'] = entry['settings'] = entry['control_identity'] = None
+            elif kind == 'connected' and event.get('channel') == 'control':
+                entry['control_identity'] = dict(event)
+            elif kind == 'settings' and event.get('channel') != 'control':
+                entry['settings'] = dict(event)
+            elif kind in ('identity', 'connected') and event.get('channel') != 'control':
+                entry['identity'] = dict(event)
+            closed = kind == 'closed' or (kind == 'status' and event.get('state') == 'closed')
+            subscribers = list(entry['owners']) + (list(entry['waiting']) if closed else [])
+            for facade in subscribers:
+                facade.observe(event, serial)
+                control_event = event.get('channel') == 'control'
+                if closed or kind == 'terminal_state' or (control_event == (facade.role == 'control')):
+                    facade.emit(dict(event))
+            if closed:
+                self._terminals.pop(key, None)
+        if self.root is not None and self._terminals:
+            self._terminal_poll_id = self.root.after(30, self._drain_terminal_events)
 
     @staticmethod
     def _ports():
@@ -145,7 +309,14 @@ class ReviewSession:
 
     def show(self, role):
         if role not in self.windows:
-            self.windows[role] = StationReview(self, role)
+            if role == 'control' or not self.unified_terminal:
+                self.windows[role] = StationReview(self, role)
+            else:
+                from .terminal_ui import TerminalReview
+                self.windows[role] = TerminalReview(self, role)
+        if (role == 'control' and self.online_control and self.unified_terminal
+                and 'sender' not in self.windows):
+            self.show('sender')
         window = self.windows[role].window
         window.deiconify()
         window.lift()
@@ -184,6 +355,9 @@ class ReviewSession:
                 setattr(page, name, None)
         value = None
         if not self.windows and not keep_root:
+            if self._terminal_poll_id is not None:
+                self.root.after_cancel(self._terminal_poll_id)
+                self._terminal_poll_id = None
             self.root.destroy()
             self.source_selection = self.receiver_selection = self.root = None
 
@@ -217,6 +391,8 @@ class ReviewSession:
                 page.refresh_button.configure(state='disabled' if occupied else 'normal')
 
     def other_owner(self, role):
+        if self.unified_terminal:
+            return None
         if role not in ('sender', 'control'):
             return None
         other = 'control' if role == 'sender' else 'sender'
@@ -225,11 +401,13 @@ class ReviewSession:
 
     def remember_rf_frequency_plan(self, request):
         """Current RF success proposes a local TX plan; it never submits hardware work."""
-        plan = business_frequency_plan('sender', request['rx_mhz']+.5)
+        plan = business_frequency_plan('sender', format_mhz(request_lo_hz(request, 'rx')+500000))
         self.sender_center_plan = format_mhz(plan['center_hz'])
         self.sender_plan_origin = '真实 RF 回报'
         page = self.windows.get('sender')
-        if page and not page.closed and not page.closing and page.direction == 'forward':
+        if page and hasattr(page, 'remember_transmit_plan'):
+            page.remember_transmit_plan(self.sender_center_plan)
+        elif page and not page.closed and not page.closing and page.direction == 'forward':
             page.setting_rf_plan = True
             try:
                 page.business_plan_origin = '真实 RF 回报'
@@ -247,7 +425,8 @@ class StationReview:
                           if self.direction == 'reverse' else role)
         self.replacement_direction = None
         self.online = session.online_control and role == 'control'
-        self.business_online = session.online_business and role in ('sender', 'receiver')
+        self.business_online = (session.online_business and role in ('sender', 'receiver') or
+                                session.unified_terminal and session.online_control and role == 'sender')
         self.live = self.online or self.business_online
         self.local_claimed = False
         self._blocked_by = None
@@ -279,8 +458,8 @@ class StationReview:
         self._snapshot_prefix = ''
         self._poll_id = None
         self.window = tk.Toplevel(session.root)
-        self.window.title(ROLES[role][0])
-        if self.direction == 'reverse':
+        self.window.title(ROLES[role][0] if self.live else ROLES[role][0]+' [离线预览]')
+        if self.direction == 'reverse' and not getattr(self, 'combined_terminal', False):
             self.window.title('电脑1 · 接收回信' if role == 'sender' else '电脑2 · 文本回发')
         offset = {'sender': 0, 'receiver': 1, 'control': 2}[role]
         self.window.geometry(f'1160x860+{40+offset*70}+{35+offset*55}')
@@ -301,7 +480,8 @@ class StationReview:
             self._start_business()
 
     def _build(self):
-        main = tk.Frame(self.window, bg=BG, padx=26, pady=20)
+        combined = getattr(self, 'combined_terminal', False)
+        main = tk.Frame(self.window, bg=BG, padx=22 if combined else 26, pady=12 if combined else 20)
         main.pack(fill='both', expand=True)
         mast = tk.Frame(main, bg=BG)
         mast.pack(fill='x')
@@ -309,28 +489,31 @@ class StationReview:
         badge = label(mast, ' 在线测控 ' if self.online else ' 在线业务 ' if self.business_online else ' 界面审阅 ',
                       color=TEAL if self.live else AMBER, size=9, bg=PALE if self.live else '#FBF2DE')
         badge.pack(side='right', padx=(15, 0))
-        label(mast, '02 → 01  /  业务回信' if self.direction == 'reverse' else ROLES[self.role][3], color=TEAL, bold=True, bg=BG).pack(side='right')
+        label(mast, ROLES[self.role][3], color=TEAL, bold=True, bg=BG).pack(side='right')
 
         header = tk.Frame(main, bg=BG)
-        header.pack(fill='x', pady=(15, 18))
+        header.pack(fill='x', pady=(8, 10) if combined else (15, 18))
         heading = tk.Frame(header, bg=BG)
         heading.pack(side='left')
-        title = ('接收回信' if self.role == 'sender' else '文本回发') if self.direction == 'reverse' else ROLES[self.role][1]
+        title = ROLES[self.role][1]
         label(heading, title, size=25, bold=True, bg=BG).pack(anchor='w')
         if self.role in ('sender', 'receiver'):
             switch_text = ('发送文本' if self.direction == 'reverse' else '接收回信') if self.role == 'sender' else (
                           '接收文本' if self.direction == 'reverse' else '回发文本')
             self.direction_label = switch_text+'  ⇄'
             self.direction_button = button(header, self.direction_label, self.switch_business_direction)
-            self.direction_button.pack(side='right', padx=(10, 0), pady=8)
+            if not getattr(self, 'combined_terminal', False):
+                self.direction_button.pack(side='right', padx=(10, 0), pady=8)
         if self.role != 'receiver':
             other = 'control' if self.role == 'sender' else 'sender'
-            button(header, '改频控制  →' if other == 'control' else '←  文本发送',
+            button(header, '测控  →' if other == 'control' else '←  终端1通信',
                    lambda: self.session.show(other)).pack(side='right', pady=8)
 
-        connection = card(main, padding=12)
-        connection.edge.pack(fill='x', pady=(0, 14))
-        label(connection, '本地板卡' if self.role != 'control' else '发送板', bold=True).pack(side='left', padx=(2, 15))
+        connection_card = card(main, padding=12)
+        connection_card.edge.pack(fill='x', pady=(0, 14))
+        connection = tk.Frame(connection_card, bg=PAPER)
+        connection.pack(fill='x')
+        label(connection, '本地板卡' if self.role != 'control' else '终端1板卡', bold=True).pack(side='left', padx=(2, 15))
         self.port_combo = ttk.Combobox(connection, textvariable=self.selection,
             values=tuple(self.session.devices), state='readonly', style='V2.TCombobox', width=32)
         self.port_combo.pack(side='left')
@@ -338,12 +521,26 @@ class StationReview:
         self.refresh_button.pack(side='left', padx=8)
         self.connect_button = button(connection, '连接', self.connect_business if self.business_online else self.connect_online, disabled=True)
         self.connect_button.pack(side='left')
+        if not self.live:
+            label(connection, '离线预览 · 使用 start_station_v2.bat 启动在线连接',
+                  color=AMBER, size=9).pack(side='left', padx=10)
+        if self.role == 'control' and self.session.unified_terminal:
+            self.port_combo.pack_forget()
+            self.refresh_button.pack_forget()
+            self.connect_button.pack_forget()
+            label(connection, '继承终端1通信连接', color=MUTED, size=9).pack(side='left')
         self.connection_status = tk.StringVar(self.window, '●  未连接')
         if self.session.online_control and self.role == 'sender' and not self.business_online:
             self.connection_status.set('●  测控模式 · 文本禁发')
         label(connection, variable=self.connection_status, color=MUTED, size=9).pack(side='left', padx=15)
         self.details_button = button(connection, '设备与参数  ▾', self.toggle_details)
         self.details_button.pack(side='right')
+        if combined:
+            self.connection_issue = tk.StringVar(self.window, '')
+            self.connection_issue_label = label(connection_card, variable=self.connection_issue,
+                size=9, color='#B64242', wrap=1000)
+            connection_card.bind('<Configure>', lambda event:
+                self.connection_issue_label.configure(wraplength=max(200, event.width-24)))
         self.details = card(main, padding=12)
         self.device_detail = tk.StringVar(self.window)
         detail_label = label(self.details, variable=self.device_detail, color=MUTED, size=9, wrap=1000)
@@ -382,14 +579,15 @@ class StationReview:
             label(self.details, ('回信使用 RX2A；' if self.direction == 'reverse' else '')+'本地接收本振=中心+0.25 MHz，增益30 dB；频谱仅来自本地接收采样。',
                   color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
         else:
-            self.mapping = tk.StringVar(self.window, '业务中心减去 0.5 MHz 为协议本振；当前报文的本振精度为 1 MHz。')
+            self.mapping = tk.StringVar(self.window, '业务中心减去 0.5 MHz 为转发本振；当前设置步进为 1 kHz。')
             label(self.details, variable=self.mapping, color=MUTED, size=9).pack(anchor='w', pady=(8, 0))
-            label(self.details, '遥控上行 100.5 MHz · 状态下行 90.5 MHz；与文本发送共用本地 SDR，按分时方案接入。',
+            label(self.details, '遥控上行 100.5 MHz · 状态下行 90.5 MHz；继承终端1连接，测控结束后自动恢复业务接收。',
                   color=MUTED, size=9).pack(anchor='w', pady=(6, 0))
 
     def update_details(self):
         device = self.session.devices.get(self.selection.get())
-        if self.live and self.connecting_port and (not device or device['port'] != self.connecting_port):
+        if (self.live and not (self.role == 'control' and self.session.unified_terminal)
+                and self.connecting_port and (not device or device['port'] != self.connecting_port)):
             if not self.cancel_pending and not self.closing:
                 self.stop_business('disconnect') if self.business_online else self.cancel_online('disconnect')
         if self.online_identity is not None and device and device['port'] == self.online_identity.get('port'):
@@ -436,7 +634,7 @@ class StationReview:
         if blocked:
             self._blocked_by = blocked
             self.connection_status.set('●  改频控制占用')
-            self.business_note.set('发送板由改频控制占用，请先在该窗口断开；切换窗口不会换线。')
+            self.business_note.set('终端1板卡由测控窗口占用，请先在该窗口断开；切换窗口不会换线。')
         elif self._blocked_by:
             self._blocked_by = None
             self.connection_status.set('●  未连接')
@@ -841,13 +1039,16 @@ class StationReview:
         self.preview_button.configure(state='disabled')
         self.preview_combo.configure(state='disabled')
         self.record_button.configure(state='disabled')
-        self.request_note.set(DEMO_HINT+'；先连接本地发送板。')
+        self.request_note.set('在终端1通信页面连接板卡，再生成并发送指令。' if self.session.unified_terminal else '先连接终端1板卡，再生成并发送指令。')
         try:
-            factory = self.session.controller_factory
-            if factory is None:
-                from .tc_live import TelecontrolController
-                factory = TelecontrolController
-            self.controller = factory(self.events.put, log_dir=self.session.log_dir)
+            if self.session.unified_terminal:
+                self.controller = self.session.terminal_controller('control', self.events.put)
+            else:
+                factory = self.session.controller_factory
+                if factory is None:
+                    from .tc_live import TelecontrolController
+                    factory = TelecontrolController
+                self.controller = factory(self.events.put, log_dir=self.session.log_dir)
         except Exception as error:
             self.online_state = 'error'
             self.reply_title.set('在线控制启动失败')
@@ -863,12 +1064,12 @@ class StationReview:
         blocked = self.session.other_owner(self.role)
         if blocked:
             self._blocked_by = blocked
-            self.connection_status.set('●  文本发送占用')
-            self.request_note.set('发送板由文本发送占用，请先在该窗口断开；切换窗口不会换线。')
+            self.connection_status.set('●  终端1通信占用')
+            self.request_note.set('终端1板卡由通信窗口占用，请先在该窗口断开；切换窗口不会换线。')
         elif self._blocked_by:
             self._blocked_by = None
             self.connection_status.set('●  未连接')
-            self.request_note.set('占用已释放，请连接本地发送板。')
+            self.request_note.set('占用已释放，请连接终端1板卡。')
         idle = not self.closing and not self.cancel_pending and self.active_request is None
         local_ready = self.online_state == 'connected' and self.online_identity is not None
         disconnected = self.online_state in ('disconnected', 'error')
@@ -880,12 +1081,16 @@ class StationReview:
                                            '断开连接' if not disconnected else '连接'),
                                       state='normal' if not self.closing and not self.cancel_pending and not blocked and self.controller is not None
                                       and (bool(selected) or not disconnected) else 'disabled')
+        if self.session.unified_terminal:
+            self.port_combo.configure(state='disabled')
+            self.refresh_button.configure(state='disabled')
+            self.connect_button.configure(state='disabled')
         sendable = bool(idle and local_ready and self.draft and self.draft.get('body_hex') and self.draft.get('request')
                         and self.draft['request']['air_seq'] == self.session.next_sequence < 256)
         self.command_send_button.configure(state='normal' if sendable else 'disabled')
         self.generate_button.configure(state='normal' if idle else 'disabled')
         for entry in self.frequency_entries:
-            entry.configure(state='normal' if idle else 'disabled')
+            entry.configure(state='normal' if idle and CONTROL_OPERATIONS[self.operation.get()] in ('frequency', 'enable') else 'disabled')
         self.operation_combo.configure(state='readonly' if idle else 'disabled')
         self.stop_button.configure(state='normal' if not self.closing and not self.cancel_pending and
                                    (self.accept_connected or self.active_request is not None) else 'disabled')
@@ -899,6 +1104,11 @@ class StationReview:
             if action == 'close':
                 self.closing = False
                 self.reply_title.set('关闭提交失败 · 请重试关闭')
+            elif self.session.unified_terminal and action == 'send':
+                # A synchronous queue rejection accepted no TC command and must
+                # neither create pending ownership nor stop unrelated TX.
+                self.cancel_pending = False
+                self.request_note.set('测控未提交，请检查原因后重新生成指令；终端1连接保留。')
             else:
                 # A rejected/uncertain queue submission is not proof that hardware is idle.
                 self.cancel_pending = True
@@ -913,6 +1123,9 @@ class StationReview:
             return False
 
     def connect_online(self):
+        if self.session.unified_terminal:
+            self.session.show('sender')
+            return
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
             return
         if self.session.other_owner(self.role):
@@ -966,8 +1179,10 @@ class StationReview:
             return
         plan = self.active_plan
         operation = self.active_request.get('operation', 'frequency') if self.active_request else 'frequency'
-        self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'),
-            f'{self._operation_name(operation)} · {format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}', status))
+        target = self._operation_name(operation)
+        if operation in ('frequency', 'enable'):
+            target += f' · {format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}'
+        self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'), target, status))
 
     @staticmethod
     def _operation_name(operation):
@@ -1008,7 +1223,7 @@ class StationReview:
             valid = relay.get('valid') is True
             if operation == 'enable':
                 valid = valid and (isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int and
-                    abs(ack[axis+'_hz']-request[axis+'_mhz']*1_000_000) <= 10_000 for axis in ('rx', 'tx')) and
+                    abs(ack[axis+'_hz']-request_lo_hz(request, axis)) <= request_tolerance_hz(request) for axis in ('rx', 'tx')) and
                     relay.get('mode') == 1 and relay.get('rx_gain_db') == [30, 30] and
                     relay.get('tx_attenuation_mdb') == [50000, 50000] and relay.get('lease_active') is True and
                     type(relay.get('remaining_ms')) is int and relay['remaining_ms'] > 0 and not relay.get('mute_fault'))
@@ -1030,9 +1245,13 @@ class StationReview:
         self._snapshot_prefix = (f'{count} 个 CRC 正确帧 · 本次操作关联通过 · 远端 rc {rc}\n'
             + ('请求被拒绝，未确认执行成功。\n' if rc else '')
             + f'接收 IQ：{Path(self.last_evidence["iq_path"]).name}\n报告：{Path(self.last_evidence["report_path"]).name}')
+        if rc == -2:
+            self._snapshot_prefix += '\n指令序号早于转发板已记录的序号；请恢复板间会话后重试。'
+        elif rc == -5:
+            self._snapshot_prefix += '\n当前本振与开启请求不符；请先执行设置频率。'
         ack = event.get('ack', {})
         if relay.get('valid') is True and isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int for axis in ('rx', 'tx')):
-            self._snapshot_prefix += f'\n实际本振 RX {ack["rx_hz"]/1e6:g} / TX {ack["tx_hz"]/1e6:g} MHz'
+            self._snapshot_prefix += f'\n实际本振 RX {ack["rx_hz"]/1e6:.6f} / TX {ack["tx_hz"]/1e6:.6f} MHz'
         self.relay_snapshot = dict(relay)
         self._snapshot_wall_anchor = time.time()
         self._snapshot_mono_anchor = time.monotonic()
@@ -1047,6 +1266,18 @@ class StationReview:
         self.update_details()
 
     def cancel_online(self, action='stop'):
+        if self.session.unified_terminal:
+            if not self.online or self.closing or self.controller is None:
+                return
+            self.cancel_pending = True
+            self.cancel_had_request = self.active_request is not None
+            self.active_request = self.active_plan = None
+            self.draft = None
+            self.reply_title.set('正在取消测控')
+            self.reply_body.set('等待测控停止，完成后自动恢复业务接收；本次执行结果未知。')
+            self._submit_online('stop')
+            self.session.update_online_controls()
+            return
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
             return
         self.cancel_pending = True
@@ -1087,6 +1318,30 @@ class StationReview:
         awaiting_cancel = self.cancel_pending and category == 'cancelled'
         timeout = category == 'timeout' or (category is None and ('超时' in message or 'timeout' in message.lower()))
         cancelled = category == 'cancelled'
+        if self.session.unified_terminal:
+            # A failed transaction does not prove that the shared terminal lost
+            # its connection. Only terminal_state changes that connection fact.
+            self._reset_reply()
+            self.reply_title.set('等待超时 · 结果未知' if timeout else
+                                 '测控已取消 · 结果未知' if cancelled else '测控未确认 · 结果未知')
+            self.reply_body.set(str(message))
+            self.reply_heading.configure(fg=AMBER)
+            self.request_note.set('本次测控结果未知；等待业务接收恢复后，可重新生成查询指令核对远端状态。')
+            self._record_online('在线 · 等待超时' if timeout else
+                                '在线 · 已取消' if cancelled else '在线 · 未确认')
+            self.active_request = self.active_plan = None
+            self.draft = None
+            self.accept_connected = False
+            self.cancel_pending = self.cancel_pending or cancelled
+            if self.online_identity is not None:
+                terminal = self.session._terminals.get('sender', {})
+                tc_active = bool((terminal.get('state') or {}).get('tc_active'))
+                self.online_state = 'paused' if self.cancel_pending or tc_active else 'connected'
+                self.connection_status.set('●  等待测控结束' if self.online_state == 'paused' else
+                                           '●  继承终端1连接 · 可测控')
+            self.update_details()
+            self.session.update_online_controls()
+            return
         self._reset_reply()
         self.reply_title.set('等待超时 · 结果未知' if timeout else '操作已取消 · 结果未知' if cancelled else '执行失败')
         self.reply_body.set(str(message))
@@ -1124,7 +1379,48 @@ class StationReview:
             return
         if self.closing:
             return
+        if self.session.unified_terminal and kind == 'terminal_state':
+            connected = bool(event.get('connected'))
+            self.local_claimed = connected
+            self.accept_connected = False
+            if connected:
+                source = event.get('source') or self.session.devices.get(self.selection.get(), {})
+                self.online_identity = dict(source)
+                self.connecting_port = source.get('port')
+                if not event.get('tc_active'):
+                    was_cancelled = self.cancel_pending
+                    self.cancel_pending = False
+                    self.online_state = 'connected'
+                    if was_cancelled:
+                        self.reply_title.set('测控已取消 · 结果未知')
+                        self.reply_body.set('本次测控已停止，执行结果未知；'+
+                            ('业务接收已恢复。' if event.get('rx_active') else '终端1连接保留。'))
+                        self.request_note.set('可重新生成查询指令核对远端状态；取消不会撤销已发到远端的指令。')
+                else:
+                    self.online_state = 'receiving' if self.active_request else 'paused'
+                self.connection_status.set('●  测控执行中' if event.get('tc_active') else
+                                           '●  继承终端1连接 · 可测控')
+            else:
+                self.online_identity = None
+                self.connecting_port = None
+                self.cancel_pending = False
+                self.online_state = 'disconnected'
+                self.connection_status.set('●  等待终端1通信连接')
+            self.update_details()
+            self.session.update_online_controls()
+            return
+        if kind == 'plan_sync_error' and self.session.unified_terminal:
+            message = str(event.get('message', '终端2频率同步失败'))
+            self.request_note.set(message)
+            self.reply_title.set(self.reply_title.get()+' · 终端2同步失败')
+            self.reply_body.set(self.reply_body.get()+'\n\n'+message)
+            self.reply_heading.configure(fg=AMBER)
+            return
         if kind == 'connected':
+            if self.session.unified_terminal:
+                self.accept_connected = True
+                source = event.get('source', {})
+                self.connecting_port = source.get('port')
             if not self.accept_connected or self.cancel_pending:
                 return
             source = event.get('source', {})
@@ -1155,6 +1451,10 @@ class StationReview:
             self.reply_body.set('本地发送设备已核验；远端服务就绪与执行结果由本次事务确认。')
             self.update_details()
         elif kind == 'status':
+            if self.session.unified_terminal and state == 'disconnected':
+                # Transaction status cannot disconnect a shared terminal.
+                # Only the backend's terminal_state owns connection facts.
+                return
             if self.cancel_pending and state not in ('disconnected', 'error'):
                 return
             if state == 'error':
@@ -1224,7 +1524,7 @@ class StationReview:
                 self.session.update_online_controls()
                 return
             matched = (isinstance(ack, dict) and all(type(ack.get(axis+'_hz')) is int and
-                       abs(ack[axis+'_hz']-request[axis+'_mhz']*1_000_000) <= 10_000 for axis in ('rx', 'tx')))
+                       abs(ack[axis+'_hz']-request_lo_hz(request, axis)) <= request_tolerance_hz(request) for axis in ('rx', 'tx')))
             if event.get('passed') is not True or type(count) is not int or count <= 0 or not matched:
                 self._online_error('真实回报未通过请求关联、CRC 帧数或频率核对。', 'validation')
                 return
@@ -1235,6 +1535,7 @@ class StationReview:
             self.connection_status.set('●  回报核对通过')
             self.reply_heading.configure(fg=TEAL)
             self.reply_body.set(f'{count} 个 CRC 正确帧 · 本次指令关联通过\n'
+                                f'申请业务中心：{format_mhz(self.active_plan["input_hz"])} → {format_mhz(self.active_plan["output_hz"])} MHz\n'
                                 f'回报本振：RX {ack["rx_hz"]/1e6:.6f} / TX {ack["tx_hz"]/1e6:.6f} MHz\n\n'
                                 '已确认频率；转发模式/电平未由本回报报告。\n'
                                 f'接收 IQ：{Path(self.last_evidence["iq_path"]).name}\n'
@@ -1243,7 +1544,8 @@ class StationReview:
             for index, (item, text) in enumerate(zip(self.step_labels, ('已提交指令', '上行已发送', '收到射频回报', '核对通过')), 1):
                 item.configure(text=f'0{index}   {text}', fg=TEAL)
             self._record_online('在线 · 执行成功，射频回报')
-            self.session.remember_rf_frequency_plan(request)
+            if not self.session.unified_terminal:
+                self.session.remember_rf_frequency_plan(request)
             self.active_request = self.active_plan = None
             self.request_note.set('本次事务完成；下一条指令需重新生成，序号不会复用。')
         elif kind == 'log' and event.get('level') in ('error', 'warning'):
@@ -1251,12 +1553,15 @@ class StationReview:
         self.session.update_online_controls()
 
     def _drain_online_events(self):
+        if self._poll_id:
+            self.window.after_cancel(self._poll_id)
+            self._poll_id = None
         while self.session.windows.get(self.role) is self:
             try:
                 self._handle_online_event(self.events.get_nowait())
             except queue.Empty:
                 break
-        if self.session.windows.get(self.role) is self:
+        if self.session.windows.get(self.role) is self and self._poll_id is None:
             self._poll_id = self.window.after(60, self._drain_online_events)
 
     def toggle_details(self):
@@ -1431,20 +1736,20 @@ class StationReview:
         self.body.columnconfigure(0, weight=1, uniform='control')
         self.body.columnconfigure(1, weight=1, uniform='control')
         self.body.rowconfigure(0, weight=1)
-        request = card(self.body, '遥控操作')
+        request = card(self.body, '转发板操作')
         request.edge.grid(row=0, column=0, sticky='nsew', padx=(0, 8), pady=(0, 12))
         self.operation = tk.StringVar(self.window, '设置频率')
         self.operation_combo = ttk.Combobox(request, textvariable=self.operation,
             values=tuple(CONTROL_OPERATIONS), state='readonly', style='V2.TCombobox')
         self.operation_combo.pack(fill='x', pady=(6, 8))
-        self.operation_note = tk.StringVar(self.window, '设置本振后保持静音；业务中心 = 本振 + 0.5 MHz。')
+        self.operation_note = tk.StringVar(self.window, DEMO_HINT)
         label(request, variable=self.operation_note, size=9, color=MUTED, wrap=430).pack(anchor='w')
         fields = tk.Frame(request, bg=PAPER)
         fields.pack(fill='x', pady=(8, 0))
         self.input_frequency = tk.StringVar(self.window, DEMO_TX_CENTERS[0])
         self.output_frequency = tk.StringVar(self.window, DEMO_RX_CENTERS[0])
         self.frequency_entries = []
-        for title, variable in (('业务输入', self.input_frequency), ('业务输出', self.output_frequency)):
+        for title, variable in (('转发输入中心', self.input_frequency), ('转发输出中心', self.output_frequency)):
             row = tk.Frame(fields, bg=PAPER)
             row.pack(fill='x', pady=(0, 8))
             label(row, title, size=11).pack(side='left', padx=(0, 14))
@@ -1455,7 +1760,7 @@ class StationReview:
             self.frequency_entries.append(entry)
         self.request_note = tk.StringVar(self.window, '')
         note = label(request, variable=self.request_note, size=9, color=MUTED, wrap=430)
-        note.pack(anchor='w', pady=(0, 12))
+        note.pack(fill='x', pady=(0, 12))
         note.bind('<Configure>', lambda event: note.configure(wraplength=max(150, event.width)))
         actions = tk.Frame(request, bg=PAPER)
         actions.pack(fill='x', side='bottom', before=self.operation_combo)
@@ -1467,7 +1772,7 @@ class StationReview:
         if self.online:
             self.stop_button.pack(side='left')
 
-        reply = card(self.body, '执行回报')
+        reply = card(self.body, '转发板执行回报')
         reply.edge.grid(row=0, column=1, sticky='nsew', padx=(8, 0), pady=(0, 12))
         self.reply_title = tk.StringVar(self.window, '等待执行回报')
         self.reply_body = tk.StringVar(self.window, '')
@@ -1519,20 +1824,23 @@ class StationReview:
 
     def _invalidate_draft(self, *_):
         self.draft = None
-        self.operation_note.set({'frequency': '设置本振后保持静音；业务中心 = 本振 + 0.5 MHz。',
-            'enable': '开启 5 分钟 · 固定双路 RX 增益 30 dB / TX 衰减 50 dB；需现有本振相符。',
-            'stop': '远端停止转发并静音；下方频率仅供请求关联，不会调谐。',
-            'status': '只读状态快照，不续租；下方频率仅供请求关联，不会调谐。'}[
+        self.operation_note.set({'frequency': DEMO_HINT+'；设置后保持静音。',
+            'enable': '仅开启已设置的转发频率，持续 5 分钟。修改数值后，请先选择“设置频率”并发送。',
+            'stop': '远端停止两路转发并静音；无需填写频率。',
+            'status': '读取实际频率、模式和剩余时间，不续期；无需填写频率。'}[
                 CONTROL_OPERATIONS[self.operation.get()]])
         if self.online and self.active_request is not None:
             self.request_note.set('当前指令执行中；新的参数需在结束后重新生成。')
             self.update_online_controls()
             return
         self.request_note.set('参数已修改，请重新生成指令。')
-        self.mapping.set('业务中心减去 0.5 MHz 为协议本振；当前报文的本振精度为 1 MHz。')
+        self.mapping.set('业务中心减去 0.5 MHz 为协议本振；设置步进 1 kHz，实际频率以回读为准。')
         self._reset_reply()
         if self.online:
             self.update_online_controls()
+        else:
+            for entry in self.frequency_entries:
+                entry.configure(state='normal' if CONTROL_OPERATIONS[self.operation.get()] in ('frequency', 'enable') else 'disabled')
 
     def generate_command(self):
         if self.online and (self.closing or self.active_request is not None or self.cancel_pending):
@@ -1541,45 +1849,46 @@ class StationReview:
         self._reset_reply()
         if self.online:
             self.update_online_controls()
-        try:
-            plan = frequency_plan(self.input_frequency.get(), self.output_frequency.get())
-        except ValueError as error:
-            self.request_note.set(str(error))
-            return
         sequence = self.session.next_sequence
         if self.online and sequence >= 256:
             self.request_note.set('本会话 0–255 序号已用完，请关闭并新建在线会话。')
             self.update_online_controls()
             return
-        request, body = None, None
         try:
             operation = CONTROL_OPERATIONS[self.operation.get()]
-            request = command_request(self.input_frequency.get(), self.output_frequency.get(), sequence, operation)
-            if self.online and not is_demo_request(request):
-                request = None
-                raise ValueError(DEMO_HINT+'；其他组合暂不发送。')
+            plan = (online_frequency_plan(self.input_frequency.get(), self.output_frequency.get())
+                    if operation in ('frequency', 'enable') else {})
+            request = command_request(self.input_frequency.get(), self.output_frequency.get(), sequence,
+                                      operation, encoding='n256_khz_v1')
             from sw.tools.telecontrol_waveform import build_body
-            body = build_body(request['rx_mhz'], request['tx_mhz'], sequence, operation=operation)
+            body = build_body(rx_hz=request['rx_hz'], tx_hz=request['tx_hz'], seq=sequence,
+                              operation=operation, encoding=request['encoding'])
         except ValueError as error:
             self.request_note.set(str(error))
+            self.reply_title.set('指令未生成')
+            self.reply_body.set(str(error))
+            self.reply_heading.configure(fg=AMBER)
+            self.step_labels[0].configure(text='01   请检查频率', fg=AMBER)
+            return
         else:
             if not self.online:
                 self.session.next_sequence = (sequence+1) % 256
             self.request_note.set('指令已生成 · 尚未发送')
         self.draft = dict(plan=plan, request=request, operation=CONTROL_OPERATIONS[self.operation.get()], body_hex=body.hex() if body else None)
-        self.mapping.set(('关联本振（不调谐）：' if self.draft['operation'] in ('stop', 'status') else '计划本振：')+
-                         f'RX {format_mhz(plan["input_hz"]-500_000)} MHz / '
-                         f'TX {format_mhz(plan["output_hz"]-500_000)} MHz；'
-                         + ('现有报文可编码。' if body else '当前在线方案未开放，未生成可发送正文。' if self.online else '待扩展报文精度，未生成可发送正文。'))
-        self.step_labels[0].configure(text='01   已生成 · 未发送' if body else '01   方案待接入', fg=TEAL)
-        self._add_history('草稿 · 未发送' if body else '在线方案 · 暂不发送' if self.online else '频率方案 · 待扩展报文')
+        self.mapping.set('本操作不携带调谐请求。' if operation in ('stop', 'status') else
+                         f'计划本振：RX {format_mhz(request["rx_hz"])} / TX {format_mhz(request["tx_hz"])} MHz；1 kHz 步进。')
+        self.step_labels[0].configure(text='01   已生成 · 未发送', fg=TEAL)
+        self._add_history('草稿 · 未发送')
         if self.online:
             self.update_online_controls()
 
     def _add_history(self, status):
         plan = self.draft['plan']
-        self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'),
-            f'{self._operation_name(self.draft["operation"])} · {format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}', status))
+        operation = self.draft['operation']
+        target = self._operation_name(operation)
+        if operation in ('frequency', 'enable'):
+            target += f' · {format_mhz(plan["input_hz"])} → {format_mhz(plan["output_hz"])}'
+        self.history.insert('', 0, values=(datetime.now().strftime('%H:%M:%S'), target, status))
 
     def preview_report(self):
         if self.online:
@@ -1590,7 +1899,8 @@ class StationReview:
             return
         outcome = {'成功': 'success', '失败': 'failure', '超时': 'timeout'}[self.preview_outcome.get()]
         self._reset_reply()
-        result = simulated_reply(self.draft['plan'], outcome)
+        result = simulated_reply(self.draft['plan'], outcome) if self.draft['plan'] else dict(
+            source='simulation', title='模拟 · '+self.preview_outcome.get(), body='本操作无需频率参数；这里只演示界面状态。')
         self.simulation = result
         self.reply_title.set(result['title'])
         self.reply_body.set(f'模拟操作：{self._operation_name(self.draft["operation"])}\n'+result['body']+
@@ -1610,7 +1920,8 @@ class StationReview:
         selection = self.history.selection()
         if selection:
             row = self.history.item(selection[0], 'values')
-            self.request_note.set(f'记录：{row[1]} MHz · {row[2]}')
+            unit = ' MHz' if ' → ' in row[1] else ''
+            self.request_note.set(f'记录：{row[1]}{unit} · {row[2]}')
 
     def choose_record(self):
         if self.online:
@@ -1657,9 +1968,12 @@ def main(argv=None):
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--all', action='store_true', help='打开三个审阅窗口')
     group.add_argument('--role', choices=tuple(ROLES))
-    parser.add_argument('--online-control', action='store_true', help='启用改频窗口实板事务；文本业务另由 --online-business 启用')
-    parser.add_argument('--online-business', action='store_true', help='启用本地文本发送/接收；与改频窗口须显式断开交接')
+    parser.add_argument('--online-control', action='store_true', help='启用测控及终端1连接入口；与终端1通信共享设备后台')
+    parser.add_argument('--online-business', action='store_true', help='启用本地双向文本；测控共享终端1连接并自动恢复接收')
+    parser.add_argument('--preview', action='store_true', help='明确使用离线预览，不连接设备')
     args = parser.parse_args(argv)
+    if args.preview and (args.online_control or args.online_business):
+        parser.error('--preview 不能与在线参数同时使用')
     root = tk.Tk()
     root.withdraw()
     root.tk.call('tk', 'scaling', 1.33)

@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 set "STATION_PYTHON=python"
 if exist "%~dp0.venv\Scripts\python.exe" set "STATION_PYTHON=%~dp0.venv\Scripts\python.exe"
-"%STATION_PYTHON%" -m sw.ground_station.ui_v2 --all
+"%STATION_PYTHON%" -m sw.ground_station.ui_v2 --all --preview
 if errorlevel 1 (
     echo UI review could not start. See the error above.
     pause

@@ -4,14 +4,49 @@
 
 static const uint8_t ap_asm[4] = {0x1a, 0xcf, 0xfc, 0x1d};
 
-static int command_valid(const struct ap_command *command)
+uint8_t ap_command_operation(const struct ap_command *command)
 {
+    if (!command) return 0u;
+    switch (command->version) {
+    case 1u: case 0x81u: return 1u;
+    case 0x21u: case 0xa1u: return 0x21u;
+    case 0x22u: case 0xa2u: return 0x22u;
+    case 0x23u: case 0xa3u: return 0x23u;
+    default: return 0u;
+    }
+}
+
+int ap_command_validate(const struct ap_command *command)
+{
+    uint8_t operation;
     if (!command) return AP_EARG;
-    if (command->version != 1u && command->version != 0x21u &&
-        command->version != 0x22u && command->version != 0x23u) return AP_EVERSION;
+    operation = ap_command_operation(command);
+    if (!operation) return AP_EVERSION;
+    if (command->version & 0x80u) {
+        if (operation == 0x22u || operation == 0x23u)
+            return (!command->rx_mhz && !command->tx_mhz) ? AP_OK : AP_ERANGE;
+        if (command->rx_mhz < AP_OFFSET_MIN_KHZ || command->rx_mhz > AP_OFFSET_MAX_KHZ ||
+            command->tx_mhz < AP_OFFSET_MIN_KHZ || command->tx_mhz > AP_OFFSET_MAX_KHZ)
+            return AP_ERANGE;
+        return AP_OK;
+    }
     if (command->rx_mhz < 70u || command->rx_mhz > 6000u ||
         command->tx_mhz < 70u || command->tx_mhz > 6000u) return AP_ERANGE;
     return AP_OK;
+}
+
+uint64_t ap_command_rx_hz(const struct ap_command *command)
+{
+    if (ap_command_validate(command) != AP_OK) return 0u;
+    return command->version & 0x80u ? AP_RX_BASE_HZ + (uint64_t)command->rx_mhz * 1000u :
+        (uint64_t)command->rx_mhz * UINT64_C(1000000);
+}
+
+uint64_t ap_command_tx_hz(const struct ap_command *command)
+{
+    if (ap_command_validate(command) != AP_OK) return 0u;
+    return command->version & 0x80u ? AP_TX_BASE_HZ + (uint64_t)command->tx_mhz * 1000u :
+        (uint64_t)command->tx_mhz * UINT64_C(1000000);
 }
 
 uint16_t ap_crc16(const uint8_t *data, size_t length)
@@ -32,7 +67,7 @@ uint16_t ap_crc16(const uint8_t *data, size_t length)
 int ap_body_build(const struct ap_command *command, uint8_t body[AP_BODY_BYTES])
 {
     uint16_t crc;
-    int rc = command_valid(command);
+    int rc = ap_command_validate(command);
     if (!body) return AP_EARG;
     if (rc != AP_OK) return rc;
     body[0] = command->version;
@@ -58,7 +93,7 @@ int ap_body_parse(const uint8_t *body, size_t length, struct ap_command *command
     temporary.rx_mhz = (uint16_t)((uint16_t)body[2] << 8 | body[1]);
     temporary.tx_mhz = (uint16_t)((uint16_t)body[4] << 8 | body[3]);
     temporary.seq = body[5];
-    rc = command_valid(&temporary);
+    rc = ap_command_validate(&temporary);
     if (rc != AP_OK) return rc;
     *command = temporary;
     return AP_OK;
@@ -237,17 +272,17 @@ int ap_rf_packet(const struct ap_command *command, uint16_t transaction_seq,
 {
     uint8_t temporary[AP_RF_BYTES];
     uint16_t crc;
-    int rc = command_valid(command);
+    int rc = ap_command_validate(command);
     if (!output) return AP_EARG;
     if (rc != AP_OK) return rc;
-    if (command->version != 1u) return AP_EVERSION;
+    if (ap_command_operation(command) != 1u) return AP_EVERSION;
     if (transaction_seq > 0x3fffu || rx_gain_db > 76u || tx_att_db > 89u) return AP_ERANGE;
     temporary[0] = 0x01u; temporary[1] = 0x01u;
     temporary[2] = (uint8_t)(0xc0u | (transaction_seq >> 8));
     temporary[3] = (uint8_t)transaction_seq;
     temporary[4] = 0u; temporary[5] = 17u;
-    put_be64(temporary+6u, (uint64_t)command->rx_mhz * UINT64_C(1000000));
-    put_be64(temporary+14u, (uint64_t)command->tx_mhz * UINT64_C(1000000));
+    put_be64(temporary+6u, ap_command_rx_hz(command));
+    put_be64(temporary+14u, ap_command_tx_hz(command));
     temporary[22] = rx_gain_db; temporary[23] = tx_att_db;
     crc = ap_crc16(temporary, 24u);
     temporary[24] = (uint8_t)(crc >> 8); temporary[25] = (uint8_t)crc;
@@ -260,17 +295,17 @@ static uint32_t get32(const uint8_t *p)
 static uint64_t get64(const uint8_t *p) { return (uint64_t)get32(p)<<32 | get32(p+4); }
 int ap_control_packet(const struct ap_command *c,uint16_t seq,uint8_t *out,size_t capacity)
 {
-    uint8_t p[AP_CONTROL_BYTES];uint16_t crc;int rc=command_valid(c);
+    uint8_t p[AP_CONTROL_BYTES],op=ap_command_operation(c);uint16_t crc;int rc=ap_command_validate(c);
     if(!out)return AP_EARG;
     if(rc!=AP_OK)return rc;
-    if(c->version==1u)return AP_EVERSION;
+    if(op==1u)return AP_EVERSION;
     if(seq>0x3fffu)return AP_ERANGE;
     if(capacity<sizeof(p))return AP_ELENGTH;
     memset(p,0,sizeof(p));p[0]=1;p[1]=0x20;p[2]=(uint8_t)(0xc0u|(seq>>8));p[3]=(uint8_t)seq;
-    p[5]=27;p[6]=1;p[7]=c->version;
-    if(c->version==0x21u){p[8]=1;p[9]=30;p[10]=50;p[13]=4;p[14]=0x93;p[15]=0xe0;}
-    put_be64(p+16,(uint64_t)c->rx_mhz*UINT64_C(1000000));
-    put_be64(p+24,(uint64_t)c->tx_mhz*UINT64_C(1000000));
+    p[5]=27;p[6]=1;p[7]=op;
+    if(op==0x21u){p[8]=1;p[9]=30;p[10]=50;p[13]=4;p[14]=0x93;p[15]=0xe0;}
+    put_be64(p+16,ap_command_rx_hz(c));
+    put_be64(p+24,ap_command_tx_hz(c));
     crc=ap_crc16(p,32);p[32]=(uint8_t)(crc>>8);p[33]=(uint8_t)crc;
     memcpy(out,p,sizeof(p));return AP_OK;
 }
@@ -359,8 +394,8 @@ int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *
     uint8_t packet[AP_CONTROL_BYTES];size_t length;
     int rc;
     if (!state || !command) return AP_EARG;
-    length=command->version==1u?AP_RF_BYTES:AP_CONTROL_BYTES;
-    rc = command->version==1u?ap_rf_packet(command, state->next_transaction_seq, rx_gain_db, tx_att_db, packet):
+    length=ap_command_operation(command)==1u?AP_RF_BYTES:AP_CONTROL_BYTES;
+    rc = ap_command_operation(command)==1u?ap_rf_packet(command, state->next_transaction_seq, rx_gain_db, tx_att_db, packet):
          ap_control_packet(command,state->next_transaction_seq,packet,sizeof(packet));
     if (state->applied_valid && command->seq == state->applied_command.seq) {
         if (same_command(command, &state->applied_command) && rx_gain_db == state->applied_gain &&
@@ -376,7 +411,7 @@ int ap_transaction_begin(struct ap_transaction *state, const struct ap_command *
     if (rc != AP_OK) return rc;
     memcpy(state->packet, packet, length);state->packet_length=length;
     state->pending_transaction_seq = state->next_transaction_seq;
-    if(command->version!=1u)state->control_sequence_used=1u;
+    if(ap_command_operation(command)!=1u)state->control_sequence_used=1u;
     state->next_transaction_seq = (uint16_t)(state->next_transaction_seq+1u);
     if(!state->control_sequence_used)state->next_transaction_seq &= 0x3fffu;
     state->pending_command = *command;
@@ -394,10 +429,11 @@ int ap_transaction_ack(struct ap_transaction *state, const struct ap_ack *ack,
     if (!state || !ack) return AP_EARG;
     if (tolerance_hz > 10000u) return AP_ERANGE;
     if (!state->pending || ack->seq != state->pending_transaction_seq) return AP_ESTALE;
-    if(state->pending_command.version!=1u)return AP_EACK;
+    if(ap_command_operation(&state->pending_command)!=1u)return AP_EACK;
+    if ((state->pending_command.version & 0x80u) && tolerance_hz > 10u) return AP_ERANGE;
     if (ack->rc != 0) return AP_EREMOTE;
-    if (distance(ack->rx_hz, (uint64_t)state->pending_command.rx_mhz*UINT64_C(1000000)) > tolerance_hz ||
-        distance(ack->tx_hz, (uint64_t)state->pending_command.tx_mhz*UINT64_C(1000000)) > tolerance_hz)
+    if (distance(ack->rx_hz, ap_command_rx_hz(&state->pending_command)) > tolerance_hz ||
+        distance(ack->tx_hz, ap_command_tx_hz(&state->pending_command)) > tolerance_hz)
         return AP_EMISMATCH;
     state->applied_command = state->pending_command;
     state->applied_gain = state->pending_gain;
@@ -412,12 +448,13 @@ int ap_transaction_control_ack(struct ap_transaction *s,const struct ap_ack *a,c
     if(!s || !a || !r)return AP_EARG;
     if(tolerance>10000u)return AP_ERANGE;
     if(!s->pending || a->seq!=s->pending_transaction_seq)return AP_ESTALE;
-    if(s->pending_command.version==1u || r->operation!=s->pending_command.version)return AP_EACK;
+    if(ap_command_operation(&s->pending_command)==1u || r->operation!=ap_command_operation(&s->pending_command))return AP_EACK;
+    if((s->pending_command.version&0x80u) && r->operation==0x21u && tolerance>10u)return AP_ERANGE;
     if(a->rc)return AP_EREMOTE;
     if(!(r->flags&1u))return AP_EMISMATCH;
     if(r->operation==0x21u &&
-       (distance(a->rx_hz,(uint64_t)s->pending_command.rx_mhz*UINT64_C(1000000))>tolerance ||
-        distance(a->tx_hz,(uint64_t)s->pending_command.tx_mhz*UINT64_C(1000000))>tolerance ||
+       (distance(a->rx_hz,ap_command_rx_hz(&s->pending_command))>tolerance ||
+        distance(a->tx_hz,ap_command_tx_hz(&s->pending_command))>tolerance ||
         r->mode!=1u || r->rx1_gain!=30 || r->rx2_gain!=30 || r->tx1_mdB!=50000 || r->tx2_mdB!=50000 ||
         !(r->flags&2u) || (r->flags&8u) || !r->remaining_ms || r->remaining_ms>get32(s->packet+12)))return AP_EMISMATCH;
     if(r->operation==0x22u && (r->mode!=2u || r->rx1_gain || r->rx2_gain ||

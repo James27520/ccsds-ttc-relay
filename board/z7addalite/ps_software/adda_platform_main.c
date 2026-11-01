@@ -148,6 +148,7 @@ static void line_command(char *line)
         if(rc>=0){uart_log(0,text);rc=AP_OK;}
     }
     else if(!strcmp(line,"service on"))rc=asv_start(&service,clock_ms(0));
+    else if(!strcmp(line,"service standby"))rc=asv_start_standby(&service,clock_ms(0));
     else if(!strcmp(line,"service off"))rc=asv_stop(&service,ASV_USER,clock_ms(0));
     else if(!asv_command_allowed(&service,line)) {
         uart_log(0,"SERVICE_BUSY conflicting command rejected\r\n");rc=AP_EBUSY;
@@ -174,7 +175,7 @@ static void line_command(char *line)
     else if(!strcmp(line,"tmstop"))rc=atm_tx_stop(&telemetry_tx);
     else if(!strcmp(line,"tmclear"))rc=atm_tx_clear(&telemetry_tx);
     else {
-        if(!strcmp(line,"help"))uart_log(0,"network on/off | service on/off/status (600s,16 transactions,400 finite replies each) | tmstatus | tmsend | tmstop | tmclear (explicit idle recovery)\r\n");
+        if(!strcmp(line,"help"))uart_log(0,"network on/off | service standby (continuous RX) | service on (600s/16 test) | service off/status | tmstatus | tmsend | tmstop | tmclear\r\n");
         rc=act_command_line(&controller,line);
     }
     if(cancel_rc<0)rc=cancel_rc;
@@ -204,6 +205,12 @@ int main(void)
     uart_log(0,ADDA_CAPTURE_ENABLED?
       "BOOT ADDA M2 candidate UART115200/8N1 capture=ENABLED no auto/network; matching final PL required\r\n":
       "BOOT ADDA PS candidate UART115200/8N1 capture=DISABLED; selftest/waveformtest local SYNTHETIC\r\n");
+#if defined(ADDA_SERVICE_STANDBY) && ADDA_SERVICE_STANDBY && ADDA_CAPTURE_ENABLED && ADDA_TM_TX_ENABLED
+    /* Start network and listening only. Never send RF_SET/ENABLE on startup.
+     * A missing link leaves standby waiting; explicit off cancels that intent. */
+    if(network_on()==0){service.standby=service.wanted=1u;service.reason=ASV_NETWORK;}
+    uart_log(0,"STANDBY requested; continuous command RX, finite replies; relay enable remains explicit\r\n");
+#endif
     for(;;) {
         /* ACK processing precedes retries, captures and synchronous decoding. */
         network_poll();
