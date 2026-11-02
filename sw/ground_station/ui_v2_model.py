@@ -132,7 +132,7 @@ def relay_snapshot_view(relay, now):
     confirmed_muted = (fields_valid and relay.get('mode') == 2 and gains == [0, 0] and
                        atten == [89000, 89000] and relay.get('lease_active') is False and
                        type(relay.get('remaining_ms')) is int and relay['remaining_ms'] == 0 and not relay.get('mute_fault'))
-    state, message = 'unknown', '转发板当前状态未知，待查询'
+    state, message = 'unknown', ''
     refresh_after_ms = None
     if relay.get('mute_fault'):
         lines.append('静音故障锁存 · 需处理后重新查询')
@@ -144,7 +144,8 @@ def relay_snapshot_view(relay, now):
     elif fields_valid and relay.get('lease_active') is True and remaining is not None:
         state, message = 'snapshot', '测控回报已收到（状态快照，非持续监控）'
         refresh_after_ms = max(1, math.ceil(remaining))
-    lines.append(message)
+    if message:
+        lines.append(message)
     if relay.get('lease_expired'):
         lines.append('板端报告曾到期')
     return dict(body='\n'.join(lines), expired=expired, state=state,

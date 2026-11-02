@@ -415,8 +415,12 @@ class OnlineControlTests(unittest.TestCase):
     def test_communication_expiry_survives_control_draft_edits_and_never_sends(self):
         sender = self.session.show('sender')
         receiver = self.session.show('receiver')
-        self.assertIn('状态未知', sender.relay_status.get())
-        self.assertIn('尚无测控回报', receiver.relay_status.get())
+        for page, title in ((sender, '终端1'), (receiver, '终端2'), (self.control, '转发板测控')):
+            top_row = page.body.master.pack_slaves()[0]
+            heading = top_row.pack_slaves()[0]
+            self.assertEqual(heading.pack_slaves()[0].cget('text'), title)
+        self.assertEqual('', sender.relay_status.get())
+        self.assertEqual('', receiver.relay_status_label.winfo_manager())
         self.control.operation.set('开启转发')
         request = self.sent()
         self.result(request, matched=True, remote_rc=0, relay=self.relay())
@@ -434,7 +438,7 @@ class OnlineControlTests(unittest.TestCase):
         for page in (sender, receiver):
             self.assertIn('转发有效期已过，当前状态待查询', page.relay_status.get())
             self.assertNotIn('确认静音', page.relay_status.get())
-            self.assertTrue(page.relay_status_label.winfo_manager())
+            self.assertEqual('bottom', page.relay_status_label.pack_info()['side'])
         self.assertEqual(self.controller.calls, calls)
         self.assertEqual(rows, [sender.history.item(i, 'values') for i in sender.history.get_children()])
         self.assertIsNone(self.session._relay_display_after)
@@ -445,7 +449,7 @@ class OnlineControlTests(unittest.TestCase):
         request = self.sent()
         self.result(request, matched=True, remote_rc=0, relay=self.relay(), frame_count=0)
         self.assertIsNone(self.session._relay_display_snapshot)
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertEqual(self.session._relay_status_event()['state'], 'unknown')
 
     def enable_then_submit(self, operation):
@@ -463,7 +467,7 @@ class OnlineControlTests(unittest.TestCase):
         self.control.send_online()
         request = dict(self.control.active_request)
         self.assertEqual(self.session._relay_status_event()['state'], 'unknown')
-        self.assertIn('执行中', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status_label.winfo_manager())
         self.assertNotIn(timer, self.root.tk.call('after', 'info'))
         return sender, request
 
@@ -483,7 +487,7 @@ class OnlineControlTests(unittest.TestCase):
         self.result(request, matched=True, passed=False, remote_rc=-5,
                     relay=self.relay(valid=False, lease_active=False))
         self.assertIn('远端拒绝', self.control.reply_title.get())
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertNotIn('确认静音', sender.relay_status.get())
         self.assertIsNone(self.session._relay_display_snapshot)
 
@@ -491,14 +495,14 @@ class OnlineControlTests(unittest.TestCase):
         sender, request = self.enable_then_submit('设置频率')
         self.result(request)
         self.assertEqual(self.control.reply_title.get(), '改频成功')
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertNotIn('确认静音', sender.relay_status.get())
         self.assertIsNone(self.session._relay_display_snapshot)
 
     def test_timeout_after_enable_withdraws_old_shared_snapshot(self):
         sender, _ = self.enable_then_submit('开启转发')
         self.control._handle_online_event(dict(type='status', state='error', category='timeout', message='timeout'))
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertIn('结果未知', self.control.reply_title.get())
         self.assertIsNone(self.session._relay_display_snapshot)
 
@@ -506,14 +510,14 @@ class OnlineControlTests(unittest.TestCase):
         sender, request = self.enable_then_submit('开启转发')
         self.control.cancel_online()
         self.result(request, matched=True, remote_rc=0, relay=self.relay())
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertNotIn('确认静音', sender.relay_status.get())
         self.assertIsNone(self.session._relay_display_snapshot)
 
     def test_invalid_crc_after_enable_leaves_shared_state_unknown(self):
         sender, request = self.enable_then_submit('开启转发')
         self.result(request, matched=True, remote_rc=0, relay=self.relay(), frame_count=0)
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertIsNone(self.session._relay_display_snapshot)
 
     def test_new_query_snapshot_cancels_old_expiry_and_retains_confirmed_mute(self):
@@ -552,8 +556,8 @@ class OnlineControlTests(unittest.TestCase):
         other = ReviewSession(other_root, port_provider=lambda: PORTS, aliases=ALIASES)
         try:
             page = other.show('receiver')
-            self.assertIn('状态未知', page.relay_status.get())
-            self.assertIn('尚无测控回报', page.relay_status.get())
+            self.assertEqual('', page.relay_status.get())
+            self.assertEqual('', page.relay_status_label.winfo_manager())
             self.assertIsNone(other._relay_display_snapshot)
         finally:
             other._destroy_page('receiver')
@@ -584,7 +588,7 @@ class OnlineControlTests(unittest.TestCase):
         self.assertIsNotNone(self.control.online_identity)
         self.assertIsNone(self.control.active_request)
         self.assertIsNone(self.session._relay_display_snapshot)
-        self.assertIn('状态未知', sender.relay_status.get())
+        self.assertEqual('', sender.relay_status.get())
         self.assertEqual(self.session.sender_plan_origin, '本地计划')
         self.assertIn('拒绝', self.control.history.item(self.control.history.get_children()[0], 'values')[2])
 

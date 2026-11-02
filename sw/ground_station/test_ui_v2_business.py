@@ -290,7 +290,7 @@ class BusinessWindowTests(unittest.TestCase):
         self.event(self.receiver,'settings',values=dict(configured=True,rx_lo_hz_readback=2180750000,expected_rf_mhz=2180.5))
         self.event(self.receiver,'status',state='ready',message='local prior updated')
         self.assertIn('2180.750',self.receiver.receiver_plan_note.get())
-        self.assertIn('远端状态未知',self.receiver.receiver_plan_note.get())
+        self.assertEqual('本地 LO 2180.750 MHz\n先验 2180.5 MHz',self.receiver.receiver_plan_note.get())
         self.ready(self.sender)
         self.sender.attenuation.set('55')
         self.assertEqual(self.sender.controller.calls[-1],('configure',dict(tx_atten_db=55,tx_rf_mhz=1989.5)))

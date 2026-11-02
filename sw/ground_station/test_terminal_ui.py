@@ -40,6 +40,47 @@ class TerminalWorkspaceTests(unittest.TestCase):
             expected_rf_hz=2179500000)))
         page._handle_business_event(dict(type='status', state='receiving', message='auto receive'))
 
+    def test_disconnect_announces_once(self):
+        from .sound import Notifier
+        spoken = []
+        self.session.notifier = Notifier(enabled=True, speaker=spoken.append, player=lambda _alias: None)
+        page = self.sender
+        self.ready(page)
+        spoken.clear()
+        page._handle_business_event(dict(type='status', state='disconnected', message='已断开'))
+        self.assertEqual(spoken, ['已断开连接'])
+
+    def test_both_terminals_announce_verified_send_once_with_a_request_id(self):
+        from .sound import Notifier
+        for page in (self.sender, self.receiver):
+            spoken = []
+            self.session.notifier = Notifier(enabled=True, speaker=spoken.append, cooldown={'sent': 0})
+            self.ready(page)
+            page.message_input.insert('1.0', '你好')
+            page.send_business()
+            request = page.controller.calls[-1][1]['request_id']
+            event = dict(request_id=request, text='你好', message_id='12345678:0001')
+            page._handle_business_event(dict(type='tx_queue', state='sending', **event))
+            self.assertEqual(spoken, ['连接成功'])
+            page._handle_business_event(dict(type='tx', **event))
+            page._handle_business_event(dict(type='tx_queue', state='sent', **event))
+            page._handle_business_event(dict(type='tx', **event))
+            self.assertEqual(spoken, ['连接成功', '发送成功'])
+
+    def test_error_cleanup_is_quiet_and_sound_switch_is_shared(self):
+        from .sound import Notifier
+        spoken = []
+        self.session.notifier = Notifier(enabled=True, speaker=spoken.append, cooldown={'error': 0})
+        self.session.sound_enabled.set(True)
+        self.ready(self.sender)
+        self.sender.sound_toggle.invoke()
+        self.assertFalse(self.receiver.sound_toggle.instate(['selected']))
+        self.receiver.sound_toggle.invoke()
+        self.assertTrue(self.sender.sound_toggle.instate(['selected']))
+        for state in ('error', 'error', 'disconnected'):
+            self.sender._handle_business_event(dict(type='status', state=state, message='设备已释放'))
+        self.assertEqual(spoken, ['连接成功', '连接异常'])
+
     def test_both_terminals_send_while_automatically_receiving(self):
         for page in (self.sender, self.receiver):
             self.ready(page)
@@ -151,6 +192,27 @@ class TerminalWorkspaceTests(unittest.TestCase):
         page.business_online=False
         before=list(page.controller.calls);page.apply_local_frequency()
         self.assertEqual(page.controller.calls,before)
+
+    def test_only_a_new_valid_text_is_announced(self):
+        from .sound import Notifier
+        spoken = []
+        self.session.notifier = Notifier(enabled=True, speaker=spoken.append, player=lambda _alias: None)
+        page = self.sender
+        self.ready(page)
+        spoken.clear()
+        # A noise window carries no message at all.
+        page._handle_business_event(dict(type='rx', messages=[], valid_frames=0, crc_rejected=3))
+        # A CRC-rejected candidate is not a received text either.
+        page._handle_business_event(dict(type='rx', messages=[
+            dict(text='bad', message_id='rx:bad', crc_valid=False)], valid_frames=0, crc_rejected=1))
+        self.assertEqual(spoken, [])
+        page._handle_business_event(dict(type='rx', messages=[
+            dict(text='hello', message_id='rx:1', crc_valid=True)]))
+        self.assertEqual(spoken, ['收到新文本'])
+        # The same message arriving again must stay silent.
+        page._handle_business_event(dict(type='rx', messages=[
+            dict(text='hello', message_id='rx:1', crc_valid=True)]))
+        self.assertEqual(spoken, ['收到新文本'])
 
     def test_event_type_classifies_history_independent_of_role(self):
         for page in (self.sender, self.receiver):

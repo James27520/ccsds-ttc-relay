@@ -21,6 +21,7 @@ from .ui_v2_model import (command_request, device_choices, format_mhz, frequency
                          business_frequency_plan, online_frequency_plan, request_lo_hz, request_tolerance_hz,
                          CONTROL_OPERATIONS, relay_snapshot_view)
 from .rf_profiles import DEMO_TX_CENTERS, DEMO_RX_CENTERS, DEMO_HINT, is_demo_request
+from .sound import Notifier
 
 
 BG = '#F4F6F8'
@@ -33,9 +34,9 @@ PALE = '#EAF5F3'
 BLUE = '#2D64B3'
 AMBER = '#8E671D'
 ROLES = {
-    'sender': ('终端1 · 双向通信', '终端1', '与终端2交换文本。', '终端1  ⇄  终端2'),
-    'receiver': ('终端2 · 双向通信', '终端2', '与终端1交换文本。', '终端2  ⇄  终端1'),
-    'control': ('终端1 · 转发板测控', '转发板测控', '设置远端转发板，核对射频回报。', '远端设备  /  LDSDR'),
+    'sender': ('终端1 · 双向通信', '终端1'),
+    'receiver': ('终端2 · 双向通信', '终端2'),
+    'control': ('终端1 · 转发板测控', '转发板测控'),
 }
 
 
@@ -142,10 +143,11 @@ class ReviewSession:
         # as a remote state source or used to submit a control action.
         self._relay_display_snapshot = None
         self._relay_display_after = None
-        self._relay_display_unknown_message = '转发板状态未知 · 本会话尚无测控回报'
         self.business_controller_factory = business_controller_factory
         self.controller_factory, self.log_dir = controller_factory, log_dir
         self.port_provider = port_provider or self._ports
+        self.notifier = Notifier()
+        self.sound_enabled = tk.BooleanVar(root, value=self.notifier.enabled)
         self._style()
         self.refresh_devices()
 
@@ -162,13 +164,12 @@ class ReviewSession:
         self._relay_display_mono_anchor = time.monotonic()
         self._refresh_relay_status()
 
-    def invalidate_relay_status(self, message):
+    def invalidate_relay_status(self):
         """Withdraw stale display evidence without issuing a control action."""
         if self._relay_display_after is not None:
             self.root.after_cancel(self._relay_display_after)
             self._relay_display_after = None
         self._relay_display_snapshot = None
-        self._relay_display_unknown_message = '转发板状态未知 · '+message
         self._refresh_relay_status()
 
     @staticmethod
@@ -180,12 +181,11 @@ class ReviewSession:
 
     def _relay_status_event(self):
         if self._relay_display_snapshot is None:
-            return dict(type='relay_status', state='unknown',
-                        message=self._relay_display_unknown_message)
+            return dict(type='relay_status', state='unknown', message='')
         view = relay_snapshot_view(self._relay_display_snapshot,
             self._relay_display_wall_anchor+max(0, time.monotonic()-self._relay_display_mono_anchor))
         return dict(type='relay_status', state=view['state'],
-                    message=view['message']+' · 来源：本会话测控回报',
+                    message=view['message']+' · 来源：本会话测控回报' if view['message'] else '',
                     refresh_after_ms=view['refresh_after_ms'])
 
     def _refresh_relay_status(self):
@@ -330,6 +330,10 @@ class ReviewSession:
                         fieldbackground=PAPER, background=PAPER, bordercolor=LINE)
         style.map('V2.TCombobox', fieldbackground=[('readonly', PAPER)],
                   foreground=[('readonly', INK)])
+        style.configure('V2.TCheckbutton', background=PAPER, foreground=MUTED,
+                        font=('Microsoft YaHei UI', 9), padding=(4, 2))
+        style.map('V2.TCheckbutton', background=[('active', PAPER)],
+                  foreground=[('active', INK)])
         style.configure('V2.TSpinbox', padding=8, bordercolor=LINE,
                         font=('Microsoft YaHei UI', 10), fieldbackground=PAPER)
         style.configure('V2.Frequency.TEntry', padding=10, bordercolor=LINE,
@@ -407,6 +411,7 @@ class ReviewSession:
                 setattr(page, name, None)
         value = None
         if not self.windows and not keep_root:
+            self.notifier.close()
             if self._relay_display_after is not None:
                 self.root.after_cancel(self._relay_display_after)
                 self._relay_display_after = None
@@ -414,7 +419,7 @@ class ReviewSession:
                 self.root.after_cancel(self._terminal_poll_id)
                 self._terminal_poll_id = None
             self.root.destroy()
-            self.source_selection = self.receiver_selection = self.root = None
+            self.source_selection = self.receiver_selection = self.sound_enabled = self.root = None
 
     def replace_business_page(self, role, direction):
         page = self.windows[role]
@@ -540,22 +545,8 @@ class StationReview:
         combined = getattr(self, 'combined_terminal', False)
         main = tk.Frame(self.window, bg=BG, padx=22 if combined else 26, pady=12 if combined else 20)
         main.pack(fill='both', expand=True)
-        mast = tk.Frame(main, bg=BG)
-        mast.pack(fill='x')
-        if self.role != 'control':
-            self.relay_status = tk.StringVar(self.window)
-            self.relay_status_label = label(mast, variable=self.relay_status,
-                size=10, color=AMBER, bold=True, bg=BG)
-            self.relay_status_label.pack(side='left')
-        else:
-            label(mast, 'NTN   /   卫星测控与变频转发', color=MUTED, size=10, bg=BG).pack(side='left')
-        badge = label(mast, ' 在线测控 ' if self.online else ' 在线业务 ' if self.business_online else ' 界面审阅 ',
-                      color=TEAL if self.live else AMBER, size=9, bg=PALE if self.live else '#FBF2DE')
-        badge.pack(side='right', padx=(15, 0))
-        label(mast, ROLES[self.role][3], color=TEAL, bold=True, bg=BG).pack(side='right')
-
         header = tk.Frame(main, bg=BG)
-        header.pack(fill='x', pady=(8, 10) if combined else (15, 18))
+        header.pack(fill='x', pady=(0, 10 if combined else 18))
         heading = tk.Frame(header, bg=BG)
         heading.pack(side='left')
         title = ROLES[self.role][1]
@@ -596,6 +587,10 @@ class StationReview:
         if self.session.online_control and self.role == 'sender' and not self.business_online:
             self.connection_status.set('●  测控模式 · 文本禁发')
         label(connection, variable=self.connection_status, color=MUTED, size=9).pack(side='left', padx=15)
+        if self.role != 'control':
+            self.sound_toggle = ttk.Checkbutton(connection, text='语音播报', variable=self.session.sound_enabled,
+                                                command=self.toggle_sound, style='V2.TCheckbutton')
+            self.sound_toggle.pack(side='left', padx=(10, 0))
         self.details_button = button(connection, '设备与参数  ▾', self.toggle_details)
         self.details_button.pack(side='right')
         if combined:
@@ -611,6 +606,10 @@ class StationReview:
         self.details.bind('<Configure>', lambda event: detail_label.configure(wraplength=max(200, event.width-24)))
         self._build_details()
 
+        if self.role != 'control':
+            self.relay_status = tk.StringVar(self.window)
+            self.relay_status_label = label(main, variable=self.relay_status,
+                size=10, color=MUTED, bg=BG)
         self.body = tk.Frame(main, bg=BG)
         self.body.pack(fill='both', expand=True)
         getattr(self, '_build_'+self.flow_role)()
@@ -906,7 +905,7 @@ class StationReview:
             self.attenuation_note.set('  本地配置尚未确认。')
         else:
             self.carrier_frequency.set('—')
-            self.receiver_plan_note.set('MHz · 本地先验尚未应用，远端状态未知')
+            self.receiver_plan_note.set('MHz · 本地先验尚未应用')
             self.frame_stats.set('有效帧 — / CRC候选拒绝 —')
             self.spectrum.set_spectrum(None)
 
@@ -983,7 +982,7 @@ class StationReview:
             else:
                 lo = values.get('rx_lo_hz_readback')
                 if self._finite_business(lo):
-                    self.receiver_plan_note.set(f'本地 LO {lo/1e6:.3f} MHz\n先验 {values.get("expected_rf_mhz", self.expected_rf.get())} MHz · 远端状态未知')
+                    self.receiver_plan_note.set(f'本地 LO {lo/1e6:.3f} MHz\n先验 {values.get("expected_rf_mhz", self.expected_rf.get())} MHz')
             if self.business_pending == 'configure' and values.get('configured') is True and self.business_config_request:
                 key = 'tx_rf_mhz' if self.flow_role == 'sender' else 'expected_rf_mhz'
                 plan = business_frequency_plan(self.flow_role, self.business_config_request[key])
@@ -1234,7 +1233,7 @@ class StationReview:
         self.online_state = 'sending'
         self.connection_status.set('●  执行中')
         self._record_online('在线 · 已提交，待回报')
-        self.session.invalidate_relay_status('测控执行中，等待本次射频回报')
+        self.session.invalidate_relay_status()
         self._submit_online('send', requested=dict(request), wiring_confirmed=True)
         self.session.update_online_controls()
 
@@ -1326,7 +1325,7 @@ class StationReview:
             # operation rejection separate from the checked state evidence.
             self.session.remember_relay_status(relay)
         else:
-            self.session.invalidate_relay_status('远端拒绝，本次回报状态不明，待查询')
+            self.session.invalidate_relay_status()
         for index, item in enumerate(self.step_labels, 1):
             item.configure(text=f'0{index}   '+('远端拒绝' if index == 4 and rc else
                 ('已提交指令', '上行已发送', '收到射频回报', '核对状态快照')[index-1]),
@@ -1341,7 +1340,7 @@ class StationReview:
             if not self.online or self.closing or self.controller is None:
                 return
             if self.active_request is not None:
-                self.session.invalidate_relay_status('测控已取消，执行结果待查询')
+                self.session.invalidate_relay_status()
             self.cancel_pending = True
             self.cancel_had_request = self.active_request is not None
             self.active_request = self.active_plan = None
@@ -1354,7 +1353,7 @@ class StationReview:
         if not self.online or self.closing or self.cancel_pending or self.controller is None:
             return
         if self.active_request is not None:
-            self.session.invalidate_relay_status('测控已取消，执行结果待查询')
+            self.session.invalidate_relay_status()
         self.cancel_pending = True
         self.cancel_had_request = self.active_request is not None
         self.accept_connected = False
@@ -1378,7 +1377,7 @@ class StationReview:
         if self.closing:
             return
         if self.active_request is not None:
-            self.session.invalidate_relay_status('测控窗口关闭，本次执行结果待查询')
+            self.session.invalidate_relay_status()
         self.closing = True
         self.accept_connected = False
         self.online_identity = None
@@ -1393,7 +1392,7 @@ class StationReview:
 
     def _online_error(self, message, category=None):
         if self.active_request is not None:
-            self.session.invalidate_relay_status('本次测控未确认，执行结果待查询')
+            self.session.invalidate_relay_status()
         awaiting_cancel = self.cancel_pending and category == 'cancelled'
         timeout = category == 'timeout' or (category is None and ('超时' in message or 'timeout' in message.lower()))
         cancelled = category == 'cancelled'
@@ -1446,8 +1445,12 @@ class StationReview:
         if event.get('type') == 'relay_status':
             if self.role != 'control' and not self.closing:
                 self.relay_status.set(event['message'])
-                self.relay_status_label.configure(
-                    fg=AMBER if event.get('state') in ('expired', 'unknown') else MUTED)
+                if event['message']:
+                    self.relay_status_label.configure(
+                        fg=AMBER if event.get('state') in ('expired', 'unknown') else MUTED)
+                    self.relay_status_label.pack(side='bottom', anchor='w', before=self.body)
+                else:
+                    self.relay_status_label.pack_forget()
             return
         if self.business_online:
             self._handle_business_event(event)
@@ -1613,7 +1616,7 @@ class StationReview:
             if event.get('passed') is not True or type(count) is not int or count <= 0 or not matched:
                 self._online_error('真实回报未通过请求关联、CRC 帧数或频率核对。', 'validation')
                 return
-            self.session.invalidate_relay_status('频率回报未提供转发模式与电平，待查询')
+            self.session.invalidate_relay_status()
             self._reset_reply()
             self.last_evidence = dict(iq_path=str(event.get('iq_path', '未提供')),
                                       report_path=str(event.get('report_path', '未提供')))
@@ -1649,6 +1652,9 @@ class StationReview:
                 break
         if self.session.windows.get(self.role) is self and self._poll_id is None:
             self._poll_id = self.window.after(60, self._drain_online_events)
+
+    def toggle_sound(self):
+        self.session.notifier.set_enabled(self.session.sound_enabled.get())
 
     def toggle_details(self):
         self.update_details()

@@ -44,6 +44,7 @@ class TerminalReview(StationReview):
 
     def __init__(self, session, role):
         self.received_ids = set()
+        self.voice_connected = False
         self.tx_requests = {}
         self.last_business_error = None
         self.business_issue_kind = None
@@ -138,7 +139,7 @@ class TerminalReview(StationReview):
 
         received = card(self.body, '来自'+peer, padding=14)
         received.edge.grid(row=2, column=1, sticky='nsew', padx=(7, 0), pady=(0, 12))
-        text_box = tk.Frame(received, bg='#F0F8F6', padx=14, pady=12)
+        text_box = tk.Frame(received, bg='#F0F8F6', padx=14)
         text_box.pack(fill='both', expand=True, pady=(8, 8))
         self.received_text = tk.StringVar(self.window, '等待接收文本')
         self.received_hero = label(text_box, variable=self.received_text, size=18, color='#9BADA9', bg='#F0F8F6', wrap=420)
@@ -414,6 +415,8 @@ class TerminalReview(StationReview):
                 self.history.set(entry['row'], 'id', message_id)
             entry['state'] = state
         if state == 'sent' and isinstance(message_id, str):
+            if message_id not in self.business_tx_ids:
+                self.notify('sent')
             self.business_tx_ids.add(message_id)
         if state == 'retry':
             self.business_note.set('待发送记录保留，选中后点击“重试选中”。'+str(event.get('reason') or ''))
@@ -450,13 +453,24 @@ class TerminalReview(StationReview):
         self.carrier_frequency.set('—')
         self.spectrum.set_spectrum(None)
 
+    def notify(self, cue):
+        """Play a short success/error cue when the user has kept sound enabled."""
+        notifier = getattr(self.session, 'notifier', None)
+        if notifier is not None:
+            notifier.play(cue)
+
     def _business_released(self, message, state='disconnected'):
         if state == 'error':
+            if self.last_business_error is None:
+                self.notify('error')
             self.last_business_error = str(message)
         elif self.last_business_error is not None:
             # Cleanup often reports disconnected after the actual failure.
             # Keep its cause visible until a new connection attempt or success.
             state, message = 'error', self.last_business_error
+        elif self.voice_connected:
+            self.notify('disconnected')
+        self.voice_connected = False
         if state == 'error':
             self._show_business_issue(str(message), 'connection')
         self.local_claimed = self.accept_connected = self.cancel_pending = False
@@ -561,6 +575,9 @@ class TerminalReview(StationReview):
                     self.cancel_pending = False
                 if state == 'receiving':
                     self.rx_active, self.tx_active, self.tc_active = True, False, False
+                    if self.business_configured and not self.voice_connected:
+                        self.voice_connected = True
+                        self.notify('connected')
                 elif state == 'transmitting':
                     self.tx_active = True
                 elif state == 'paused':
@@ -591,11 +608,17 @@ class TerminalReview(StationReview):
             elif message_id not in self.business_tx_ids:
                 self.history.insert('', 0, direction='sent', values=(datetime.now().strftime('%H:%M:%S'),
                     message_id, text, '已发送'))
+                self.notify('sent')
             self.business_tx_ids.add(message_id)
         elif kind == 'rx':
             if not self.local_claimed or self.cancel_pending:
                 return
+            previous_count = len(self.received_ids)
             self._business_rx(event)
+            # Noise windows, CRC rejects and progress frames also arrive as 'rx';
+            # only a brand-new CRC-verified message earns an announcement.
+            if len(self.received_ids) > previous_count:
+                self.notify('received')
         elif kind == 'log' and event.get('level') in ('warning', 'error'):
             self.business_note.set(str(event.get('message', '')))
             self._show_business_issue(self.business_note.get(), 'diagnostic')
