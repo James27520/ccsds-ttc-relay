@@ -39,7 +39,7 @@
 ## 启动演示
 
 1. 按 [双电脑操作说明](docs/two-computer-guide.md) 核对接线、板卡与环境。Windows 首次使用运行 [setup_station.bat](setup_station.bat)。
-2. 电脑1运行 [start_terminal1.bat](start_terminal1.bat)，电脑2运行 [start_terminal2.bat](start_terminal2.bat)。单电脑台架可在 [start_station_v2.bat](start_station_v2.bat) 中选择菜单项 3。
+2. 电脑1运行 [start_terminal1.bat](start_terminal1.bat)，电脑2运行 [start_terminal2.bat](start_terminal2.bat)。根目录仅保留上述两个终端入口及环境安装、检查入口；测控从终端1窗口打开。
 3. 两端分别连接本地 SDR 并应用匹配的收发频率。从终端1窗口进入测控，设置远端频率并收到成功回报后开启转发，再互发新文本核对实收。
 
 ## 仓库入口

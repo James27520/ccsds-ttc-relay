@@ -576,7 +576,7 @@ class StationReview:
         self.connect_button = button(connection, '连接', self.connect_business if self.business_online else self.connect_online, disabled=True)
         self.connect_button.pack(side='left')
         if not self.live:
-            label(connection, '离线预览 · 使用 start_station_v2.bat 启动在线连接',
+            label(connection, '离线预览 · 使用 start_terminal1.bat 或 start_terminal2.bat 启动在线连接',
                   color=AMBER, size=9).pack(side='left', padx=10)
         if self.role == 'control' and self.session.unified_terminal:
             self.port_combo.pack_forget()

@@ -10,7 +10,7 @@
 
 当前第二版入口已接入统一终端后台：每块本地终端板卡只有一个工作线程和一个串口owner，终端1通信与测控页面订阅同一个后台。默认启动仍是离线界面审阅，不连接设备、不发射。**10月31日晚已修正本机终端角色标签，通过实际GUI双向文本、真实测控及测控期间两条新文本按序自动发送和对端实收。USB长期稳定性、SD启动CRC及掉电自启动仍待解决，详见[最新验收范围](../../docs/unified-terminal-validation.md#gui收发恢复与角色核对)。**
 
-实板操作使用上述两个终端入口；[start_station_v2.bat](../../start_station_v2.bat)现为选择菜单，选3才打开单电脑三页面。[review_ui_v2.bat](../../review_ui_v2.bat)是离线布局预览，标题带“离线预览”，不能连接设备；对应命令为`python -m sw.ground_station.ui_v2 --all --preview`。三个页面的职责如下：
+实板操作使用上述两个终端入口，测控从终端1窗口打开。根目录仅保留环境安装、检查和两个终端 BAT。离线布局预览可运行`.\.venv\Scripts\python.exe -m sw.ground_station.ui_v2 --all --preview`，标题带“离线预览”，不能连接设备。三个页面的职责如下：
 
 | 页面 | 职责 |
 | --- | --- |
@@ -30,10 +30,8 @@
 
 | 入口 | 打开的窗口 |
 | --- | --- |
-| [start_terminal1.bat](../../start_terminal1.bat) | 电脑1：终端1双向通信，可打开测控页；旧start_sender_v2名称兼容 |
-| [start_terminal2.bat](../../start_terminal2.bat) | 电脑2：仅终端2双向通信；旧start_receiver_v2名称兼容 |
-| [start_station_v2.bat](../../start_station_v2.bat) | 选择菜单，选3打开本机三个页面 |
-| [start_control.bat](../../start_control.bat) | 测控页及终端1通信连接入口 |
+| [start_terminal1.bat](../../start_terminal1.bat) | 电脑1：终端1双向通信，可打开测控页 |
+| [start_terminal2.bat](../../start_terminal2.bat) | 电脑2：仅终端2双向通信 |
 
 命令行可使用`python -m sw.ground_station.ui_v2 --computer 1`或`--computer 2`启动对应在线工作区；加`--preview`只预览，不连接设备。传统`--all --online-business --online-control`保留三窗口台架方式。单独运行`--role control --online-control`也会自动打开具备连接能力的终端1通信页；双电脑正常操作应直接在终端1页打开测控。传统`--role`/`--all`没有在线参数时仍为离线审阅。
 
@@ -109,7 +107,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m sw.ground_station.ui_v2 --computer 2
 ```
 
-也可直接双击[start_terminal1.bat](../../start_terminal1.bat)和[start_terminal2.bat](../../start_terminal2.bat)。启动脚本定位自身仓库目录并检查本机`.venv`，缺依赖时提示先安装，不自动下载、连接设备或发射。`start_sender.bat`和`start_receiver.bat`是第一版历史工具，不用于这次双电脑联调。
+也可直接双击[start_terminal1.bat](../../start_terminal1.bat)和[start_terminal2.bat](../../start_terminal2.bat)。启动脚本定位自身仓库目录并检查本机`.venv`，缺依赖时提示先安装，不自动下载、连接设备或发射。旧版与兼容 BAT 已删除。
 
 若使用其他虚拟环境，可先激活环境、运行环境检查，再直接运行上述模块命令。两台电脑分别安装依赖并保留完整仓库；电脑2的一个终端窗口已包含发送与接收，不另启动单向发送程序。
 

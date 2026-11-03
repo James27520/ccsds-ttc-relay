@@ -390,7 +390,7 @@ class TerminalWorkspaceTests(unittest.TestCase):
             widgets.extend(widget.winfo_children())
             if isinstance(widget, tk.Label):
                 labels.append(widget.cget('text'))
-        self.assertTrue(any('start_station_v2.bat' in value for value in labels))
+        self.assertTrue(any('start_terminal1.bat' in value and 'start_terminal2.bat' in value for value in labels))
 
 
 if __name__ == '__main__':
