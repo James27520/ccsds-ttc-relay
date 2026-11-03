@@ -5,7 +5,7 @@ import re
 import struct
 
 
-def verify(out, base, pinned, package):
+def verify(out, base, pinned, package, dual_board_source=None):
     sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
     symbols = (out/"symbols.txt").read_text()
     source = (out/"src/main.c").read_text()
@@ -34,7 +34,9 @@ def verify(out, base, pinned, package):
     checks = dict(
         fixed_rebuild_all_checks_pass=all(json.loads((out/"fixed_reference/offline_verification.json").read_text())["checks"].values()),
         existing_non_main_sources_unchanged=all(sha(out/"src"/n)==pinned["patched_sources_sha256"][n] for n in unchanged),
-        new_headers_match_package=all(sha(out/"src"/p.name)==sha(p) for p in package.glob("*.h")),
+        new_headers_match_package=all(
+            (board == dual_board_source(p.read_text()) if dual_board_source and p.name=="relay_remote_board.h"
+             else sha(out/"src"/p.name)==sha(p)) for p in package.glob("*.h")),
         entry_0x04800000=eh[4]==0x04800000,
         all_loads_within_window=bool(loads) and all(0x04800000<=s[2] and s[2]+s[5]<=0x04c00000 and s[2]==s[3] for s in loads),
         disjoint_from_fixed_load_window=all(s[2]+s[5]<=0x04000000 or s[2]>=0x04400000 for s in loads),
@@ -56,6 +58,20 @@ def verify(out, base, pinned, package):
         board_native_groups_passed=tests.get("test_board_results.txt", "").count("PASS:")>=4,
         baseline_elf_unchanged=sha(base/"relay_udp.elf")==pinned["base_elf_sha256"],
     )
+    if dual_board_source:
+        axi = word(mmu+0x43c*4)
+        # GCC can reuse the argument register for both the first store and the
+        # subsequent two-path mute. Match its dataflow, not a particular r2.
+        start = main_dis.split("<Xil_ICacheEnable>",1)[0]
+        mute_prefix = (r"mov\s+(r\d+), #0\s*\n[^\n]+movt\s+\1, #17344[^\n]*\n"
+                       r"[^\n]+mov\s+(r\d+), #2\s*\n[^\n]+str\s+\2, \[\1, #16\]"
+                       r"\s*\n[^\n]+bl\s+[0-9a-f]+ <relay_dual_set_mode>")
+        checks.update(
+            first_main_mmio_mute="<Xil_ICacheEnable>" in main_dis and bool(re.search(mute_prefix,start)),
+            dual_helper_matches=sha(out/"src/relay_dual_mode.h")==sha(package/"dual/relay_dual_mode.h"),
+            dual_axi_mapping=(axi&3)==2 and (axi&0xfff0700c)==0x43c00000,
+            dual_regression_passed=tests.get("test_board_results.txt","").count("PASS: dual PL")==2,
+        )
     result = dict(hardware_tested=False,checks=checks,elf_sha256=sha(out/"relay_remote.elf"),
         mmu_table=hex(mmu),stack_top=hex(symbol("__undef_stack")),ddr_bounds=[hex(low),hex(high)],
         load_segments=[dict(virtual=hex(s[2]),physical=hex(s[3]),file_size=s[4],memory_size=s[5],flags=s[6],

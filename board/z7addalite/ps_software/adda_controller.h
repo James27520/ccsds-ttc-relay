@@ -2,6 +2,9 @@
 #define ADDA_CONTROLLER_H
 #include "adda_ps_core.h"
 #include "adda_capture.h"
+#if ADDA_DOPPLER_ENABLED
+#include "../software/doppler/adda_doppler_rx.h"
+#endif
 struct act_clock {void *context; uint32_t (*now_ms)(void *);};
 struct act_controller {
     struct aps_state *core;
@@ -13,6 +16,10 @@ struct act_controller {
      * NULL preserves the existing manual/legacy auto behavior. */
     void *filter_context;
     int (*filter)(void *,const struct ap_frame_result *,uint32_t);
+#if ADDA_DOPPLER_ENABLED
+    struct dp_tracker doppler;
+    struct adp_trace doppler_trace;
+#endif
 };
 void act_init(struct act_controller *,struct aps_state *,struct ac_capture *,const struct act_clock *);
 /* Platform polls Ethernet/UART/timers before this cooperative iteration.

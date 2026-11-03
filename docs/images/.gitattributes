@@ -1,0 +1,2 @@
+# Matplotlib SVG paths contain intentional trailing spaces; preserve export bytes.
+*.svg -text whitespace=-blank-at-eol

@@ -192,6 +192,9 @@ void ac_poll(struct ac_capture *s,uint32_t now)
         s->config_epoch=epoch;
         if(!wr(s,TC_REG_REQUEST_SELECT,s->select) || !wr(s,TC_REG_REQUEST_EPOCH,s->epoch)) {fail(s,AC_EBUS);return;}
         if(!command(s,TC_CMD_ARM)){fail(s,AC_ECOMMAND);return;}
+#if ADDA_DOPPLER_ENABLED
+        s->arm_ms=now;s->done_ms=now;
+#endif
         s->state=AC_CAPTURING;s->phase_started_ms=now;return;
     }
     if(s->state==AC_CAPTURING) {
@@ -200,6 +203,9 @@ void ac_poll(struct ac_capture *s,uint32_t now)
         barrier(s);
         if(s->error==AC_ECANCEL){release(s,now);return;}
         if(!snapshot_read(s,&s->snapshot)){s->error=AC_EMETADATA;release(s,now);return;}
+#if ADDA_DOPPLER_ENABLED
+        s->done_ms=now;
+#endif
         s->copied_words=0u;s->state=AC_COPYING;s->phase_started_ms=now;
     }
     if(s->state==AC_COPYING) {

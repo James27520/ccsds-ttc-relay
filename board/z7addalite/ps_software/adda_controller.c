@@ -6,14 +6,36 @@ static uint32_t now(struct act_controller *c){return c->clock.now_ms(c->clock.co
 static void log_text(struct act_controller *c,const char *s)
 {if(c->core->io.log)c->core->io.log(c->core->io.context,s);}
 void act_init(struct act_controller *c,struct aps_state *s,struct ac_capture *a,const struct act_clock *clock)
-{memset(c,0,sizeof(*c));c->core=s;c->capture=a;if(clock)c->clock=*clock;c->reported_state=AC_IDLE;}
+{memset(c,0,sizeof(*c));c->core=s;c->capture=a;if(clock)c->clock=*clock;c->reported_state=AC_IDLE;
+#if ADDA_DOPPLER_ENABLED
+ {struct dp_config cfg;dp_defaults(&cfg,ADP_TC_LINK,0);(void)dp_init(&c->doppler,&cfg);}
+#endif
+}
 static int decode(struct act_controller *c)
 {
     struct ap_frame_result frame;adda_demod_stats stats;int rc;uint32_t start;char text[180];
     struct ac_capture *a=c->capture;
     if(!a || a->state!=AC_READY || !a->valid || c->consumed)return AP_EARG;
     if(c->core->transaction.pending)return AP_EBUSY;
-    start=now(c);rc=adda_receive(a->samples,TC_SAMPLE_COUNT,&frame,&stats);
+    start=now(c);
+#if ADDA_DOPPLER_ENABLED
+    if(c->doppler.mode!=DP_OFF && ac_normal_ready(a) && (a->select&1u)==0) {
+        rc=adp_receive(&c->doppler,a->samples,TC_SAMPLE_COUNT,a->arm_ms,start,
+                       (uint32_t)(a->done_ms-a->arm_ms)+1u,a->snapshot.epoch,
+                       &frame,&stats,&c->doppler_trace);
+        /* Integer Hz log avoids requiring float printf in a standalone BSP.
+         * Full-precision trace remains in RAM for the offline test harness. */
+        (void)snprintf(text,sizeof(text),
+          "DOPPLER t=%lu seq=%lu state=%u plan=%d used=%u pred=%ld residual=%ld applied=%ld rate=%ld obs=%d crc=%u\r\n",
+          (unsigned long)a->arm_ms,(unsigned long)a->snapshot.epoch,
+          (unsigned)c->doppler_trace.plan.state,c->doppler_trace.plan_result,c->doppler_trace.planned,
+          (long)c->doppler_trace.plan.prediction_hz,(long)c->doppler_trace.plan.residual_hz,
+          (long)c->doppler_trace.applied_correction_hz,(long)c->doppler_trace.applied_rate_hz_s,
+          c->doppler_trace.observation_result,c->doppler_trace.crc_ok);
+        log_text(c,text);
+    } else
+#endif
+    rc=adda_receive(a->samples,TC_SAMPLE_COUNT,&frame,&stats);
     (void)snprintf(text,sizeof(text),"WAVEFORM_DECODE source=%s epoch=%lu rc=%d elapsed_ms=%lu\r\n",
       ac_normal_ready(a)?"ADC_NORMAL":"ADC_TEST",(unsigned long)a->snapshot.epoch,rc,(unsigned long)(now(c)-start));
     log_text(c,text);c->consumed=1u;
@@ -76,6 +98,45 @@ int act_command_line(struct act_controller *c,const char *line)
     const char *guard;
     if(!c || !c->core || !c->clock.now_ms || !line)return AP_EARG;
     if(strlen(line)>127u)return AP_ELENGTH;
+#if ADDA_DOPPLER_ENABLED
+    if(!strncmp(line,"doppler ",8u)) {
+        double frequency,rate;unsigned ttl;struct dp_prediction model;
+        struct dp_output plan;enum dp_mode mode;
+        if(!strcmp(line,"doppler status")) {
+            int result=dp_plan(&c->doppler,now(c),&plan);
+            (void)snprintf(text,sizeof(text),"DOPPLER_STATUS mode=%u state=%u rc=%d valid=%u accepted=%lu rejected=%lu\r\n",
+              (unsigned)c->doppler.mode,(unsigned)plan.state,result,plan.valid,
+              (unsigned long)c->doppler.accepted,(unsigned long)c->doppler.rejected);
+            log_text(c,text);return AP_OK;
+        }
+        if(!strcmp(line,"doppler off")) {
+            (void)dp_set_mode(&c->doppler,DP_OFF);return AP_OK;
+        }
+        /* Model/mode changes require an idle capture; they never start service
+         * or arm forwarding, and no old observation survives a new model. */
+        if(c->automatic || c->filter || (c->capture && ac_busy(c->capture))) return AP_EBUSY;
+        if(sscanf(line,"doppler model %lf %lf %u %c",&frequency,&rate,&ttl,&extra)==3) {
+            model.start_ms=now(c);model.duration_ms=ttl;model.rf_hz=ADP_TC_RF_HZ;
+            model.cfo_hz=frequency;model.rate_hz_s=rate;
+            return dp_set_prediction(&c->doppler,&model)==DP_OK?AP_OK:AP_EARG;
+        }
+        if(sscanf(line,"doppler radial %lf %lf %u %c",&frequency,&rate,&ttl,&extra)==3) {
+            /* Input is radial range rate/acceleration in m/s and m/s^2.
+             * Positive = receding; conversion runs here on the A9. This is
+             * a local segment, not an on-board orbit propagator. */
+            double r[3]={1,0,0},v[3]={frequency,0,0},a[3]={rate,0,0};
+            model.start_ms=now(c);model.duration_ms=ttl;model.rf_hz=ADP_TC_RF_HZ;
+            if(dp_geometry(model.rf_hz,r,v,a,&model.cfo_hz,&model.rate_hz_s)!=DP_OK) return AP_EARG;
+            return dp_set_prediction(&c->doppler,&model)==DP_OK?AP_OK:AP_EARG;
+        }
+        if(!strcmp(line,"doppler predict")) mode=DP_PREDICTION;
+        else if(!strcmp(line,"doppler measure")) mode=DP_MEASUREMENT;
+        else if(!strcmp(line,"doppler hybrid")) mode=DP_FUSION;
+        else return AP_EARG;
+        if(mode!=DP_MEASUREMENT && !c->doppler.model_valid) return AP_EARG;
+        return dp_set_mode(&c->doppler,mode)==DP_OK?AP_OK:AP_EARG;
+    }
+#endif
     guard=line;while(*guard==' ' || *guard=='\t')++guard;
     if(!strncmp(guard,"remotenettest",13u) &&
        (c->automatic || c->filter || c->core->armed || (c->capture && ac_busy(c->capture))))return AP_EBUSY;

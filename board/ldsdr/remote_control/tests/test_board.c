@@ -29,7 +29,23 @@ static void relay_set_mode(unsigned value) {
     if(value==1) ++enable_writes;
     if(!mode_error) mode=value;
 }
+#ifdef RELAY_DUAL_PATH
+#define RELAY_GAIN_UNITY 0x800u
+#define R_RELAY_GAIN 0x1cu
+static unsigned ch2_ctrl,ch1_gain,drop_ch2_write;
+static unsigned Xil_In32(unsigned addr) {
+    if(addr==R_RELAY_MODE) return mode;
+    if(addr==R_RELAY_GAIN) return ch1_gain;
+    assert(addr==0x2cu); return ch2_ctrl;
+}
+static void Xil_Out32(unsigned addr,unsigned value) {
+    assert(addr==0x2cu);
+    if(!drop_ch2_write) ch2_ctrl=value;
+}
+#include "relay_dual_mode.h"
+#else
 static unsigned Xil_In32(unsigned addr) { assert(addr==R_RELAY_MODE); return mode; }
+#endif
 static int ad9361_set_rx_rf_gain(int *phy,unsigned ch,int32_t value) {
     assert(phy==ad9361_phy && ch<2);++level_writes;if(!first_event) first_event=2;
     gains[ch]=value;if(counter_error) ++relay_spi_error_count;return write_error;
@@ -66,6 +82,9 @@ static void reset(void) {
     write_error=counter_error=read_error=radio_error=legacy_error=mode_error=0;
     uart_pos=uart_n=0;uart="";remote_cli_length=remote_cli_overflow=0;
     diag_calls=stat_calls=0;cli_last_rc=0;
+#ifdef RELAY_DUAL_PATH
+    ch2_ctrl=2;ch1_gain=RELAY_GAIN_UNITY;drop_ch2_write=0;
+#endif
     remote_board_init();
 }
 static void feed(const char *s) { uart=s;uart_pos=0;uart_n=(unsigned)strlen(s); }
@@ -109,5 +128,26 @@ int main(void) {
     assert(remote_board_gain(NULL,0,30)==-1 && remote_board_attenuation(NULL,0,50000)==-1);
     ad9361_phy=&phy_object;probe_ready=0;assert(remote_board_read(NULL,&v)==-1);
     puts("PASS: unavailable/failed PHY initialization never dereferenced by the hardware adapter");
+#ifdef RELAY_DUAL_PATH
+    {
+        struct remote_command c={0};
+        c.rx_hz=900000000;c.tx_hz=1000000000;c.gain=30;c.attenuation=50;c.lease_ms=2000;
+        reset();assert(mode==2 && ch2_ctrl==0x2002u);
+        ch2_ctrl|=0x4000u; /* independently configured DC block must survive */
+        assert(!remote_enable(&remote_board,&c) && mode==1 && ch2_ctrl==0x6001u);
+        assert(!remote_safe(&remote_board) && mode==2 && ch2_ctrl==0x6002u);
+        assert(!remote_enable(&remote_board,&c));
+        ticks=remote_boot_ticks+COUNTS_PER_SECOND*2ULL;remote_tick(&remote_board);
+        assert(remote_board.expired && !remote_board.active && mode==2 && ch2_ctrl==0x6002u);
+        puts("PASS: dual PL cold zero gain, enable, stop and timeout preserve CH2 DC and unity gain");
+        reset();drop_ch2_write=1;
+        assert(remote_enable(&remote_board,&c)==-4 && remote_board.fault && !remote_board.active);
+        assert(mode==2 && ch2_ctrl==0x2002u && atten[0]==89000 && atten[1]==89000);
+        reset();assert(!remote_enable(&remote_board,&c));ch2_ctrl=1; /* mode correct, gain lost */
+        assert(remote_snapshot(&remote_board,&v)==-4 && !(v.flags&REMOTE_VALID));
+        assert(remote_board.fault && !remote_board.active && mode==2 && ch2_ctrl==0x2002u);
+        puts("PASS: dual PL CH2 write/gain mismatch rejects success and mutes both paths");
+    }
+#endif
     return 0;
 }

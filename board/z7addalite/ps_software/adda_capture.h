@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "capture_abi.h"
+#include "../software/doppler/doppler.h"
 
 /* All addresses/constants come from the FPGA owner's single generated ABI.
  * The final platform must map these apertures Device/noncacheable and provide
@@ -37,6 +38,10 @@ struct ac_capture {
     uint32_t phase_started_ms, copied_words;
     unsigned valid;
     struct ac_metadata snapshot;
+#if ADDA_DOPPLER_ENABLED
+    /* Local PS timestamp bounds; not an FPGA sample timestamp. */
+    uint32_t arm_ms, done_ms;
+#endif
 };
 #define AC_TIMEOUT_MS 5000u
 #define AC_COPY_WORDS_PER_POLL 1024u

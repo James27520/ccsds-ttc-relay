@@ -16,6 +16,14 @@ typedef struct {
     unsigned timing_trials;
 } adda_demod_stats;
 
+/* Optional block-start frequency and linear chirp. The rate is in sampled IF
+ * Hz/s, not a change to the ADC clock or RF LO. search_hz=0 fixes the frequency
+ * (prediction-only experiment); otherwise the squared BPSK line refines it.
+ * Normal adda_demod() retains its original acquisition and mixer. */
+typedef struct {
+    double center_hz, rate_hz_s, search_hz;
+} adda_demod_plan;
+
 /* Return nonzero only after the caller validates ASM, decoding, CRC and range.
  * Polarity ambiguity is intentionally left to the frame decoder. */
 typedef int (*adda_bits_callback)(const uint8_t *bits, size_t count,
@@ -29,4 +37,7 @@ typedef int (*adda_bits_callback)(const uint8_t *bits, size_t count,
 int adda_demod(const int16_t *samples, size_t count,
                adda_bits_callback callback, void *context,
                adda_demod_stats *stats);
+int adda_demod_planned(const int16_t *samples, size_t count,
+                       adda_bits_callback callback, void *context,
+                       adda_demod_stats *stats, const adda_demod_plan *plan);
 #endif

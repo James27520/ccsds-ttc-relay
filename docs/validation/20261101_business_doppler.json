@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-01",
+  "scope": "LDSDR autonomous dual business Doppler, offline basic verification",
+  "hardware_tested": false,
+  "downloaded": false,
+  "default_mode": "OFF",
+  "gui_changed": false,
+  "local_output": "D:\\RelayTools\\work\\doppler_business_20261101",
+  "firmware": {
+    "path": "D:\\RelayTools\\work\\doppler_business_20261101\\firmware_final\\relay_doppler.elf",
+    "sha256": "72e2452171991e8cf9fda9c7002e15691f5b7a0b32585436ca62c50fce240b30",
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n 205168\t   4012\t2733456\t2942636\t 2ce6ac\tD:\\RelayTools\\work\\doppler_business_20261101\\firmware_final\\relay_doppler.elf",
+    "load_ranges": [
+      [
+        "0x4800000",
+        "0x4834014"
+      ],
+      [
+        "0x4900000",
+        "0x4b9b590"
+      ]
+    ],
+    "mmu_table": "0x4830000",
+    "axi_section_descriptor": "0x43c00c02",
+    "reference": "D:\\RelayTools\\work\\remote_relay_20261029\\ldsdr_relocated02",
+    "reference_binary_equivalence_claimed": false
+  },
+  "pl": {
+    "path": "D:\\RelayTools\\work\\doppler_business_20261101\\pl03\\doppler_business.runs\\impl_2\\ad9361_top.bit",
+    "sha256": "bbbec53d1861c86871a811555cd2017763cded71867b587732820b4817b23a04",
+    "part": "xc7z010clg400-1",
+    "sample_rate_per_channel": 30720000,
+    "WNS_ns": 0.128,
+    "WHS_ns": 0.024,
+    "TNS_ns": 0,
+    "resources": {
+      "LUT": 1949,
+      "FF": 3677,
+      "BRAM36_tiles": 8,
+      "DSP48": 20
+    },
+    "full_cdc_signoff": false,
+    "warnings": "Existing missing IO delays and CDC items retained. 32 snapshot endpoint CDC Critical paths originate in the static vendor PHY_MODE gating; fixed 2R2T required. New request/ack/reset synchronizers recognized."
+  },
+  "basic_checks": {
+    "c_result": "ch=1 input_cfo=12300.000 measured=12300.505 downlink_cfo=-8000.000 correction=-4300.504 residual=-0.504\nch=2 input_cfo=-15250.000 measured=-15250.109 downlink_cfo=6000.000 correction=9250.109 residual=0.109\nBUSINESS_DOPPLER_PASS: two directions, signed correction, invalid observation, expiry, lease, baseline\n",
+    "board_mock_result": "DOPPLER business ready=1 default=OFF fs=30720000\n\nERR DOPPLER needs active lease, idle capture, valid radial plan\n\nDOPPLER ch=1 armed locally ttl_ms=1000; lease unchanged\n\nDOPPLER ch=2 armed locally ttl_ms=1000; lease unchanged\n\nDOPPLER ch=1 armed locally ttl_ms=1000; lease unchanged\n\nDOPPLER OFF\n\nBOARD_DOPPLER_PASS: local model, actual poller, dual raw IQ, lease/off cleanup, bounded capture stall\n",
+    "mixer_result": "RTL ch=1 residual_after_downlink=-0.010 Hz\nRTL ch=2 residual_after_downlink=-2.074 Hz\nMIXER_PASS: C estimator/NCO words drive existing dual-channel RTL, both correction signs\n"
+  },
+  "capture_rtl_check": "SNAPSHOT_PASS: independent AXI channels, two captures, both IQ banks, backpressure, frozen ownership, reset",
+  "common_core_checks": 80,
+  "limits": [
+    "Synthetic BPSK and RTL, not measured RF accuracy or BER",
+    "No hardware runtime or latency measurement",
+    "Inbound measured CFO includes oscillator error; outbound prediction only",
+    "Local finite radial model segment, no real orbit/GNSS/ephemeris source",
+    "20 ms observation freshness and fixed 2R2T require on-board validation"
+  ],
+  "files_sha256": {
+    "board/ldsdr/doppler/build_pl.tcl": "97026653eecfd4298709484f7b1b3bac682ed9597c71e9001f5ea2cf2e20fe96",
+    "board/ldsdr/doppler/rebuild.py": "9173458f693ec39299562a34615af696373f359aa65433ad2d032551f2025079",
+    "board/ldsdr/doppler/relay_doppler.c": "ea812ddcfa29efa87f5d24d9b8e870e6a4ee4e95a38f076d223e5facce9595ad",
+    "board/ldsdr/doppler/relay_doppler.h": "51e2d48d6c1e7bd85f52f666b8fa294f7029b0b3f655e7e1e3311f2e90bfab8f",
+    "board/ldsdr/doppler/relay_doppler_board.h": "04a2b74131f091533ef7bdcf62b83eeed3a8f716b82e4b46407685cea2a4ba0c",
+    "board/ldsdr/doppler/relay_iq_snapshot.v": "396f39a6e764f7dafc15b5d9edc102dd6df203801edb96b172a0fb5bb66d88e0",
+    "board/ldsdr/doppler/tb_business_mix.sv": "09ba398b23eac0c819978dac509442c1f9c2b422bb2833393b974d7e33662d44",
+    "board/ldsdr/doppler/tb_snapshot.sv": "af4b29ea9c1a9a04d09e73cabee4933939eca9990f8b3ad222e927cd8510ff78",
+    "board/ldsdr/doppler/test_board.c": "fc26ab34d1bb48b4070cdf59a1f071d73a7df844824a497e7539d144f84c202f",
+    "board/ldsdr/doppler/test_business.c": "302be2f00f8221083e4d95c072b6fc795337d4a340155020b626a608d47b6c8a",
+    "board/ldsdr/doppler/verify.py": "17efc5aee7466129ab30a3964cbae104aff4a7c2d86856cb7e8a6e7b9205e67b"
+  },
+  "reports_sha256": {
+    "timing.txt": "d5867640f385d58ccf2dbbdf84a5a42b7d3f89ecdda1d08785c16464f410358d",
+    "utilization.txt": "d07914c8711afa036ae6ab1c1b8d50b4161374c53a97154a1d3bb1daf51d7fda",
+    "drc.txt": "8b803d293343effac285c51f1463477bd8c7ca5dfa09068591a3948513826b91",
+    "cdc_details.txt": "888d4c81babc941f48650c9e10ea99a630e3457d9b39060f344973d2c425b73b"
+  }
+}

@@ -4,6 +4,7 @@
 
 | 文档 | 内容 |
 |---|---|
+| [星上业务多普勒补偿](doppler-compensation.md) | LDSDR 两路预测＋测量、数字移频；基础仿真、构建证据与实板边界 |
 | [项目首页](../README.md) | Z7ADDALite 遥控板、LDSDR 转发板和当前系统范围 |
 | [双端桌面站](../sw/ground_station/README.md) | 浅色发送/接收 GUI、独立设备、安装与操作 |
 | [桌面站验证](ground-station-validation.md) | 动态文本、真实硬件链路、异常与重连测试 |
