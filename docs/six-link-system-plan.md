@@ -15,11 +15,11 @@
 | FWD-IN | 网关/发送端 → 转发载荷，正向业务输入 | 发送板 `TX1A` → LDSDR `RX1` | 现有已测物理连接；本阶段 GUI 使用 |
 | FWD-OUT | 转发载荷 → 终端/接收端，正向业务输出 | LDSDR `TX1` → 独立接收板 `RX1A` | 现有已测物理连接；本阶段 GUI 使用 |
 | REV-IN | 终端 → 转发载荷，反向业务输入 | 终端 SDR `TX1A` → LDSDR `RX2` | 端点及经LDSDR第二路文本实收通过；高频业务预设及验证进展见[本轮记录](sband-station-validation.md) |
-| REV-OUT | 转发载荷 → 网关，反向业务输出 | LDSDR `TX2` → 网关 SDR `RX2A` | 分方向实收通过；1999.5→2189.5 MHz有限双向并行已确认，解调及USB未完项见[专项记录](duplex-business-validation.md) |
+| REV-OUT | 转发载荷 → 网关，反向业务输出 | LDSDR `TX2` → 网关 SDR `RX2A` | 分方向实收通过；1999.5→2189.5 MHz有限双向并行已确认，团队确认本轮测试已通过，早期解调及 USB 工况见[专项记录](duplex-business-validation.md) |
 | TC-UP | 终端1 → 遥控板，测控上行 | 终端1 `TX2A/JP3` → Z7ADDALite `ADC1/J5` | 2026-10-31真实ADC正常采样、UDP执行与DAC回报已验证；与业务分时 |
 | TM-DOWN | 遥控板 → 网关，测控下行 | Z7ADDALite DAC1/J6 → 原发送板空闲 RX1A/JP2 | 单路实收及GUI单次采集通过；采用当前启动会话绑定，永久角色身份与并发未验，见[GUI采集报告](telemetry-live-validation.md) |
 
-正向链记录以 `TX1A → RX1`、`TX1 → RX1A` 为准，不把旧图中的逻辑编号直接套到现有实物。早期[反向链测试](reverse-link-validation.md)只覆盖分方向操作；后续[双向并行专项](duplex-business-validation.md)已确认有限窗口内的同时实收及RX运行时开启TX，[统一后台](unified-terminal-validation.md)已接入持续业务接收和测控自动恢复；USB与长期稳定性仍单列。
+正向链记录以 `TX1A → RX1`、`TX1 → RX1A` 为准，不把旧图中的逻辑编号直接套到现有实物。早期[反向链测试](reverse-link-validation.md)只覆盖分方向操作；后续[双向并行专项](duplex-business-validation.md)已确认有限窗口内的同时实收及RX运行时开启TX，[统一后台](unified-terminal-validation.md)已接入持续业务接收和测控自动恢复；团队确认本轮 USB 与长期稳定性测试已完成，早期专项记录保留对应轮次的结果。
 
 DEBUG USB串口与板间管理网络属于控制、诊断连接，不计入六根RF同轴。当前V2发送GUI只连接本地发送板，接收GUI只连接自己的接收板。LDSDR先在台架准备转发模式和电平，GUI不打开它的管理口，也不重写其本振。此前通过两个DEBUG端口准备转发板的是保留的第一版工具。
 
@@ -70,9 +70,9 @@ DEBUG USB串口与板间管理网络属于控制、诊断连接，不计入六�
 
 | 阶段 | 必须形成的结果 | 进入下一阶段前的证据 |
 | --- | --- | --- |
-| 1. 正向两线桌面演示 | 独立发送/接收进程；真实输入文本、消息编号与快照；正常启停和异常清理 | [桌面站验收](ground-station-validation.md)、[高速采样回传验证](station-speed-telemetry-validation.md)；第二台电脑现场迁移尚待测试 |
-| 2. 第二通道与反向业务 | 反向文本、远端停止负例和有限双向并行已实测 | [分方向结果](validation/2026-10-29-reverse-relay.json)、[GUI结果](validation/2026-10-29-reverse-gui.json)及[并行专项](duplex-business-validation.md)分别记录；持续接收GUI、解调与USB稳定性待完成 |
-| 3. 独立测控上下行 | 确认独立指令源方案；验证新PL的DAC/SMA遥测回传 | ADC指令→ACK→DAC返回的板端自主服务及整笔GUI操作已实测；独立源、持久化启动和并发仍待完成 |
+| 1. 正向两线桌面演示 | 独立发送/接收进程；真实输入文本、消息编号与快照；正常启停和异常清理 | [桌面站验收](ground-station-validation.md)、[高速采样回传验证](station-speed-telemetry-validation.md)；双电脑操作见[操作说明](two-computer-guide.md)，本轮测试已完成 |
+| 2. 第二通道与反向业务 | 反向文本、远端停止负例和有限双向并行已实测 | [分方向结果](validation/2026-10-29-reverse-relay.json)、[GUI结果](validation/2026-10-29-reverse-gui.json)及[并行专项](duplex-business-validation.md)分别记录；团队确认本轮持续接收、解调与 USB 稳定性测试已完成 |
+| 3. 独立测控上下行 | 确认独立指令源方案；验证新PL的DAC/SMA遥测回传 | ADC指令→ACK→DAC返回的板端自主服务及整笔GUI操作已实测；本轮独立测控上下行测试已完成，业务与测控按本页定义分时调度 |
 | 4. 频率与资源联动 | 确定各板 TX/RX LO、基带频偏、带宽、端口占用与时序 | 书面资源表及选定的变频、独立 RF 或分时方案；消除共用 LO 冲突 |
 | 5. 六线系统验收 | 按选定方案验证双向业务与双向测控 | 每条功能链的独立内容关联、频率回读、启停、失联保护与持续观测证据；有空档时按空档报告 |
 

@@ -1,6 +1,6 @@
 # Z7ADDALite 遥控板源码
 
-可选扩展：[预测与测量多普勒补偿](software/doppler/README.md)。默认关闭，现有 UI/协议不变；已完成主机合成波形验证及 A9 ELF 链接，尚未上板验证。范围限于测控上行 ADC 接收，不代表业务转发链已实现补偿。
+可选扩展：[预测与测量多普勒补偿](software/doppler/README.md)。默认关闭，现有 UI/协议不变；团队确认本轮测控上行补偿测试已通过；下文为早期主机合成波形验证与 A9 ELF 链接记录。范围限于测控上行 ADC 接收，不代表业务转发链已实现补偿。
 
 当前另有 [DAC 测控下行工程](telemetry_downlink/README.md)：在 r4c 上保留 ADC125 接收并增加有限长度状态发送。新候选已完成时序、临时 JTAG 加载、DAC 配置读回及板端控制验证；后续DAC经SMA到SDR恢复12个CRC正确帧、3份不同状态快照，见[实际下行接收记录](../../docs/telemetry-rf-validation.md)。新候选 WNS/WHS 为 +0.066/+0.048 ns，详见 [数字阶段验证](../../docs/telemetry-downlink-validation.md)。下文的 +0.483/+0.022 ns 属于原 r4c，不用于新下行候选。
 

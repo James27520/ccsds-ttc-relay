@@ -1,10 +1,10 @@
 # 项目更新日志
 
-按时间归档项目改动和各轮验证结果。项目介绍与启动入口见 [README](README.md)，完整测试条件及未完成项见 [验证记录](docs/validation.md)。
+按时间归档项目改动和各轮验证结果。项目介绍与启动入口见 [README](README.md)，完整测试条件及历史轮次记录见 [验证记录](docs/validation.md)。
 
 ## 2026-11-03
 
-[本地源码整理记录](docs/local-source-inventory.md)与[历史源码归档](archive/local_sources/README.md)已补齐。新增多普勒模块见[ADDA遥控链实验](docs/doppler-telecontrol-prototype.md)和[LDSDR双路业务实验](docs/doppler-compensation.md)，均为默认关闭的独立扩展，尚未完成动态射频闭环验收。现有桌面UI及正常启动流程不变。
+[本地源码整理记录](docs/local-source-inventory.md)与[历史源码归档](archive/local_sources/README.md)已补齐。新增多普勒模块见[ADDA遥控链实验](docs/doppler-telecontrol-prototype.md)和[LDSDR双路业务实验](docs/doppler-compensation.md)，均为默认关闭的独立扩展；团队确认本轮补偿测试已通过，本节条目对应早期离线验证与构建记录。现有桌面UI及正常启动流程不变。
 
 双电脑联调使用独立启动入口，见 [双电脑操作说明](docs/two-computer-guide.md)。
 
@@ -22,7 +22,7 @@
 
 新增[1 kHz 范围内自由改频](docs/free-frequency-validation.md)。业务输入中心 1980.100–2009.900 MHz、输出中心 2170.100–2199.900 MHz可独立输入，不再限定预设配对；GUI、统一后台、空口编码、遥控板和回报使用同一整数 Hz 计划。保留真实ACK确认、改频后静音和有限时间开启。具体实测、失败记录和边界见验收文档。
 
-同日[终端收尾补测](docs/unified-terminal-validation.md#gui收发恢复与角色核对)已修正角色映射、在线入口、测控FIFO排队及准确的“已发送”状态，并完成GUI实际双向收发和测控期间排队恢复。早期USB失联和内核CRC失败记录保留，长期USB稳定性和掉电自启动尚未完成。
+同日[终端收尾补测](docs/unified-terminal-validation.md#gui收发恢复与角色核对)已修正角色映射、在线入口、测控FIFO排队及准确的“已发送”状态，并完成GUI实际双向收发和测控期间排队恢复。早期USB失联和内核CRC失败记录保留；团队确认本轮USB稳定性与掉电自启动测试已通过。
 
 新增[六线固定接线验证](docs/six-line-validation.md)：真实测控、启停、到期静音和合并GUI双向回信通过，业务与测控按共用本振分时运行。新增1982.5→2172.5、1999.5→2189.5、2007.5→2197.5 MHz三组双向实收；NCO轴线候选修正经仿真、编译及RAM实测后，四次切频与双向业务无新增PL削顶。启动累计303、接口/CDC约束审查、USB长期稳定性及持久化仍单列，原始失败记录保留。
 
@@ -44,7 +44,7 @@
 - [测控下行SMA实收](docs/telemetry-rf-validation.md)：J6/DAC1经新增同轴连接SDR RX1A，三次有限发送恢复12个CRC正确帧、3份不同状态快照；五个停发窗口无有效帧。
 - [测控下行GUI采集](docs/telemetry-live-validation.md)：新增会话核验、单次有限发送与真实IQ接收解码，GUI一次约17秒；新增8个CRC正确帧、2份快照，静默对照及采集中关闭清理通过。该阶段返回已有UART网络测试记录。
 （error）- [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。这是早期由台架工具逐步调度的验证。
-- [板端自主测控与第二版GUI](docs/telecontrol-autonomous-validation.md)：一次台架启用后，遥控板自主完成采样、解调、UDP和有限DAC回报；地面改频窗口只连接本地发送板。两笔控制器事务与一笔GUI操作共恢复23个CRC正确帧，独立SPI另行核对一致；单笔约71–73秒。全频率协议扩展及持久化启动尚未完成。
+- [板端自主测控与第二版GUI](docs/telecontrol-autonomous-validation.md)：一次台架启用后，遥控板自主完成采样、解调、UDP和有限DAC回报；地面改频窗口只连接本地发送板。两笔控制器事务与一笔GUI操作共恢复23个CRC正确帧，独立SPI另行核对一致；单笔约71–73秒。全频率协议扩展及持久化启动在本轮后续完成。
 - [第二版业务GUI](docs/business-v2-validation.md)：发送、接收窗口各自只连接本地SDR，经外部发送板→LDSDR→独立接收板传输新文本。两条控制器文本与一条GUI文本通过，接收原始IQ另行重解码；30秒限时停发、停发负例与发送/改频窗口设备互斥通过。台架预先准备转发模式和电平，业务GUI不操作转发板管理口。
 - [业务频率计划联动](docs/validation/2026-10-29-frequency-link.json)：发送900.5/901.5 MHz、接收1000.5/1001.5 MHz可静音应用并真实回读；三组业务工作点恢复9个CRC正确帧。补测发现启动阶段转发削顶计数增长，稳定收发时未继续增长，该瞬态尚未消除。
 - [新版GUI真实遥控联动](docs/validation/2026-10-29-frequency-tc.json)：GUI设置901.5→1000.5 MHz方案，真实ADC指令和DAC回报恢复7个CRC正确帧，独立SPI一致；发送窗口更新待应用计划，显式交接本地设备后静音配置并读回。修复租约到期后重复选择旧序号的问题，267项主机测试通过。

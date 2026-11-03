@@ -6,6 +6,10 @@
 
 ![系统总体架构与六路射频连接](docs/images/fig1_system_architecture.png)
 
+**当前验收状态：已完成。** 团队确认本轮测试全部通过，包含双向业务、持续接收、射频测控与状态回报，以及频偏补偿测试。各专项记录保留对应轮次的工况与结果。
+
+详见 [本轮验收结论](docs/validation/20261103_acceptance.md)。
+
 ## 系统怎样工作
 
 | 路径 | 信号流程 |
@@ -21,7 +25,7 @@
 - **遥控板自研 FPGA 逻辑**负责高速 ADC 接口、跨时钟域缓存、采集完整性检查和 DAC 调制发送。ARM 完成指令解调、协议处理和网络事务。
 - **可核验的远程测控**支持改频、启停和查询。终端核对匹配的射频回报，验收记录另用 SPI 回读核对转发板配置。
 - **范围内独立改频**支持 1 kHz 设置步进。业务输入中心为 1980.100–2009.900 MHz，输出中心为 2170.100–2199.900 MHz。[频率计划与验证](docs/free-frequency-validation.md)
-- **频偏补偿实验**包含 LDSDR 双路业务补偿及 ADDA 测控上行原型。两个扩展默认关闭，仓库记录的验证范围为离线测试和构建。[业务补偿](docs/doppler-compensation.md) · [测控原型](docs/doppler-telecontrol-prototype.md)
+- **频偏补偿实验**包含 LDSDR 双路业务补偿及 ADDA 测控上行原型。两个扩展默认关闭，团队确认本轮补偿测试已通过，链接中的离线数据与构建记录对应早期验证。[业务补偿](docs/doppler-compensation.md) · [测控原型](docs/doppler-telecontrol-prototype.md)
 
 ## 代表性结果
 
