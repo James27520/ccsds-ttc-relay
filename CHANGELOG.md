@@ -2,6 +2,10 @@
 
 按时间归档项目改动和各轮验证结果。项目介绍与启动入口见 [README](README.md)，完整测试条件及历史轮次记录见 [验证记录](docs/validation.md)。
 
+## 2026-11-04
+
+精简根目录启动器，仅保留环境安装、环境检查和两个终端入口；删除9个旧版、兼容及辅助BAT。复查并更新文档索引、默认在线说明、常驻接收与监听、独立本机频率计划，以及历史三线和短快照的适用范围。早期工具和报告保留溯源标识，不作为现行操作步骤。
+
 ## 2026-11-03
 
 [本地源码整理记录](docs/local-source-inventory.md)与[历史源码归档](archive/local_sources/README.md)已补齐。新增多普勒模块见[ADDA遥控链实验](docs/doppler-telecontrol-prototype.md)和[LDSDR双路业务实验](docs/doppler-compensation.md)，均为默认关闭的独立扩展；团队确认本轮补偿测试已通过，本节条目对应早期离线验证与构建记录。现有桌面UI及正常启动流程不变。
@@ -37,13 +41,13 @@
 - 修正LDSDR接收I/Q顺序后，[单音变频转发](docs/rf-forward-bringup.md)与[100 ksym/s文本业务转发](docs/rf-payload-validation.md)通过。两轮文本测试共13个有效信号窗口、19个完整CRC有效帧，三段内容全部一致；静音、关源和坏CRC未误接收。另用遥控板UDP命令触发约1 MHz实际频移，新频点仍恢复正确文本。
 - [业务序列与稳定性验证](docs/rf-stability-validation.md)另完成同一TX writer保持输出311.136秒、11次离散快照及8次1000/1001 MHz交替UDP设置。全轮25个窗口中，23个正例恢复29个完整CRC有效帧；7356个条件比较bit无差异，2个负例无有效帧，采样无ADC削顶、转发削顶增量0。
 - [独立接收板业务验证](docs/independent-receiver-validation.md)通过8个窗口（5正、3负），恢复8个完整CRC有效帧、1599个条件比较bit无差异；UDP改频后的实测位移999997.235 Hz，全部采样来自新增COM18接收板。
-（error）- [真实ADC与业务分时验证](docs/adc-business-staged-validation.md)完成修正版LDSDR的四组真实遥控设置；保留900/1001 MHz设置换线，未再次改频，独立接收端恢复6个完整CRC有效帧、960个条件比较bit无差异，3个负例无有效帧。
+- [真实ADC与业务分时验证](docs/adc-business-staged-validation.md)完成修正版LDSDR的四组真实遥控设置；保留900/1001 MHz设置换线，未再次改频，独立接收端恢复6个完整CRC有效帧、960个条件比较bit无差异，3个负例无有效帧。
 - [双端桌面站](sw/ground_station/README.md)提供浅色发送、接收窗口，可现场输入短中文或英文，经外部三板链路恢复文本、消息编号和 CRC。控制器回归完成15个快照、26个有效帧，另完成两个独立桌面进程的实际收发；接收控制器断开重连与发送进程失联保护通过实板检查，见[详细验收](docs/ground-station-validation.md)。
 - [演示提速与测控状态回传](docs/station-speed-telemetry-validation.md)：DEBUG临时高速传输将快照周期降至2.87–2.91秒，另完成29快照/26有效帧回归。发送GUI新增带CRC的TM1监控，独立展示UDP/ACK与SPI读回；该管理状态经USB返回。
 - [DAC下行数字实现与板端验证](docs/telemetry-downlink-validation.md)：新增90.5MHz有限状态发送链，完整ADC/DAC时序及板端配置读回、单次发送/取消、PN9和网口回归通过。
 - [测控下行SMA实收](docs/telemetry-rf-validation.md)：J6/DAC1经新增同轴连接SDR RX1A，三次有限发送恢复12个CRC正确帧、3份不同状态快照；五个停发窗口无有效帧。
 - [测控下行GUI采集](docs/telemetry-live-validation.md)：新增会话核验、单次有限发送与真实IQ接收解码，GUI一次约17秒；新增8个CRC正确帧、2份快照，静默对照及采集中关闭清理通过。该阶段返回已有UART网络测试记录。
-（error）- [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。这是早期由台架工具逐步调度的验证。
+- [真实遥控与射频回报闭环](docs/telecontrol-roundtrip-validation.md)：两条新ADC_NORMAL指令分别设置900/1001、900/1000MHz，经匹配ACK和独立SPI核对后，DAC下行各恢复4帧对应状态。这是早期由台架工具逐步调度的验证。
 - [板端自主测控与第二版GUI](docs/telecontrol-autonomous-validation.md)：一次台架启用后，遥控板自主完成采样、解调、UDP和有限DAC回报；地面改频窗口只连接本地发送板。两笔控制器事务与一笔GUI操作共恢复23个CRC正确帧，独立SPI另行核对一致；单笔约71–73秒。全频率协议扩展及持久化启动在本轮后续完成。
 - [第二版业务GUI](docs/business-v2-validation.md)：发送、接收窗口各自只连接本地SDR，经外部发送板→LDSDR→独立接收板传输新文本。两条控制器文本与一条GUI文本通过，接收原始IQ另行重解码；30秒限时停发、停发负例与发送/改频窗口设备互斥通过。台架预先准备转发模式和电平，业务GUI不操作转发板管理口。
 - [业务频率计划联动](docs/validation/2026-10-29-frequency-link.json)：发送900.5/901.5 MHz、接收1000.5/1001.5 MHz可静音应用并真实回读；三组业务工作点恢复9个CRC正确帧。补测发现启动阶段转发削顶计数增长，稳定收发时未继续增长，该瞬态尚未消除。

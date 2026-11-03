@@ -1,8 +1,12 @@
 # Z7ADDALite 遥控板源码
 
-可选扩展：[预测与测量多普勒补偿](software/doppler/README.md)。默认关闭，现有 UI/协议不变；团队确认本轮测控上行补偿测试已通过；下文为早期主机合成波形验证与 A9 ELF 链接记录。范围限于测控上行 ADC 接收，不代表业务转发链已实现补偿。
+可选扩展：[预测与测量多普勒补偿](software/doppler/README.md)。默认关闭，现有 UI/协议不变；团队确认本轮测控上行补偿测试已通过；下文为早期主机合成波形验证与 A9 ELF 链接记录。该模块范围限于测控上行 ADC 接收；业务转发补偿由[LDSDR独立模块](../ldsdr/doppler/README.md)处理。
 
 当前另有 [DAC 测控下行工程](telemetry_downlink/README.md)：在 r4c 上保留 ADC125 接收并增加有限长度状态发送。新候选已完成时序、临时 JTAG 加载、DAC 配置读回及板端控制验证；后续DAC经SMA到SDR恢复12个CRC正确帧、3份不同状态快照，见[实际下行接收记录](../../docs/telemetry-rf-validation.md)。新候选 WNS/WHS 为 +0.066/+0.048 ns，详见 [数字阶段验证](../../docs/telemetry-downlink-validation.md)。下文的 +0.483/+0.022 ns 属于原 r4c，不用于新下行候选。
+
+## r4c历史基线与重建
+
+以下r4c时序、早期待验项和双板UDP步骤对应2026-10-27/28阶段；现行ADC/DAC候选见上方链接，系统使用[双电脑入口](../../docs/two-computer-guide.md)，团队汇总结论见[本轮验收](../../docs/validation/20261103_acceptance.md)。
 
 目标链路：ADC 125 MSPS → PL 采集/每 4 点抽取 → PS C 解调（31.25 MSPS）→ UDP → LDSDR 转发板。这里归档可重建源码。r4c完整M2已通过临时JTAG上板的A/B全通道、k=0..3内部PN9/checker快照检查，板端检查与独立JTAG DDR导出检查一致；早期normal A/B格式与normal→training切换测试未接外部信号；2026-10-28另完成真实100.5 MHz SMA输入及自动控制闭环。
 
@@ -50,7 +54,7 @@ DDR 地址必须取自对应固件实际发布的快照记录，并结合 UART �
 
 ## 双板 UDP 复测
 
-此UART_NETTEST复测仅将两块板的RJ45直接相连，USB调试口均接电脑，不接SMA；真实SMA输入闭环另见上述2026-10-28报告。先核对两块板的JTAG线缆和UART USB序列号，再加载报告中记录的匹配固件。LDSDR使用既有工程的UDP固件（SHA256 `c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd`），该ELF与其完整厂商工程仍在独立的`relay_udp_work`目录，本仓库不包含其BSP和启动映像。下面的LDSDR加载器要求该板已经由原启动介质完成正确PS/PL初始化，不能用于裸板冷启动，也不能传入ADDA的ELF或ps7_init。
+此UART_NETTEST复测仅将两块板的RJ45直接相连，USB调试口均接电脑，不接SMA；真实SMA输入闭环另见上述2026-10-28报告。先核对两块板的JTAG线缆和UART USB序列号，再加载报告中记录的匹配固件。LDSDR使用既有工程的UDP固件（SHA256 `c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd`），该轮ELF与完整厂商工程使用外部`relay_udp_work`目录；后来补录的自写源码见[归档清单](../../archive/local_sources/README.md)，BSP、ELF和启动映像仍为外部依赖。当前受控镜像的重建说明见[LDSDR源码](../ldsdr/README.md)，归档源码不等于完整厂商构建环境。下面的LDSDR加载器要求该板已经由原启动介质完成正确PS/PL初始化，不能用于裸板冷启动，也不能传入ADDA的ELF或ps7_init。
 
 ```powershell
 xsdb.bat board/z7addalite/tools/load_relay_udp_checked.tcl '<已核对的LDSDR UDP ELF>' '<LDSDR JTAG序列号>'
