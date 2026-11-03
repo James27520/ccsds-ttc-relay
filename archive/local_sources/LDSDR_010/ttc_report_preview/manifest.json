@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "backend": "native",
+  "rasterEngine": "libreoffice",
+  "source": "saved",
+  "inputPath": "E:\\fpga_sdr_project\\遥控遥测链路框架与验证方法报告.docx",
+  "sourceSha256": "7a4369e15027d8cd0547324cc40f598eb5006ea9c58be0b1f32e90ee22c6ceb0",
+  "dpi": 110,
+  "pageCount": 9,
+  "images": [
+    {
+      "index": 1,
+      "page": 1,
+      "path": "E:\\LDSDR_010\\ttc_report_preview\\page-0001.png",
+      "width": 910,
+      "height": 1287,
+      "rectangle": {
+        "x": 0,
+        "y": 0,
+        "width": 793.7333333333333,
+        "height": 1122.5333333333333
+      },
+      "byteLength": 124131
+    }
+  ],
+  "missingFonts": [
+    "Courier"
+  ]
+}

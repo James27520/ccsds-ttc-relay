@@ -1,0 +1,15 @@
+6cd0d0667210d6136678594adb17d6b65ec57cc317977965e978855244ba02fb  标准\S1_3GPP TS 38.300 V19.4.0.pdf
+b76b19ec47b5f53e4cc97877c008c7943c0dee6881b23a8a9dbc4f56fa89f13e  标准\S2_3GPP TS 23.501 V19.9.0.pdf
+07d1943f41c1168634af0196b2ff508dc7265332525a90c0de6002404cd74728  标准\S3_3GPP TS 38.108 V19.4.0.pdf
+b3d7470c5ba7ca34c470dbde8e9d39e0515c04a0601bb957209ae58985482435  论文\P1_A Tutorial on SDR-Based Emulation of 5G Non-Terrestrial Networks Using OpenAirInterface.pdf
+01285840e6567c83842701290a1e44ca0247734be8531e5f02ff06b8ccf56e3d  论文\P2_FlexSAN A Flexible Regenerative Satellite Access Network Architecture.pdf
+c284a6b42b97d34f8fc6ed34eb5b653dc4a6aa30c276edcf18acabff3980e070  论文\P3_A Scalable Architecture for Future Regenerative Satellite Payloads.pdf
+250f15eae04189553627248cbd4ee62a3d5963fd2cd463a0d5c27d24b41c51d1  论文\P6_OpenAirInterface as a platform for 5G-NTN Research and Experimentation.pdf
+c7b82f77bb80ab94318c4395326cafff84e320ec7f7185460bcdae1780f7333f  论文\P7_5G Non-Terrestrial Networks With OpenAirInterface An Experimental Study Over GEO Satellites.pdf
+6b8237c18a16833b50c34e785513973f30d2c4a38d700e8af7d8dc68b001c9a0  论文\P8_An SDR-Based Test Platform for 5G NTN Prototyping and Validation.pdf
+6eee758e329398ccbe23f616b17cddbb8e887d59a0b129caad561a0b4fadea86  工程演示资料\D1_Thales 5G NTN Space Net O-RAN workshop 2026.pdf
+69c104cdaf2e75515e2f6d4346d52cd695144bab8260bdcdb3a23216f9475474  工程演示资料\D2_Thomas Heyn 6G LINO presentation 2026.pdf
+566dfb389272654de12e6303036f5869b797fadb5413c793ae9db12e49d7ab81  工程演示资料\D3_Airbus SpaceRAN announcement 2026.pdf
+b45599a52a2180c0d780a8b87e7c253357ea6477c20aaed16a25b995d658c730  工程演示资料\D4_Keysight Sky to Lab O-RAN workshop 2026.pdf
+9996f9fd620c2e4d89a172a2e17d06695e5bee0149318be063131ea7a418d5d0  论文\P10_Space-O-RAN Enabling Intelligent Open and Interoperable Non Terrestrial Networks in 6G.pdf
+03dbff90f73a5feb041069211d773943bb9bb02942f6640c0636065d5f754781  工程演示资料\D5_MILCOM 2024 Proceedings Table of Contents.pdf

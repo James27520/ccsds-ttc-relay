@@ -1,0 +1,69 @@
+{
+  "time": "2026-10-18T17:34:14.071369+08:00",
+  "host": "169.254.9.10",
+  "local_ip": "169.254.219.130",
+  "serial": "COM13",
+  "steps": [
+    {
+      "step": "same_frequency",
+      "rx_hz": 900000000,
+      "tx_hz": 1000000000,
+      "seq": 200,
+      "packet_hex": "0101c0c800110000000035a4e900000000003b9aca00001e3b1c",
+      "sent_bytes": 26,
+      "error": "timed out",
+      "uart": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3004248063 out=3004248059 clip=136593 rc=0\r\r\n",
+      "last_stat": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3004248063 out=3004248059 clip=136593 rc=0"
+    },
+    {
+      "step": "change_frequency",
+      "rx_hz": 901000000,
+      "tx_hz": 1001000000,
+      "seq": 201,
+      "packet_hex": "0101c0c900110000000035b42b40000000003baa0c40001e48fe",
+      "sent_bytes": 26,
+      "error": "timed out",
+      "uart": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3125243903 out=3125243899 clip=136593 rc=0\r\r\n",
+      "last_stat": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3125243903 out=3125243899 clip=136593 rc=0"
+    },
+    {
+      "step": "restore_frequency",
+      "rx_hz": 900000000,
+      "tx_hz": 1000000000,
+      "seq": 202,
+      "packet_hex": "0101c0ca00110000000035a4e900000000003b9aca00001e80d1",
+      "sent_bytes": 26,
+      "error": "timed out",
+      "uart": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3246161919 out=3246161915 clip=136593 rc=0\r\r\n",
+      "last_stat": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3246161919 out=3246161915 clip=136593 rc=0"
+    }
+  ],
+  "auto_off": "OK auto=0\r\r\n",
+  "baseline": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=2883014655 out=2883014651 clip=136593 rc=0\r\r\n",
+  "baseline_values": {
+    "rx_hz": 900000000,
+    "tx_hz": 1000000000,
+    "gain_db": 0,
+    "attenuation_db": 30
+  },
+  "auto_restore": "OK auto=1\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3265527807 out=3265527803 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3266224127 out=3266224123 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3266916351 out=3266916347 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3267612671 out=3267612667 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3268304895 out=3268304891 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3268997119 out=3268997115 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3269693439 out=3269693435 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3270385663 out=3270385659 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3271081983 out=3271081979 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3271774207 out=3271774203 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3272466431 out=3272466427 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3273162751 out=3273162747 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3273854975 out=3273854971 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3274547199 out=3274547195 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3275243519 out=3275243515 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3275935743 out=3275935739 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3276632063 out=3276632059 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3277324287 out=3277324283 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3278016511 out=3278016507 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3278712831 out=3278712827 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3279405055 out=3279405051 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3280101375 out=3280101371 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3280793599 out=3280793595 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3281485823 out=3281485819 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3282182143 out=3282182139 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=3282874367 out=3282874363 clip=136593 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 ",
+  "final_stat": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=140648447 out=140648443 clip=136593 rc=0",
+  "jtag": {
+    "gem0_network_control": "0x00000000",
+    "gem0_rx_queue_base": "0x00000000",
+    "gem0_tx_queue_base": "0x00000000",
+    "gem1_network_control": "0x00000000",
+    "rx_enable_mask": "0x00000004",
+    "tx_enable_mask": "0x00000008",
+    "cpus_running": true,
+    "method": "read-only JTAG; no reset or firmware download"
+  },
+  "arp_targets_without_reply": [
+    "169.254.9.10",
+    "192.168.3.10",
+    "192.168.10.1",
+    "192.168.0.1"
+  ],
+  "ethernet_link": "1 Gbps",
+  "verdict": "FAIL: no UDP responses and no serial frequency change; PS Ethernet receive/transmit disabled in current running firmware"
+}

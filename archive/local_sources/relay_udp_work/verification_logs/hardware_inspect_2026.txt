@@ -1,0 +1,43 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 02-sep-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:02:23 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Sun Oct 18 18:19:07 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source {IoT-NTN-FPGA-Relay\scripts\inspect_2026.tcl} -notrace
+WARNING: [filemgmt 56-3] IPUserFilesDir: Could not find the directory 'D:/RelayTools/work/relay_udp2026/hardware/zynq_dev_fmcomms3.ip_user_files'.
+Scanning sources...
+Finished scanning sources
+WARNING: [Project 1-509] GeneratedRun file for 'synth_1' not found
+WARNING: [Project 1-509] GeneratedRun file for 'synth_2' not found
+WARNING: [Project 1-509] GeneratedRun file for 'impl_1' not found
+WARNING: [Project 1-509] GeneratedRun file for 'impl_2' not found
+WARNING: [Project 1-5713] Board part '' set for the project  is not found. BoardPart property will be unset. Please select board from latest repo build 
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository 'd:/RelayTools/work/relay_udp2026/hardware/repo'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'D:/AMDDesignTools/2026.1/Vivado/data/ip'.
+WARNING: [BD 41-1663] The design 'design_1.bd' cannot be modified due to following reason(s):
+* Project is read-only. Please run 'save_project_as' before making any change to the bd-design. 
+
+WARNING: [BD 41-1661] One or more IPs have been locked in the design 'design_1.bd'. Please run report_ip_status for more details and recommendations on how to fix this issue.
+List of locked IPs:
+design_1_proc_sys_reset_0_0
+design_1_processing_system7_0_0
+design_1_dds_compiler_0_0
+design_1_axi_interconnect_0_0
+design_1_ila_0_0
+design_1_dds_dq_0_0
+design_1_ad9361_phy_0_0
+design_1_clk_wiz_0_1
+design_1_axi_ctrl_v1_0_0_0
+design_1_auto_pc_0
+
+WARNING: [Project 1-229] Project 'zynq_dev_fmcomms3.xpr' is read-only and therefore could not be upgraded for this version of Vivado.  Use 'save_project_as' if you wish to save an upgraded copy.
+open_project: Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 632.625 ; gain = 318.078
+RELAY_PROJECT_PART=xc7z010clg400-1
+RELAY_PROJECT_TOP=ad9361_top
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 18 18:19:18 2026...

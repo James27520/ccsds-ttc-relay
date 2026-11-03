@@ -1,0 +1,253 @@
+[
+  {
+    "id": "P1",
+    "title": "A Tutorial on SDR-Based Emulation of 5G Non-Terrestrial Networks Using OpenAirInterface",
+    "authors": "Daniele Pugliese and Salvatore Carbonara and Riccardo Semeraro and Alessio Fascista and Giuseppe Piro and Luigi Alfredo Grieco and Gennaro Boggia",
+    "year": 2026,
+    "venue": "IEEE Communications Standards Magazine, Early Access",
+    "doi": "10.1109/MCOMSTD.2026.3731376",
+    "url": "https://ieeexplore.ieee.org/abstract/document/11698779/",
+    "evidence": "实验室再生式 NTN 仿真；公开配置；非在轨验证",
+    "full_text": "公开作者稿已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P2",
+    "title": "FlexSAN: A Flexible Regenerative Satellite Access Network Architecture",
+    "authors": "Weize Kong and Chaoqun You and Xuming Pei and Yue Gao",
+    "year": 2025,
+    "venue": "arXiv preprint 2509.07548v1",
+    "doi": "10.48550/arXiv.2509.07548",
+    "url": "https://arxiv.org/abs/2509.07548",
+    "evidence": "OAI 原型测量两种静态架构；动态优化收益来自仿真；未核实期刊/会议录用",
+    "full_text": "预印本已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P3",
+    "title": "A Scalable Architecture for Future Regenerative Satellite Payloads",
+    "authors": "Olfa Ben Yahia and Zineb Garroussi and Brunilde Sanso and Jean-Francois Frigon and Stephane Martel and Antoine Lesage-Landry and Gunes Karabulut Kurt",
+    "year": 2025,
+    "venue": "IEEE Wireless Communications Letters, 14(2), 514-518",
+    "doi": "10.1109/LWC.2024.3514452",
+    "url": "https://publications.polymtl.ca/61051/",
+    "evidence": "再生载荷架构与数值仿真；不是完整 gNB 上星实验",
+    "full_text": "公开预印本已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P4",
+    "title": "Demonstration of Advanced Regenerative 5G NTN NR Satellite Base Station Prototype",
+    "authors": "Alison Keefe and Suresh Iyer",
+    "year": 2024,
+    "venue": "IEEE MILCOM 2024, 661-662",
+    "doi": "10.1109/MILCOM61039.2024.10774047",
+    "url": "https://ieeexplore.ieee.org/document/10774047",
+    "evidence": "会议论文题名、作者及起始页经论文集目录核实；未获取全文，不推断硬件和在轨状态",
+    "full_text": "未获取公开全文；只保存题录和官方入口",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P5",
+    "title": "A Review of Discussions on Support of Regenerative Payloads in NR NTN",
+    "authors": "Seungkwon Cho and JunHwan Lee",
+    "year": 2025,
+    "venue": "International Conference on Information and Communication Technology Convergence (ICTC) 2025, 2019-2020",
+    "doi": "10.1109/ICTC66702.2025.11387822",
+    "url": "https://ksp.etri.re.kr/ksp/article/read?id=71418",
+    "evidence": "ETRI 官方题录核实；标准讨论综述；未获取全文，不当作实现证据",
+    "full_text": "未获取公开全文；只保存题录和官方入口",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P6",
+    "title": "OpenAirInterface as a platform for 5G-NTN Research and Experimentation",
+    "authors": "Sumit Kumar and others",
+    "year": 2022,
+    "venue": "IEEE Future Networks World Forum (FNWF) 2022, 500-506",
+    "doi": "10.1109/FNWF55208.2022.00094",
+    "url": "https://orbilu.uni.lu/handle/10993/53157",
+    "evidence": "OAI NTN 实验基础与路线；不作为完整 gNB 在轨证据",
+    "full_text": "公开作者稿已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P7",
+    "title": "5G Non-Terrestrial Networks With OpenAirInterface: An Experimental Study Over GEO Satellites",
+    "authors": "Florian Voelk and Thomas Schlichter and Sumit Kumar and Robert T. Schwarz and Andreas Knopp and Marwan Hammouda and Thomas Heyn and Jorge Querol and Symeon Chatzinotas and Adam Kapovits",
+    "year": 2024,
+    "venue": "IEEE Access, 12, 155098-155109",
+    "doi": "10.1109/ACCESS.2024.3483958",
+    "url": "https://orbilu.uni.lu/handle/10993/62569",
+    "evidence": "真实透明 GEO 卫星实验；基站在地面，不能误当星上 gNB 验证",
+    "full_text": "开放全文已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P8",
+    "title": "An SDR-Based Test Platform for 5G NTN Prototyping and Validation",
+    "authors": "Lu Hou and Kan Zheng and Jie Mei and Cheng Huang",
+    "year": 2025,
+    "venue": "IEEE Open Journal of the Communications Society, 6, 7758-7766",
+    "doi": "10.1109/OJCOMS.2025.3610869",
+    "url": "https://arxiv.org/abs/2509.20692",
+    "evidence": "Amarisoft/SDR 与透明 GEO 实验基线；不能作为星上完整基站证据",
+    "full_text": "公开预印本已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P9",
+    "title": "O-RAN NTN Regenerative Payload Testbed with RIC Monitoring",
+    "authors": "Balaji Kirubakaran and Muhamad Luthfi and Maximilian Burr and Tomaso de Cola",
+    "year": 2026,
+    "venue": "one6G Summit 2026, London, September 10; non-refereed poster",
+    "url": "https://elib.dlr.de/227683/",
+    "evidence": "模拟星上 DU、地面 CU/核心网的 split 2 实验台，非完整 gNB；DLR 标注非同行评审海报",
+    "full_text": "官方摘要和题录可读；全文未开放",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "P10",
+    "title": "Space-O-RAN: Enabling Intelligent, Open, and Interoperable Non Terrestrial Networks in 6G",
+    "authors": "Eduardo Baena and Paolo Testolina and Michele Polese and Dimitrios Koutsonikolas and Josep Jornet and Tommaso Melodia",
+    "year": 2026,
+    "venue": "IEEE Communications Magazine, 64(2), 112-118",
+    "doi": "10.1109/MCOM.001.2500080",
+    "url": "https://arxiv.org/abs/2502.15936",
+    "evidence": "分层星地控制与 AI 任务部署架构；仿真，不是完整在轨 gNB 产品",
+    "full_text": "公开预印本 v2 已下载",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C1",
+    "title": "OAI + Open5GS 可复现实验配置",
+    "url": "https://github.com/dpugliese6/5G_NTN_Tutorial",
+    "evidence": "配置/脚本、Docker、定制 OAI 子模块；实验室再生式 NTN 仿真；非星载固件",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C2",
+    "title": "Celeste SmartgNB 产品",
+    "url": "https://celestetechnologies.com/products-and-services/",
+    "evidence": "商业软件授权与集成支持；完整 L1-L3 软件栈；不能据此认定任何 ARM 板都能运行",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C2a",
+    "title": "Celeste/Qualcomm/Sateliot 2026 互操作测试",
+    "url": "https://celestetechnologies.com/milestones/",
+    "evidence": "2026-02-26 公告：多核 SoC、不用硬件加速、信道模拟器、Qualcomm 测试终端；实验室验证，厂商称 Rel-17",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C3",
+    "title": "AccelerComm AX-RG",
+    "url": "https://www.accelercomm.com/solutions/accelercomm-ax-rg",
+    "evidence": "面向再生载荷的商用 5G NR L1 IP；厂商宣称有在轨应用。物理层 IP 在轨不等于完整 Rel-19 gNB 全栈在轨",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C3a",
+    "title": "AccelerComm + Radisys EVK",
+    "url": "https://www.accelercomm.com/solutions/accelercomm-evk",
+    "evidence": "硬件加速 PHY 与高层软件组合的商业评估平台；支持透明/再生 NTN；公开页面无价格和开放源码",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C4",
+    "title": "Capgemini + Keysight 2025 验证",
+    "url": "https://www.keysight.com/se/en/about/newsroom/news-releases/2025/0305-pr25-037-keysight-and-capgemeni-accelerate-validation-of-regenerative-and-transparent-non-terrestrial-network-ran.html",
+    "evidence": "O-RAN CU/DU 软件框架与终端/信道仿真；MWC 2025 实验室演示；不是在轨验证",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C5",
+    "title": "ESA MIXELS",
+    "url": "https://resilience.esa.int/archives/projects/mixels",
+    "evidence": "2025-06 完成 Phase 1 实验室端到端测试；完整/分布式 gNB。官方页面把在轨演示列为 Phase 2",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C6",
+    "title": "Fraunhofer / ESA 6G LINO",
+    "url": "https://www.iis.fraunhofer.de/en/ff/kom/satkom/6g-lino.html",
+    "evidence": "完整 gNB、星上 AI 频谱分析、可编程处理器；Versal AI SoC FPGA + Raspberry Pi 5 CPU；最新页面计划 2027 发射，不能当作已在轨",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C7",
+    "title": "Airbus UpNext SpaceRAN",
+    "url": "https://www.airbus.com/en/newsroom/press-releases/2026-01-airbus-launches-demonstrator-to-test-global-5g-connectivity-in",
+    "evidence": "2026-01-14 启动示范项目：地面试验台 + LEO 在轨再生基站；预计 2028 出首批结果，启动项目不等于卫星已发射",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C8",
+    "title": "Antwerp Space + AccelerComm + ESA",
+    "url": "https://www.accelercomm.com/insights/accelercomm-selected-for-esa-funded-contract-advancing-regenerative-5g-satellite-networks",
+    "evidence": "2026-09 公告：多用户完整星上 gNB 示范器，目标 TRL 5；研究/开发阶段",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "C9",
+    "title": "Starlink Direct to Cell 星上 LTE 基站",
+    "url": "https://new.spacex.com/updates",
+    "evidence": "SpaceX 官方说明现有星座采用再生架构和星上 eNodeB；LTE/4G 商用实例，不能冒充已商用 Rel-19 5G gNB",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "B1",
+    "title": "Ericsson 标准制定者技术解读",
+    "url": "https://www.ericsson.com/en/blog/2024/10/ntn-payload-architecture",
+    "evidence": "2024-10-18，解释 Rel-19 完整 gNB 选型、Xn、时延与复杂度；技术博客，不是同行评审论文",
+    "category": "工程或技术资料",
+    "access_date": "2026-11-01"
+  },
+  {
+    "id": "S1",
+    "category": "标准",
+    "title": "3GPP TS 38.300 V19.4.0",
+    "url": "https://www.etsi.org/deliver/etsi_ts/138300_138399/138300/19.04.00_60/ts_138300v190400p.pdf",
+    "access_date": "2026-11-01",
+    "resolved_url": "https://www.etsi.org/deliver/etsi_ts/138300_138399/138300/19.04.00_60/ts_138300v190400p.pdf",
+    "file": "标准\\S1_3GPP TS 38.300 V19.4.0.pdf",
+    "bytes": 3838977,
+    "sha256": "6cd0d0667210d6136678594adb17d6b65ec57cc317977965e978855244ba02fb",
+    "download_status": "downloaded"
+  },
+  {
+    "id": "S2",
+    "category": "标准",
+    "title": "3GPP TS 23.501 V19.9.0",
+    "url": "https://www.etsi.org/deliver/etsi_ts/123500_123599/123501/19.09.00_60/ts_123501v190900p.pdf",
+    "access_date": "2026-11-01",
+    "resolved_url": "https://www.etsi.org/deliver/etsi_ts/123500_123599/123501/19.09.00_60/ts_123501v190900p.pdf",
+    "file": "标准\\S2_3GPP TS 23.501 V19.9.0.pdf",
+    "bytes": 7356416,
+    "sha256": "b76b19ec47b5f53e4cc97877c008c7943c0dee6881b23a8a9dbc4f56fa89f13e",
+    "download_status": "downloaded"
+  },
+  {
+    "id": "S3",
+    "category": "标准",
+    "title": "3GPP TS 38.108 V19.4.0",
+    "url": "https://www.etsi.org/deliver/etsi_ts/138100_138199/138108/19.04.00_60/ts_138108v190400p.pdf",
+    "access_date": "2026-11-01",
+    "resolved_url": "https://www.etsi.org/deliver/etsi_ts/138100_138199/138108/19.04.00_60/ts_138108v190400p.pdf",
+    "file": "标准\\S3_3GPP TS 38.108 V19.4.0.pdf",
+    "bytes": 1286903,
+    "sha256": "07d1943f41c1168634af0196b2ff508dc7265332525a90c0de6002404cd74728",
+    "download_status": "downloaded"
+  }
+]

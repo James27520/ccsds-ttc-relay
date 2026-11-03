@@ -1,0 +1,13 @@
+{
+  "source_url": "https://codeload.github.com/Xilinx/embeddedsw/zip/refs/tags/xilinx-v2018.3",
+  "source_sha256": "c654f487b75925764d4685f531fe7a4ea00a26d49c1fc90b29f429e39c5adeb2",
+  "gcc": "D:\\STM32CubeIDE_1.16.1\\STM32CubeIDE\\plugins\\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.12.3.rel1.win32_1.0.200.202406191623\\tools\\bin\\arm-none-eabi-gcc.exe",
+  "elf": "D:\\RelayTools\\work\\relay_udp2026\\relay_udp.elf",
+  "elf_sha256": "c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+  "source_adaptations": [
+    "xil_printf rebuilt for current newlib",
+    "IPv4 output callback const signature",
+    "BYTE_ORDER redefinition guard"
+  ],
+  "hardware_contract": "Existing LDSDR PL; GEM0 MIO16..27 and MDIO52..53 initialized before ELF"
+}

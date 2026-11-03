@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-18",
+  "elf": "relay_udp.elf",
+  "elf_sha256": "c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+  "elf_bytes": 868624,
+  "verification_report": "../verification_logs/udp_rf_verified_final_20261018.json",
+  "verification_report_sha256": "a50431cd298228a6a096c33427e23c09f1e524fb14e411b833baf18f909f3778",
+  "cases_passed": 7,
+  "deployment": "JTAG warm load to DDR; existing PS initialization and PL required",
+  "cold_boot_image_created": false,
+  "final_rx_hz": 900000000,
+  "final_tx_hz": 1000000000,
+  "verification_method": "UDP responses and independent AD9361 SPI LO readback; no RF spectrum measurement"
+}

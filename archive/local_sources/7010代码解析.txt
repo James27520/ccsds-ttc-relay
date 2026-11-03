@@ -1,0 +1,261 @@
+7010 遥控遥测代码解析
+核对日期：2026-10-18
+核对方式：静态阅读源码、追踪调用关系、比较同名文件、检查压缩包工程、检索本机可访问目录。
+本次没有执行工程脚本、射频收发、烧录或硬件测试；以下“有实现”表示源码中可见，不代表本轮实机验证通过。
+
+一、先明确7010的职责与当前证据
+
+设计目标：
+地面控制消息 → 7010射频接收 → 解调/译码/还原控制参数 → 板间通信 → LDSDR修改频率、增益和模式。
+设备状态 → 封装遥测消息 → 7010射频发射 → 地面接收。
+
+用白话说，7010承担接收控制消息和发送状态消息的通信工作。LDSDR执行转发业务信号的工作。
+7010自身的测控收发频率，与控制消息要求LDSDR采用的业务收发频率，是不同的参数。
+例如7010先在双方约定的测控频率接收一条消息；消息内容可以要求LDSDR接收900 MHz附近信号、发射1000 MHz附近信号。
+
+当前源码能直接追踪的两条路径：
+A. 7010采样射频信号 → IQ数字样点 → 电脑/RK3588上的Python程序解调、解码与比对。
+B. 电脑/RK3588的payload_ctl.py接收命令或命令文件 → relay_link.py发串口命令 → LDSDR裸机程序配置射频芯片。
+当前可见源码中，没有找到将A中解析出的参数自动接到B的完整入口。
+报告将7010解析后经以太网下发LDSDR列作待集成工作。
+不能仅凭文件名“遥控板”“闭环验证通过”，就判断自动无线遥控LDSDR已经完成。
+
+二、实际检查范围与缺失部分
+
+重点目录：
+1. fpga_sdr_project/ccsds_ttc_loopback/sw/ttc：14个Python文件，逐项梳理。
+2. LDSDR_010/ttc_ccsds：15个Python文件，其中12个与上述目录对应文件完全相同；ccsds_tm_tx.py版本不同，另有dbg_rx.py和loopback_setup.py。
+3. LDSDR_010/rk3588：四个测控实验文件，以及ccsds.py、payload_ctl.py、relay_link.py、serial_port.py控制链路。
+4. LDSDR_010/ttc_monitor.py、ttc_scope.py与rk_console.py：电脑侧部署、显示与RK3588控制辅助。
+5. 7010_AD9363_SDR：固件与厂商参考工程压缩包，检查工程入口、关键逻辑及自定义协议关键词；厂商IP和生成代码进行了来源分类，不将其算作逐行审计完成。
+6. fpga_sdr_project下的报告生成脚本：只用来核对设计目标与完成状态，报告中的成功结论不等同于本轮验证证据。
+
+缺失：
+- E:/ccsds_fpga：被引用的7010定制FPGA工程。
+- E:/7010_ttc_ccsds：被交接文档引用的7010基线工程。
+- tm_params.py：GUI使用的16项参数定义、字节偏移、比例换算、参数打包/解包。
+- mode_b_link.py：GUI模式B的实际板卡收发封装。
+- ccsds_pl/program_and_base.tcl等定制FPGA构建/烧录脚本。
+这些路径与文件没有在当前项目中找到；按已知文件名检索C、D、Z盘可访问目录也未找到。
+在Downloads发现了LDSDR（7010_7020_rev3.1）.zip，属于LDSDR厂商资料，未发现上述定制CCSDS工程。
+因此，当前材料足以解释可见软件和接口，但不足以完整审计7010定制FPGA收发逻辑、参数寄存器和板间通信实现。
+
+三、主协议算法：ccsds_tm_tx.py
+
+位置：fpga_sdr_project/ccsds_ttc_loopback/sw/ttc/ccsds_tm_tx.py
+这是运行在电脑上的软件参考实现；文件存在不代表这些算法当前都运行在7010的FPGA中。
+
+1. crc16（82行）：算校验值，供收端检查消息是否损坏。
+2. build_tm_frame（94行）：给数据加上航天器ID、信道ID、帧序号等头字段，再附CRC。
+3. parse_tm_frame（118行）：读出帧头与数据，重新算CRC并比较。
+4. rand_seq/randomize/derandomize（138/158/164行）：生成伪随机序列并异或数据，使码流更适合传输；这不是加密。
+5. conv_encode（171行）：加入冗余，便于接收端恢复部分传输错误。
+6. conv_decode_viterbi（190行）：根据冗余信息估计原始比特。
+7. bytes_to_bits/bits_to_bytes（246/251行）：字节与0/1序列之间转换。
+8. build_cadu（262行）：按本项目实现组合随机化、卷积编码、同步标记。
+   use_rs=True会抛NotImplementedError，因此Reed-Solomon编码并没有实现。
+9. decode_cadu（291行）：检查同步标记，再执行译码、解随机化和字节还原。
+10. srrc（308行）：生成成形/匹配滤波器系数。
+11. cadu_to_iq（328行）：用BPSK把0/1变成波形，并生成I/Q数字样点。
+    默认采样率2.5 MSPS、符号率250 ksym/s、数字中频+200 kHz。
+    I/Q可理解为描述无线波形的两组数字，并非“输入频率”和“输出频率”。
+12. iq_interleave（359行）：交错排列I、Q，供IIO工具读取。
+13. selftest（369行）：软件自检入口；本次未运行。
+
+GUI的典型帧为6字节帧头+32字节参数数据+2字节校验，共40字节。
+按该软件实现编码后，加32比特同步标记得到672比特，随后生成波形。
+这些是软件内部处理参数；2.5 MSPS不是射频收发频率，+200 kHz也不是LDSDR的业务目标频率。
+
+四、从数字波形到7010射频发射
+
+stage_a_tx.py：
+- build_wave（64行）构造测试数据、生成帧和波形，并保存为二进制文件。
+- send路径通过scp把波形传到7010的/tmp/wave.bin。
+- 通过SSH调用iio_attr，配置7010自身的本振、采样率、滤波带宽、收发增益。
+- 调用iio_writedev，将波形样点送到板子的发送数据通路。
+因此这条路径是“电脑先算波形，7010按波形发射”。
+脚本中的iio_attr altvoltage0/1 frequency修改的是7010自身的收发本振，不是LDSDR的频率。
+
+board_tx.py：
+- clean：清理残留发送进程。
+- status：读取7010发射参数与波形文件状态。
+- once：发送一次现成的wave.bin。
+- cont：按样点数计算有限循环，让同一个发送进程连续工作。
+它管理发射流程，本身不解析新的LDSDR控制参数。
+
+tx_now.py：
+- 早期单次/重复发射调试脚本。
+- 检查波形文件与配置，再调用IIO发送。
+- 顶层就包含硬件操作，不能为了“看看效果”随意import。
+
+tx_continuous.py：
+- 早期连续发射实验，循环向IIO发送进程供给波形。
+- 使用板上timeout命令；board_tx.py后来的注释说明该固件缺少timeout并给出了替代。
+因此不同年代的脚本并非可以随意混用的同一版入口。
+
+五、7010接收后，谁把波形解成消息
+
+loopback_test.py：
+- ssh/ssh_bg：在7010上远程执行IIO命令。
+- do_capture（176行）：调用iio_readdev采集IQ，并通过scp取回电脑。
+- tx_filter_bb：把已知中频搬回基带。
+- matched_filter：滤波，便于读出每个符号。
+- recover_bits：尝试不同抽样位置，把波形判成0/1。
+- find_asm：寻找一帧的同步标记。
+- try_full_decode：译码、解随机化、解帧、CRC校验。
+- main：组织发送、采样与分析。
+注意：可见代码中固定尝试108字节帧；它并不是适用于所有参数帧的通用接收机。
+
+auto_decode.py：
+- spectrum：计算频谱。
+- rx_at：尝试某个频偏并选择符号抽样相位。
+- find_asm：搜索同步标记。
+- decode_at：译码并尝试108或40字节帧。
+- main（138行附近）：按10 kHz步进扫描-600至+600 kHz，找能解出CRC正确帧的配置。
+它是电脑侧离线/实验接收程序；“自动频偏搜索”不等于已实现完整卫星动态多普勒闭环。
+CRC通过表示校验匹配，程序打印“环回通过”不证明随后改动了LDSDR频率。
+
+六、GUI做了什么
+
+位置：sw/ttc/ccsds_demo_gui.py
+
+GUI显示两套参数集：relay（转发控制）与tm（卫星遥测）。
+参数具体名称、偏移和数值含义委托给缺失的tm_params.py，本目录无法重新核实完整16项定义。
+
+可见调用关系：
+read_values → TP.build_data_block → build_tm_frame → modulate。
+接收后：
+_rx_params → TP.parse_data_block → _fill_tree显示参数并与发送值比较。
+
+三种模式：
+A. 软件模式：直接在电脑内做组帧、调制、模拟信道、解调和译码，不使用7010。
+B. 过板模式：on_send_board（654行）调用缺失的mode_b_link.ModeBLink.run。
+   从可见GUI只能确认它接收结果后解析、显示、比对；缺失模块的内部逻辑无法检查。
+C. FPGA模式：on_send（548行）弹出外部烧录与ILA操作说明。
+   GUI明确写明板上设计使用固定帧，PC不下发参数，动态参数注入通路仍需补充。
+   该分支本身不执行FPGA收发链，也没有通过界面参数控制LDSDR。
+
+关键区别：
+“把一个参数通过无线链路传过去并显示正确”
+和“收到这个参数后让LDSDR立即修改设置”
+是两个步骤。当前可见GUI主要覆盖前者。
+
+七、怎样真正修改LDSDR收发频率
+
+实际可追踪的实现位于LDSDR_010/rk3588：
+1. ccsds.py：定义命令类型与二进制数据格式。
+2. payload_ctl.py：Dispatcher根据命令类型选择操作。
+3. relay_link.py：把操作转成串口文字命令。
+4. serial_port.py：负责Windows/Linux串口读写。
+5. LDSDR裸机relay_cli.h：接收命令，调用射频芯片驱动。
+
+例如：
+RF_SET命令载荷：
+接收本振频率（8字节）+发射本振频率（8字节）+接收增益（1字节）+发射衰减（1字节）。
+payload_ctl.py第99行的_apid_101解析它，调用link.set_lo。
+relay_link.py第222行把它变成lo <rxMHz> <txMHz>。
+LDSDR的relay_cli.h第271行开始把MHz换成Hz，调用ad9361_set_rx_lo_freq和ad9361_set_tx_lo_freq。
+该接口当前按整数MHz下发本振；更细的数字频偏由另外的命令处理。
+
+本地定义的控制操作：
+0x100 RELAY_SET：模式、DDC/DUC频率字、数字增益、隔直。
+0x101 RF_SET：接收/发射本振、RX增益、TX衰减。
+0x102 RELAY_MODE：旁路、转发、静音、仅上变频。
+0x103 FREQ_OFFSET：数字上/下变频频偏。
+0x104 DIG_GAIN：数字增益与隔直。
+0x110 REQ_STATUS：请求状态。
+状态/反馈：
+0x200 STATUS_TM：收发样点计数、饱和计数、错误码、模式、DDC/DUC与增益。
+0x201 SPECTRUM_TM：时间、采样率和频谱点。
+0x202 ACK_TM：命令应答。
+
+payload_ctl.py的exec入口读取二进制文件并执行包。
+这证明命令解释与LDSDR控制接口存在；它自身没有实现一个持续接收7010射频消息并自动执行的无线服务。
+
+八、RK3588上的另一套早期测控实验
+
+rk3588/ttc_modem.py：
+简化空间包+前导/同步+CRC，矩形脉冲BPSK，默认25 ksym/s。
+与主工程“250 ksym/s、SRRC、卷积编码”的链路并不是同一种完整配置，不能混称为同一版协议核。
+
+rk3588/ttc_test.py：
+读LDSDR串口STAT → 选择部分状态生成遥测数据 → 打包 → 通过USB控制7010发射/采样 → 在RK3588解调。
+读不到LDSDR时会用示例数据；因此界面出现遥测消息并不必然说明数据来自真实设备。
+
+rk3588/ttc_fsk_test.py：
+构造固定示例包 → 用两个音调分别表示0和1 → libiio循环缓冲发送 → 自环采样 → 判频 → 查同步 → 做字节/CRC比较。
+这是FSK通信实验，没有将解出的包交给Dispatcher执行。
+其固定示例载荷长度也不能直接视作当前RELAY_SET命令的完整格式。
+
+rk3588/ttc_spectrum.py：
+从7010采集多通道样点，做FFT并选择信噪比较好的通道，把频谱压成1024点输出。
+这是观测工具，没有实现自动换频决策。
+
+电脑侧：
+- ttc_monitor.py：上传实验脚本到RK3588，运行脚本，解析TTC|JSON状态行并显示。
+- ttc_scope.py：上传频谱脚本并显示SPEC频谱数据。
+- rk_console.py：通过RK3588调试串口登录、传文本、运行命令。
+这些辅助程序帮助实验运行，不是7010的FPGA协议核。
+
+九、14个主目录文件逐个归类
+
+ccsds_tm_tx.py：软件编解码、调制参考。
+ccsds_demo_gui.py：参数表、组帧、模式选择、结果显示；缺两个依赖。
+stage_a_tx.py：生成波形、上传、配置7010并发射。
+board_tx.py：管理现成波形的单次/连续发射。
+tx_now.py：早期发射调试。
+tx_continuous.py：早期连续发射方案。
+loopback_test.py：组织双板发收与电脑解码。
+auto_decode.py：自动扫频偏并解码采样文件。
+arm_loopback.py：电脑分别配置7010和LDSDR，使它们适合环回；LDSDR参数由电脑直接串口设置。
+relay_lo_fix.py：电脑通过串口直接修正LDSDR的收发本振。
+diag_link.py：比较发射开/关时的接收功率，辅助检查链路。
+sweep_gain.py：电脑枚举LDSDR增益/衰减，再尝试发收解码。
+test_rx_chain.py：用合成波形验证软件接收算法；不是硬件业务入口。
+dbg_bits.py：比特对齐/同步调试；不是硬件业务入口。
+
+LDSDR_010/ttc_ccsds中的额外文件：
+dbg_rx.py：旧版接收同步调试。
+loopback_setup.py：较早的双板配置与接线流程。
+该目录的ccsds_tm_tx.py与主目录同名版本的随机化序列算法不同，已经通过源文件差异确认；不应因为文件名相同就当成完全相同实现。
+
+十、厂商参考工程与FPGA源码边界
+
+7010_AD9363_SDR目录的主要压缩包：
+- AD936X_only_PL.zip：纯PL驱动与测试波形。
+  Src/system_top.v负责连接时钟、SPI初始化、DDS测试波与数据口。
+  AD936X_Init.v/AD936X_lut.v/spi_drive.v负责按寄存器表初始化射频芯片。
+  data_process.v/AD936X_Driver.v负责数据口收发与IQ样点拼接。
+  DDS.v产生测试正弦波；CLK_DIV_module/rst_gen_module处理时钟和复位。
+  这些参考源码未发现本项目的CCSDS命令解码与LDSDR下发逻辑。
+- AD936X_PL.zip与AD936X_PS.zip：PS+PL参考设计；主程序初始化射频，使用ADC/DAC、DMA、DDR及可选IIO支持。
+- Test_PL.zip与Test_PS.zip：DDR、EMMC、LED、USB、以太网等接口测试；以太网示例不等同于遥控参数转发实现。
+- 7020_SDR_ZC706_My.zip：ADI/FPGA射频参考设计与大量通用IP。
+- SD卡固件7020.zip、固件.zip：主要是编译好的启动/系统文件，不能据此审计自定义算法。
+- 软件与驱动目录：电脑工具与驱动安装包，不属于你们自己编写的7010遥控算法。
+
+ccsds_ttc_loopback/fw中的relay_dq.v、relay_path.v、relay_cmix.v、relay_nco.v、relay_cdc.v、relay_sin_rom.v，
+从模块接口和头部说明可知是LDSDR转发板的数据通路，并非缺失的7010 CCSDS解码器。
+
+十一、当前源码能支持的结论
+
+能确认：
+- 软件层面存在编码、波形生成、采样回读、解调、译码与CRC检查。
+- 存在7010的射频收发操作脚本。
+- 存在控制参数组包/解包与显示的调用点，但GUI参数表依赖缺失。
+- 存在RK3588/PC到LDSDR串口控制的具体实现。
+- 报告与GUI描述了把协议算法移入FPGA的目标和实验方式。
+
+不能独立确认：
+- 7010最新定制FPGA工程的实际算法与综合连接。
+- 最新固件的动态参数注入/输出寄存器和完整板间通信。
+- “无线控制消息→7010独立解析→LDSDR自动改频→回传实际状态”已在当前版本全程接通。
+- 报告里不同阶段的成功数字是否对应当前机器上的代码版本。
+
+额外的静态实现线索：
+- GUI依赖缺失、启动bat和多个脚本路径写死在原电脑，当前资料不能直接据此认定可运行。
+- 旧版脚本、不同调制方案、不同帧长和不同随机化实现同时存在，需要统一版本。
+- GUI的channel函数对已为int16量级的波形又乘32767再截幅，幅度标度存在明显疑点；本次未运行验证。
+- RS编码明确未实现。
+以上仅记录与解释代码状态，没有改动原工程。
+

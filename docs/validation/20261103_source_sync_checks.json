@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-03",
+  "mapped_files_verified": 732,
+  "archived_unique": 493,
+  "existing_exact": 225,
+  "existing_text_equivalent": 14,
+  "staged_files": 500,
+  "new_secret_patterns": 0,
+  "errors": [],
+  "hardware_accessed": false,
+  "text_equivalence_verified": 14,
+  "tests": {
+    "adda_host_groups": [
+      {
+        "name": "doppler_core",
+        "passed": true
+      },
+      {
+        "name": "capture_default",
+        "passed": true
+      },
+      {
+        "name": "capture_doppler",
+        "passed": true
+      },
+      {
+        "name": "ps_core",
+        "passed": true
+      },
+      {
+        "name": "khz_protocol",
+        "passed": true
+      },
+      {
+        "name": "remote_protocol",
+        "passed": true
+      },
+      {
+        "name": "service",
+        "passed": true
+      },
+      {
+        "name": "telemetry_0",
+        "passed": true
+      },
+      {
+        "name": "telemetry_1",
+        "passed": true
+      }
+    ],
+    "original_waveform_cases": 45,
+    "legacy_differential_cases": 16,
+    "legacy_all_passed": true,
+    "business_passed": true,
+    "business_checks": [
+      "BUSINESS_DOPPLER_PASS",
+      "BOARD_DOPPLER_PASS",
+      "SNAPSHOT_PASS",
+      "MIXER_PASS"
+    ],
+    "hardware_tested": false
+  },
+  "note": "Offline checks performed on frozen working sources. Archive payload hashes and duplicate mappings verified against staged Git blobs. Vendor/build/media exclusions listed separately."
+}

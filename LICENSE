@@ -61,15 +61,22 @@ Third-party notices
 2) ADI no-OS AD9361 driver  --  referenced by the relay-board firmware
    ---------------------------------------------------------------------
    ad9361.c / ad9361_api.c / ad9361.h / ad9361_api.h are derived from the
-   Analog Devices no-OS AD9361 driver (ADI BSD-style licence). They are NOT
-   redistributed in this repository. The new Z7ADDALite application sources
-   are standalone C code; external BSP/driver sources are described below.
+   Analog Devices no-OS AD9361 driver (ADI BSD-style licence). The active
+   relay-board build references external vendor inputs. Historical driver
+   and example-application source copies are now retained in
+   archive/local_sources/ with their original ADI copyright, redistribution
+   conditions, component-use condition and disclaimer intact. These files
+   are not relicensed under this repository's MIT licence. The new
+   Z7ADDALite application sources are standalone C code; external BSP/driver
+   sources are described below.
 
 3) Analog Devices HDL reference design
    ---------------------------------------------------------------------
    The vendor material pack referenced in the documentation contains the
    ADI HDL reference components (axi_ad9361, axi_dmac, axi_clkgen, ...).
-   Those files are NOT redistributed here.
+   Generated ADI IP libraries are not bundled here. Historical integration
+   wrappers and project-authored relay RTL may be retained in
+   archive/local_sources/ under their original file-level notices.
 
    The separate AD9643 PN9 reference is redistributed at:
    board/z7addalite/telecontrol_system/reference/axi_ad9643_pnmon_2016_r1.v

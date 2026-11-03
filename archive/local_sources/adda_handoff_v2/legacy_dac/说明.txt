@@ -1,0 +1,11 @@
+这个目录里的东西在架构 V2 里【不再需要】。
+
+原因：ADDA 板现在只当"遥控指令接收机"，用 ADC 收中频，
+      DAC 和波形生成完全用不上了。
+
+保留原因：万一以后要做"ADDA 反向当发射端"的实验，可以直接拿来用。
+
+含：
+  gen_adda_coe.py    生成 32768 点 .coe（单音 / BPSK 文本）
+  tone_100m.coe      100 MHz 单音（假设 DAC 250 MSPS）
+  text_hello.coe     BPSK "hello world"

@@ -1,0 +1,24 @@
+{
+  "requested_version": "2018.3",
+  "target_root": "D:/RelayTools/Xilinx",
+  "first_component": "Xilinx SDK 2018.3",
+  "optional_component": "Vivado 2018.3 with Zynq-7000 support if hardware rebuild requires it",
+  "installer_filename": "Xilinx_SDK_2018.3_1207_2324_Win64.exe",
+  "official_md5": "0e83e8251d76b51b5d311eea2b2fb8fc",
+  "official_page": "https://www.amd.com/en/support/downloads/adaptive-socs-and-fpgas/legacy-sdx/2018-3.html",
+  "state": "2018_install_not_required_for_verified_UDP_firmware; built_and_deployed_using_existing_tools",
+  "installer_staging_directory": "D:/RelayTools/installers",
+  "path_note": "Existing D:/AMDDesignTools directory denied write access; use separate user-writable location on D drive.",
+  "local_capability_check": {
+    "Vivado": "2026.1",
+    "device": "xc7z010clg400-1",
+    "PS7_IP": "processing_system7:5.5",
+    "license_detected": true,
+    "arm_gcc": "12.3.1 from installed STM32CubeIDE",
+    "cortex_a9_compile_probe": "passed",
+    "original_vivado_project": "../LDSDR_010/zynq_dev_fmcomms3.xpr",
+    "remaining": "cold-boot PS initialization/FSBL/BOOT.bin if required; full hardware/IP migration not performed",
+    "application_link": "passed; final firmware SHA256 c37843bf31165e12124d267f1104f2e5fb22ab1121dfeae22122d8a3bd9183cd",
+    "live_UDP_and_SPI_verification": "7/7 passed; original frequencies restored"
+  }
+}

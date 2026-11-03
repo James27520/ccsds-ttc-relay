@@ -1,0 +1,47 @@
+=== 1. 连 LDSDR 串口并打断 U-Boot ===
+  当前输出尾部: 't=30 rxlo=900 txlo=1000 fs=30720000 in=28577789 out=28577787 clip=175032 rc=0\r\r\n'
+  不在 U-Boot。
+  >>> 请现在按一下板子上的复位键（标 RST 的那个），或断电重上电 <<<
+  脚本会持续敲键，最多等 240 秒。
+      ...等待中（0 秒）
+  ✅ 已进入 U-Boot
+
+=== 2. 手动 load + bootm 启动原厂 Linux ===
+  （不用 run sdboot —— 它内部的 uenvboot 会重新导入 uEnv.txt，
+    把我们对 relayboot 的修改覆盖掉，转发器又会起来）
+    uImage                                 -> 4543704 bytes read in 408 ms (10.6 MiB/s)
+    devicetree.dtb                         -> 22496 bytes read in 18 ms (1.2 MiB/s)
+    uramdisk.image.gz                      -> 6645924 bytes read in 591 ms (10.7 MiB/s)
+  发送 bootm 0x2080000 0x4000000 0x2000000 ...
+    Starting kernel ...
+    macb e000b000.ethernet: invalid hw address, using random
+    Freeing initrd memory: 6492K
+    macb e000b000.ethernet eth0: Cadence GEM rev 0x00020118 at 0xe000b000 irq 35 (e2:eb:7a:4d:72:7b)
+    Freeing unused kernel image (initmem) memory: 1024K
+    Starting network: macb e000b000.ethernet eth0: PHY [e000b000.ethernet-ffffffff:00] driver [RTL8211E Gigabit Et
+    macb e000b000.ethernet eth0: configuring for phy/rgmii-id link mode
+    pluto login:
+  ✅ Linux 已启动
+
+=== 3. 登录 LDSDR Linux 并配置网口 ===
+  接口列表:
+    BusyBox v1.36.1 (2025-06-24 15:44:15 CST) multi-call binary.
+    Usage: ip [OPTIONS] address|route|link|tunnel|neigh|rule [ARGS]
+    OPTIONS := -f[amily] inet|inet6|link | -o[neline]
+    ip addr add|del IFADDR dev IFACE | show|flush [dev IFACE] [to PREFIX]
+    ip route list|flush|add|del|change|append|replace|test ROUTE
+    ip link set IFACE [up|down] [arp on|off] [multicast on|off]
+    [promisc on|off] [mtu NUM] [name NAME] [qlen NUM] [address MAC]
+    [master IFACE | nomaster] [netns PID]
+    ip tunnel add|change|del|show [NAME]
+    [mode ipip|gre|sit] [remote ADDR] [local ADDR] [ttl TTL]
+    ip neigh show|flush [to PREFIX] [dev DEV] [nud STATE]
+    ip rule [list] | add|del SELECTOR ACTION
+  PHY 信息:
+    
+  配置 IP 192.168.10.1:
+    2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast qlen 1000
+    link/ether e2:eb:7a:4d:72:7b brd ff:ff:ff:ff:ff:ff
+    inet 192.168.3.10/24 scope global eth0
+    valid_lft forever preferred_lft forever
+    inet 192.168.10.1/24 scope global eth0

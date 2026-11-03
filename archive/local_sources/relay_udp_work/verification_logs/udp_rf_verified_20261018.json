@@ -1,0 +1,145 @@
+{
+  "time": "2026-10-18T18:28:52.784560+08:00",
+  "host": "169.254.9.10",
+  "serial": "COM13",
+  "cases": [
+    {
+      "name": "same_frequency",
+      "packet_hex": "0101c13600110000000035a4e900000000003b9aca00001eeb28",
+      "expected_rc": 0,
+      "reply": "rc=0 seq=310 rx_hz=900000000 tx_hz=1000000000",
+      "elapsed_ms": 3.94,
+      "spi_readback_hz": [
+        900000000,
+        1000000000
+      ],
+      "passed": true
+    },
+    {
+      "name": "rx_only",
+      "packet_hex": "0101c13700110000000035b42b40000000003b9aca00001e1db4",
+      "expected_rc": 0,
+      "reply": "rc=0 seq=311 rx_hz=900999998 tx_hz=1000000000",
+      "elapsed_ms": 4.71,
+      "spi_readback_hz": [
+        900999998,
+        1000000000
+      ],
+      "passed": true
+    },
+    {
+      "name": "tx_only",
+      "packet_hex": "0101c13800110000000035b42b40000000003baa0c40001e5e3c",
+      "expected_rc": 0,
+      "reply": "rc=0 seq=312 rx_hz=900999998 tx_hz=1000999998",
+      "elapsed_ms": 6.61,
+      "spi_readback_hz": [
+        900999998,
+        1000999998
+      ],
+      "passed": true
+    },
+    {
+      "name": "reject_bad_crc",
+      "packet_hex": "0101c13900110000000035a4e900000000003b9aca00001e2ddf",
+      "expected_rc": -3,
+      "reply": "rc=-3 seq=0 rx_hz=900999998 tx_hz=1000999998",
+      "elapsed_ms": 0.87,
+      "spi_readback_hz": [
+        900999998,
+        1000999998
+      ],
+      "passed": true
+    },
+    {
+      "name": "reject_bad_length",
+      "packet_hex": "0101c13a00110000000035a4e900000000003b9aca00001e43",
+      "expected_rc": -1,
+      "reply": "rc=-1 seq=0 rx_hz=900999998 tx_hz=1000999998",
+      "elapsed_ms": 1.89,
+      "spi_readback_hz": [
+        900999998,
+        1000999998
+      ],
+      "passed": true
+    },
+    {
+      "name": "reject_out_of_range",
+      "packet_hex": "0101c13b00110000000000000001000000003b9aca00001e0f5f",
+      "expected_rc": -4,
+      "reply": "rc=-4 seq=0 rx_hz=900999998 tx_hz=1000999998",
+      "elapsed_ms": 2.47,
+      "spi_readback_hz": [
+        900999998,
+        1000999998
+      ],
+      "passed": true
+    },
+    {
+      "name": "restore_baseline",
+      "packet_hex": "0101c13c00110000000035a4e900000000003b9aca00001e9f93",
+      "expected_rc": 0,
+      "reply": "rc=0 seq=316 rx_hz=900000000 tx_hz=1000000000",
+      "elapsed_ms": 8.12,
+      "spi_readback_hz": [
+        900000000,
+        1000000000
+      ],
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "restored": true,
+  "uart": [
+    {
+      "command": "auto 0",
+      "reply": "OK auto=0\r\r\n"
+    },
+    {
+      "command": "status",
+      "reply": "STAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=503324670 out=503324663 clip=165577 rc=0\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "RFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=0 seq=310 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=0 seq=311 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900999998 tx_hz=1000000000\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=0 seq=312 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900999998 tx_hz=1000999998\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=-3 seq=0 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900999998 tx_hz=1000999998\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=-1 seq=0 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900999998 tx_hz=1000999998\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=-4 seq=0 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900999998 tx_hz=1000999998\r\r\n"
+    },
+    {
+      "command": "rfread",
+      "reply": "UDP RF_SET rc=0 seq=316 rxlo=900 txlo=1000\r\r\nRFREAD rx_rc=0 tx_rc=0 rx_hz=900000000 tx_hz=1000000000\r\r\n"
+    },
+    {
+      "command": "auto 1",
+      "reply": "OK auto=1\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=606904318 out=606904311 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=607981566 out=607981559 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=609058814 out=609058807 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=610131966 out=610131959 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=611209214 out=611209207 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=612282366 out=612282359 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=613359614 out=613359607 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=614432766 out=614432759 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=615510014 out=615510007 clip=165577 rc=0\r\r\nSTAT mode=1 ddc=00000000 duc=00000000 gain=800 dc=0 rxgain=0 txatt=30 rxlo=900 txlo=1000 fs=30720000 in=616583166 out=616583159 clip=165577 rc=0\r\r\n"
+    }
+  ],
+  "baseline": {
+    "rx_hz": 900000000,
+    "tx_hz": 1000000000,
+    "rx_gain_db": 0,
+    "tx_attenuation_db": 30
+  }
+}

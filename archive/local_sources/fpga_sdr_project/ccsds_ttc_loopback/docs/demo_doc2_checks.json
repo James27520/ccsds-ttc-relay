@@ -1,0 +1,77 @@
+{
+  "format": "docx",
+  "verdict": "pass",
+  "checks": [
+    {
+      "id": "package",
+      "status": "pass"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u9065\u6d4b\u53c2\u6570\u8868"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u6bcd\u7ebf\u7535\u538b"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "CMU200"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "TX->RX \u6cc4\u6f0f"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u56fa\u5b9a\u683c\u5f0f"
+    }
+  ],
+  "summary": {
+    "paragraphs": 315,
+    "tables": [
+      {
+        "rows": 17,
+        "columns": 7
+      },
+      {
+        "rows": 4,
+        "columns": 5
+      },
+      {
+        "rows": 4,
+        "columns": 4
+      },
+      {
+        "rows": 3,
+        "columns": 4
+      },
+      {
+        "rows": 5,
+        "columns": 3
+      }
+    ],
+    "sections": [
+      {
+        "page_twips": {
+          "w": "12240",
+          "h": "15840"
+        },
+        "margins_twips": {
+          "top": "1440",
+          "right": "1077",
+          "bottom": "1440",
+          "left": "1077",
+          "header": "720",
+          "footer": "720",
+          "gutter": "0"
+        }
+      }
+    ]
+  }
+}

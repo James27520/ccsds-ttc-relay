@@ -1,0 +1,99 @@
+{
+  "format": "docx",
+  "verdict": "pass",
+  "checks": [
+    {
+      "id": "package",
+      "status": "pass"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u822a\u5929\u5668 ID\uff08SCID\uff09"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u865a\u62df\u4fe1\u9053"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u5e27\u8ba1\u6570"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u8f7d\u8377\u5185\u5bb9"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u6f14\u793a\u6b65\u9aa4"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u8981\u63a5\u54ea\u4e9b\u786c\u4ef6"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u5e38\u89c1\u95ee\u9898"
+    }
+  ],
+  "summary": {
+    "paragraphs": 165,
+    "tables": [
+      {
+        "rows": 4,
+        "columns": 4
+      },
+      {
+        "rows": 6,
+        "columns": 2
+      },
+      {
+        "rows": 5,
+        "columns": 2
+      },
+      {
+        "rows": 6,
+        "columns": 2
+      },
+      {
+        "rows": 6,
+        "columns": 2
+      },
+      {
+        "rows": 4,
+        "columns": 2
+      },
+      {
+        "rows": 3,
+        "columns": 4
+      },
+      {
+        "rows": 5,
+        "columns": 2
+      }
+    ],
+    "sections": [
+      {
+        "page_twips": {
+          "w": "12240",
+          "h": "15840"
+        },
+        "margins_twips": {
+          "top": "1440",
+          "right": "1134",
+          "bottom": "1440",
+          "left": "1134",
+          "header": "720",
+          "footer": "720",
+          "gutter": "0"
+        }
+      }
+    ]
+  }
+}

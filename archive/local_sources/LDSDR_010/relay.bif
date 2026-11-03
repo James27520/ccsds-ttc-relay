@@ -1,0 +1,6 @@
+the_ROM_image:
+{
+	[bootloader]E:\LDSDR_010\zynq_dev_fmcomms3.sdk\fsbl\Debug\fsbl.elf
+	E:\LDSDR_010\zynq_dev_fmcomms3.runs\impl_2\ad9361_top.bit
+	E:\LDSDR_010\zynq_dev_fmcomms3.sdk\9361\Debug\9361.elf
+}

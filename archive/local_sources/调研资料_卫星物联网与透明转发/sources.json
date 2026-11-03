@@ -1,0 +1,136 @@
+{
+  "checked_on": "2026-10-18",
+  "scope": "卫星物联网、数字透明转发载荷、相关实验与开源项目",
+  "sources": [
+    {
+      "id": "P1",
+      "type": "论文",
+      "year": 2019,
+      "title": "低轨卫星物联网的发展背景、业务特点和技术挑战",
+      "authors": "沈俊、高卫斌、张更新",
+      "url": "https://www.telecomsci.com/zh/article/doi/10.11959/j.issn.1000-0801.2019089/",
+      "note": "中文入门；期刊页与摘要已核实"
+    },
+    {
+      "id": "P2",
+      "type": "论文",
+      "year": 2019,
+      "title": "Direct-To-Satellite IoT - A Survey of the State of the Art and Future Research Perspectives",
+      "authors": "Juan A. Fraire, Sandra Céspedes, Nicola Accettura",
+      "url": "https://juanfraire.space/publications/2019-direct-to-satellite-iot-a-survey-of-the-state/",
+      "note": "作者页含HAL公开版本入口；摘要与书目信息已核实"
+    },
+    {
+      "id": "P3",
+      "type": "论文",
+      "year": 2020,
+      "title": "Narrowband Internet of Things for Non-terrestrial Networks",
+      "authors": "Olof Liberg et al.",
+      "url": "https://arxiv.org/abs/2010.04906",
+      "pdf": "https://arxiv.org/pdf/2010.04906",
+      "filename": "P3_2020_NB_IoT_NTN_Liberg.pdf",
+      "note": "公开作者稿，已查看全文；IEEE Communications Standards Magazine 4(4):49–55"
+    },
+    {
+      "id": "P4",
+      "type": "论文",
+      "year": 2021,
+      "title": "NB-IoT Random Access for Non-Terrestrial Networks",
+      "authors": "Houcine Chougrani, Steven Kisseleff, Wallace A. Martins, Symeon Chatzinotas",
+      "url": "https://arxiv.org/abs/2101.08079",
+      "pdf": "https://arxiv.org/pdf/2101.08079",
+      "filename": "P4_2021_NB_IoT_Random_Access.pdf",
+      "note": "公开预印本；长时延、多普勒、随机接入"
+    },
+    {
+      "id": "P5",
+      "type": "论文",
+      "year": 2023,
+      "title": "Early Power Estimation of FPGA-based Digital Transparent Processors for 5G-satcom",
+      "authors": "Graziano Battisti et al.",
+      "url": "https://ricerca.univaq.it/handle/11697/222620",
+      "doi": "10.1109/AERO55745.2023.10115710",
+      "note": "仅核实机构库摘要与书目信息；全文需授权"
+    },
+    {
+      "id": "P6",
+      "type": "论文",
+      "year": 2024,
+      "title": "5G Non-Terrestrial Networks With OpenAirInterface: An Experimental Study Over GEO Satellites",
+      "authors": "Florian Völk et al.",
+      "url": "https://orbilu.uni.lu/handle/10993/62569",
+      "pdf": "https://orbilu.uni.lu/bitstream/10993/62569/1/5G_Non-Terrestrial_Networks_With_OpenAirInterface_An_Experimental_Study_Over_GEO_Satellites.pdf",
+      "filename": "P6_2024_5G_NTN_OAI_GEO_Experiment.pdf",
+      "doi": "10.1109/ACCESS.2024.3483958",
+      "note": "公开全文；真实GEO透明卫星实验"
+    },
+    {
+      "id": "M1",
+      "type": "技术讲义",
+      "year": 2017,
+      "title": "Efficient FPGA implementation of a Digital Transparent Satellite Processor",
+      "authors": "Giuseppe Marini, Vincenzo Sulli, Fortunato Santucci, Marco Faccio",
+      "url": "https://eascitech.eu.org/iwes/2017/presentations.phtml?id=marini1",
+      "pdf": "https://eascitech.eu.org/iwes/2017/documents/marini1/slides.pdf",
+      "filename": "M1_2017_FPGA_Digital_Transparent_Processor_Slides.pdf",
+      "note": "公开技术报告幻灯片；不是期刊论文"
+    },
+    {
+      "id": "S1",
+      "type": "标准研究报告",
+      "title": "3GPP TR 36.763: NB-IoT/eMTC support for Non-Terrestrial Networks",
+      "url": "https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3747",
+      "note": "Release 17研究报告，非单一可直接执行的完整协议规范"
+    },
+    {
+      "id": "J1",
+      "type": "科研实验平台",
+      "title": "University of Luxembourg 6GSPACE NTN Emulation",
+      "url": "https://6gspacelab.uni.lu/research-testbeds/ntn-emulation",
+      "note": "FPGA信道模拟、GomSpace透明载荷、OAI/srsRAN/USRP；平台架构非整体开源代码"
+    },
+    {
+      "id": "J2",
+      "type": "已完成工程项目",
+      "title": "ESA 5G-GOA",
+      "url": "https://resilience.esa.int/archives/projects/5ggoa",
+      "note": "真实GEO卫星双向5G连接；官方页含OAI代码分支"
+    },
+    {
+      "id": "J3",
+      "type": "开源实验教程",
+      "title": "5G_NTN_Tutorial",
+      "url": "https://github.com/dpugliese6/5G_NTN_Tutorial",
+      "note": "OAI、SDR和信道模拟器的端到端实验；需要适配硬件与版本，未实机复现"
+    },
+    {
+      "id": "J4",
+      "type": "开源仿真工具",
+      "title": "Libre Space Foundation gr-leo",
+      "url": "https://gitlab.com/librespacefoundation/gr-leo",
+      "documentation": "https://librespacefoundation.gitlab.io/gr-leo/",
+      "note": "GNU Radio星地信道模拟；多普勒与传播损耗；不是星载转发器"
+    },
+    {
+      "id": "J5",
+      "type": "开源协议模块",
+      "title": "euryspace",
+      "url": "https://github.com/euryecetelecom/euryspace",
+      "note": "CCSDS RTL；本地交接文档已记录采用并修改；不是完整NTN系统"
+    },
+    {
+      "id": "J6",
+      "type": "开源软件配合商用终端的教程",
+      "title": "srsRAN gNB for 5G NTN",
+      "url": "https://docs.srsran.com/projects/project/en/latest/tutorials/source/ntn/source/index.html",
+      "note": "该官方教程使用商用Amarisoft UE，不能视为全套免费开源方案"
+    },
+    {
+      "id": "J7",
+      "type": "在轨工程应用",
+      "title": "天启星座",
+      "url": "https://www.guodiangaoke.com/constellation",
+      "note": "国内卫星物联网应用案例；不能据此推定内部载荷与本项目透明转发架构相同"
+    }
+  ]
+}

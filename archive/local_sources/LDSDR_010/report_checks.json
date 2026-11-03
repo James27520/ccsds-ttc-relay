@@ -1,0 +1,95 @@
+{
+  "format": "docx",
+  "verdict": "pass",
+  "checks": [
+    {
+      "id": "package",
+      "status": "pass"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u9065\u63a7\u9065\u6d4b"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u4e3a\u4ec0\u4e48\u80fd\u8bc1\u660e"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "CRC-16"
+    }
+  ],
+  "summary": {
+    "paragraphs": 343,
+    "tables": [
+      {
+        "rows": 10,
+        "columns": 3
+      },
+      {
+        "rows": 5,
+        "columns": 3
+      },
+      {
+        "rows": 6,
+        "columns": 3
+      },
+      {
+        "rows": 8,
+        "columns": 3
+      },
+      {
+        "rows": 6,
+        "columns": 3
+      },
+      {
+        "rows": 6,
+        "columns": 4
+      },
+      {
+        "rows": 4,
+        "columns": 3
+      },
+      {
+        "rows": 5,
+        "columns": 3
+      },
+      {
+        "rows": 11,
+        "columns": 4
+      },
+      {
+        "rows": 4,
+        "columns": 2
+      },
+      {
+        "rows": 5,
+        "columns": 2
+      },
+      {
+        "rows": 5,
+        "columns": 2
+      }
+    ],
+    "sections": [
+      {
+        "page_twips": {
+          "w": "11906",
+          "h": "16838"
+        },
+        "margins_twips": {
+          "top": "1134",
+          "right": "1077",
+          "bottom": "1134",
+          "left": "1077",
+          "header": "720",
+          "footer": "720",
+          "gutter": "0"
+        }
+      }
+    ]
+  }
+}

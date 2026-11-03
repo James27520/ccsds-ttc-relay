@@ -1,0 +1,4 @@
+sudo chattr -i /etc/resolv.conf 2>/dev/null; sudo rm -f /etc/resolv.conf
+echo "nameserver 223.5.5.5" | sudo tee /etc/resolv.conf
+echo "nameserver 119.29.29.29" | sudo tee -a /etc/resolv.conf
+sudo chattr +i /etc/resolv.conf

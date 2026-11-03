@@ -1,0 +1,1 @@
+python3 ~/sdr_tx_relay_v2.py relay --seconds 300 --rx-gain 20 --tx-gain -10 --scale 16

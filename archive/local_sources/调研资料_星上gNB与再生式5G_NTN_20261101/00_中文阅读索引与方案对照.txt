@@ -1,0 +1,273 @@
+﻿星上完整基站 gNB / 再生式 5G NTN 调研索引
+检索核对日期：2026 年 11 月 1 日
+
+这份资料回答：完整 5G 基站搬到卫星上，究竟是标准设想、论文研究，还是已有可参考的实现？
+本次是针对这一问题的定向检索，不是穷尽全部相关论文。
+
+一、先讲清楚查到了什么
+
+1. Rel-19 已明确纳入“再生载荷承载 gNB”的架构，不能再把“把基站处理放到卫星上”本身描述为无人研究的新方向。
+2. 有完整软件基站的实验室实现、公开可下载配置、商业软件授权和物理层 IP，不只有概念图。
+3. 全栈符合 Rel-19 的在轨商用系统是否已经部署，必须逐个核实。本次若只找到项目计划或实验室结果，就没有标为“已在轨”。
+4. 星上完整 gNB 不等于星上完整核心网，更不等于业务应用的 GPU 算力。gNB 是接入基站，核心网仍可以在地面。
+5. 仅做变频/滤波/信道化/多普勒校正，也不等于完整 gNB。后者还涉及 PHY、MAC、RLC、PDCP、RRC 等无线协议处理。
+6. “支持 Rel-17 波形/协议的商业软件用于再生载荷实验”与“Rel-19 纳入标准化完整 gNB 星上架构”可以同时成立。不能凭厂商网页的 Rel-17 标注，就说 Rel-17 已完整标准化了本次讨论的架构。
+
+二、标准证据：写报告时优先引用这些
+
+S1｜3GPP TS 38.300 V19.4.0 / ETSI TS 138 300，2026-09，Release 19
+最直接的定位：第 16.14.1 节，印刷页 233–235；PDF 阅读器第 234–236 页。
+图 16.14.1-1：透明载荷，基站在地面。
+图 16.14.1-2：卫星再生载荷承载 gNB，图中还有 Xn 星间接口。
+紧接图的文字说明再生载荷终结 Uu、NG、Xn 接口。
+意义：这是“标准已经有星上 gNB 架构”的直接原文证据。
+不要扩展成：标准要求全部卫星必须再生处理、要求使用 GPU、或已经有完整商用产品。
+本地：标准/S1_3GPP TS 38.300 V19.4.0.pdf
+
+S2｜3GPP TS 23.501 V19.9.0 / ETSI TS 123 501，2026-10，Release 19
+第 5.4.11.1 节：透明和再生载荷均在系统架构的讨论范围。
+第 5.4.11.9 节：再生卫星载荷的 N2 接口及连接管理。
+重点位置：印刷页 138、140；PDF 阅读器第 139、141 页。
+意义：不只是无线链路框图，还需要处理卫星移动、馈电链路切换和地面 AMF 的连接关系。
+本地：标准/S2_3GPP TS 23.501 V19.9.0.pdf
+
+S3｜3GPP TS 38.108 V19.4.0 / ETSI TS 138 108，2026-04，Release 19
+Satellite Access Node radio transmission and reception。
+用途：进一步核对卫星接入节点的射频收发要求。它不是本次证明“完整 gNB 上星”的主证据。
+本地：标准/S3_3GPP TS 38.108 V19.4.0.pdf
+
+配套易读资料 B1：Ericsson 的标准制定者 Gino Masini，2024-10-18 技术博客。
+它解释为什么 Rel-19 最终选择完整 gNB，而不是只把 DU 放星上：星间 Xn 复用、减少星地交互，以及 CU/DU 分拆未必能节省多少星载功耗。
+这是厂商参与者的技术解释，适合入门；引用规范要求时仍以 S1/S2 为准。
+
+三、优先阅读的研究论文
+
+P1｜A Tutorial on SDR-Based Emulation of 5G Non-Terrestrial Networks Using OpenAirInterface
+Pugliese 等，IEEE Communications Standards Magazine，Early Access，2026-09-18，pp.1–7。
+DOI：10.1109/MCOMSTD.2026.3731376
+直接相关程度：最高。搭建再生式 NTN 实验台，OAI 基站/终端 + Open5GS 核心网 + USRP + Keysight PROPSIM FS16。
+值得看：图 1 的软硬件结构；GEO/LEO 的配置、时延与多普勒条件；公开脚本如何配置 NTN。
+实现层级：实验室信道模拟，不是在轨实验，也未据此认定全套 Rel-19 特性均已实现。
+全文：作者公开稿，已下载。作者稿页眉仍有 LaTeX 模板字样，以 IEEE 题录和 DOI 识别论文，不能按模板页眉认定年份。
+配套代码：C1；下载的是作者配置仓库，不是整个 OAI 软件栈。
+
+P2｜FlexSAN: A Flexible Regenerative Satellite Access Network Architecture
+Kong / You / Pei / Gao（复旦大学），arXiv:2509.07548v1，2025-09-09。
+直接相关程度：很高，尤其适合讨论“算力究竟放星上还是星下”。
+内容：比较完整星上 gNB 与星上 DU、地面 CU 两种放置方式，再提出按业务需求选择和分配资源的方法。
+实验边界：两种静态架构在 OAI 原型上测量；文中写原型用 2.7 GHz CPU、24 GB 内存的商用笔记本，并用 tc 注入时延。
+文中动态优化的接入率和成本收益来自后续仿真；OPEX 用计算资源模型衡量，不是运营商实际账单。
+注意：这是预印本。本次未核实到正式期刊或会议录用；其部分架构取舍说法也应对照 S1 和 B1，不能当作规范条文。
+全文：公开预印本，已下载。
+
+P3｜A Scalable Architecture for Future Regenerative Satellite Payloads
+Ben Yahia 等，IEEE Wireless Communications Letters，14(2):514–518，2025；2024 年先在线发表。
+DOI：10.1109/LWC.2024.3514452
+内容：用互联的调制解调器处理单元和负载分配，提高再生载荷的可扩展性及资源利用率。
+实现层级：架构与数值仿真。不能把它写成完整 5G gNB 的在轨验证。
+对项目的启发：如果做星上算力，科研问题应落到负载均衡、调度、功耗/时延约束，而不是仅仅“装一个处理器”。
+全文：公开预印本，已下载。
+
+P10｜Space-O-RAN: Enabling Intelligent, Open, and Interoperable Non Terrestrial Networks in 6G
+Baena 等，IEEE Communications Magazine，64(2):112–118，2026-02。
+DOI：10.1109/MCOM.001.2500080；arXiv:2502.15936v2。
+内容：把实时调度等轻量控制放星上，星间做集群协调，训练和策略更新等任务留给地面。
+实现层级：架构设计和仿真，不能冒充现成完整 gNB 飞行产品。
+与老师描述相关处：星地协同算力、星上控制与 AI 的任务分配已经是明确研究内容；真正需要比较的是具体分工及收益。
+全文：公开预印本 v2，已下载。
+
+四、会议论文和会议演示资料
+
+P4｜Demonstration of Advanced Regenerative 5G NTN NR Satellite Base Station Prototype
+Alison Keefe、Suresh Iyer；IEEE MILCOM 2024，pp.661–662。
+DOI：10.1109/MILCOM61039.2024.10774047
+直接相关程度：很高，题目就是再生式 5G NTN 卫星基站样机演示。
+已核实：会议论文集目录给出题目、作者及起始页 661；下一篇从 663 页开始。
+未核实：没有获得公开全文，不能据题目推断芯片、功耗、实时能力或是否在轨。
+取用方式：IEEE 官方入口或学校图书馆按 DOI 查询；资料夹 D5 仅是会议目录，不是论文全文。
+
+P5｜A Review of Discussions on Support of Regenerative Payloads in NR NTN
+Seungkwon Cho、JunHwan Lee（ETRI）；ICTC 2025，pp.2019–2020。
+DOI：10.1109/ICTC66702.2025.11387822
+已核实：ETRI 官方机构库确认题录、作者、时间和页码。
+用途：追踪再生载荷标准化讨论；本次没取得全文，不能把它当作原型或在轨实验的证据。
+
+P6｜OpenAirInterface as a platform for 5G-NTN Research and Experimentation
+Sumit Kumar 等；IEEE Future Networks World Forum（FNWF）2022，pp.500–506。
+DOI：10.1109/FNWF55208.2022.00094
+用途：了解 OAI 如何用于 5G NTN 原型研究，补足从标准到实验平台的基础。
+边界：较早期 NTN 实验路线资料，不用它来证明完整 Rel-19 gNB 上星。
+全文：公开作者稿，已下载。
+
+P9｜O-RAN NTN Regenerative Payload Testbed with RIC Monitoring
+Kirubakaran 等（DLR）；one6G Summit 2026，伦敦，2026-09-10。
+资料类型：会议海报；DLR 明确标为非同行评审，不能混写为正式同行评审会议论文。
+实验：模拟星上 DU，CU 和核心网在地面；信道模拟器构造 GEO 条件，接入 Amarisoft 终端，并用 RIC/xApp 读取测量数据。
+用途：现有分拆基站实验台的直接例子。
+边界：只有 DU 放“模拟星端”，不等于完整 gNB 上星。机构库提供摘要，全文未开放。
+
+D1｜Thales：5G NTN Space Net for Future Connectivity，O-RAN / ESA 2026-02-05 研讨会幻灯片。
+用途：MIXELS 与星上基站工程路线；不是同行评审论文。
+D2｜Thomas Heyn：2026 移动通信会议演讲幻灯片，含 6G LINO 架构与实验计划。
+用途：可编程星载平台的硬件和实验能力；发射时间以较新的 Fraunhofer 项目页为准。
+D4｜Keysight：Sky to Lab，O-RAN / ESA 2026-02-05 研讨会幻灯片。
+用途：SpaceRAN 及商业再生 NTN 验证案例；不是在轨完成报告。
+
+五、对照阅读：这两篇有真实 GEO 链路，但不是完整基站上星
+
+P7｜5G Non-Terrestrial Networks With OpenAirInterface: An Experimental Study Over GEO Satellites
+Florian Völk 等；IEEE Access，12:155098–155109，2024。
+DOI：10.1109/ACCESS.2024.3483958
+实际实验用透明 GEO 卫星，gNB 在地面。论文画了不同架构，不等于所有架构都在轨实现。
+全文：已下载。
+
+P8｜An SDR-Based Test Platform for 5G NTN Prototyping and Validation
+Lu Hou、Kan Zheng、Jie Mei、Cheng Huang；IEEE Open Journal of the Communications Society，6:7758–7766，2025。
+DOI：10.1109/OJCOMS.2025.3610869
+Amarisoft/SDR 实验平台与透明 GEO 链路验证；适合看测试方法，不能当作完整星上 gNB 的证据。
+全文：公开预印本，已下载。
+
+六、别人有哪些现成方案
+
+C1｜最适合拿来复现实验：OAI + Open5GS + USRP + 信道模拟器
+已有 Docker 编排、NTN 配置生成、核心网配置和测量脚本。再生模式下还能模拟 gNB 到核心网的时延。
+已保存作者仓库快照：commit daf7641ab2602b1d48e618ab2e2653973820ab8e，2026-06-23。
+注意：ZIP 不包含 oai-custom 子模块内容，不是下载即能跑的完整系统。子模块固定在 31eb466a7d598a7f0a8850b0a7405dca16290b9a；仓库树记录见 开源配置/github_tree_pinned.json。
+仓库 Apache-2.0 许可不代表子模块、Open5GS 和全部第三方组件都使用相同许可。
+可参考：怎样把你们现有转发/控制链路之外的真正 NR 基站处理搭起来。
+不能直接推断：RK3588 或 Zynq-7020 可以无移植运行它；也没有在这台电脑安装或运行这些程序。
+
+C2｜商业全软件基站：Celeste SmartgNB
+官网提供软件授权、定制和集成支持，称 L1–L3 全软件实现，可支持 x86/ARM/RISC-V。
+2026-02 官方公告：在 Qualcomm 实验室，多核 SoC 不用硬件加速，结合 Keysight 信道模拟器和 Qualcomm 测试终端，完成透明/再生场景互操作。
+这是“通信卫星基站没人用通用算力/软件做”的直接反例。
+边界：实验室完成不等于已在轨；厂商称 Rel-17 合规不等于已验证全部 Rel-19 功能；未公开指定芯片功耗、吞吐量、源码或价格。
+
+C3｜商业硬件加速路线：AccelerComm AX-RG + Radisys EVK
+AX-RG 提供面向再生式卫星载荷的 5G NR 物理层 IP。EVK 把硬件加速 PHY 和 Radisys 高层协议软件组合成评估平台。
+可参考：哪些处理适合 FPGA/专用硬件加速，哪些留给 CPU；是已有商业集成路线。
+边界：厂商页面的在轨 IP、功效提升等属于厂商陈述；不能将某个 L1 IP 在轨写成整个 EVK 或全套 Rel-19 gNB 已在轨，也不能照搬宣传性能作为你们的比较数据。
+
+C4｜商业 RAN 验证框架：Capgemini + Keysight
+2025-03 公告：O-RAN CU/DU 框架验证透明/再生 NTN，MWC 2025 演示，用终端及信道仿真覆盖 LEO/MEO/GEO 条件。
+边界：商业软件和测试方案，不是已完成在轨完整基站部署的证明。
+
+C5｜星上 gNB 工程项目：ESA MIXELS
+Thales Alenia Space、DLR、Kepler、EvoElectronics 合作。研究完整 gNB 或分布式 gNB 和星间光链路。
+官方状态：2025-06 完成 Phase 1 实验室端到端测试，Phase 2 才是在轨实现及演示。
+项目有已经在轨的卫星平台可用，不等于完整 gNB 演示已在轨完成。
+
+C6｜最贴近“可编程星上算力 + 通信”的公开项目：6G LINO
+Fraunhofer/ESA 平台公开了完整 gNB、星上 AI 频谱感知和可编程信号处理功能。
+硬件：AMD Versal AI SoC FPGA + Raspberry Pi 5 CPU，24 GB RAM，144 GB FLASH。
+最新项目页计划 2027 发射；旧材料存在不同时间表，本索引不据旧计划认定已发射。
+对项目的意义：星上通用处理器、AI、软件上注和通信载荷结合已有明确工程项目；创新仍需定位到具体算法/实现指标。
+
+C7｜Airbus UpNext SpaceRAN
+2026-01-14 启动，计划包括地面仿真台和 LEO 星上再生基站载荷，连接地面与航空终端；预计 2028 出首批结果。
+边界：“launches demonstrator”在这里是启动项目，不是宣布卫星已经发射。
+
+C8｜Antwerp Space + AccelerComm + ESA
+2026 年公告的再生 5G gNB 示范器，目标 TRL 5，多用户、波束跳变与功率分配等。
+边界：目标与研发项目，不能当作已经交付的在轨产品。
+
+C9｜已有实际商业应用的邻近路线：Starlink Direct to Cell
+SpaceX 官方明确说明星上使用 eNodeB 及再生架构，与普通 LTE 手机连接。
+这足以说明“星上运行蜂窝基站处理”不只是论文；但它是 LTE/4G 案例，不能说它证明全套 Rel-19 5G gNB 已经商用。
+
+七、对你们项目应怎样使用这些资料
+
+如果你们仍做透明转发 + 独立遥控链路，应把完整星上 gNB 作为复杂方案的对照，不要称自己实现了同一功能。
+如果要加入 RK3588，先确定它处理什么：完整 NR 基站、部分 PHY、频谱感知/干扰识别，还是只计算并下发频率参数。这四者所需软件、实时性和可比较对象完全不同。
+可研究的问题包括：限定带宽与用户数下的性能/功耗、星地功能划分、间歇馈电链路下的业务保持、频偏/时延变化下的稳健性。它们只是候选方向，本次没有认定你们已实现或已优于现有方案。
+要证明优势，应在同一信道、带宽、业务负载下测量吞吐量、误块率、端到端时延、处理时延与瓦数。不能单用 TOPS 或“换成国产 CPU/GPU”证明基站方案更优。
+
+建议阅读顺序：B1 入门 → S1 架构图 → P1 + C1 看可复现实现 → C2/C3 看商业路线 → C5/C6 看工程项目 → P2/P10 思考具体研究问题。
+
+八、资料夹说明
+
+标准/：3 份标准原文。
+论文/：7 份可公开取得的作者稿/预印本/开放论文。
+工程演示资料/：5 份幻灯片、项目公告、会议目录。D5 不是 P4 全文。
+开源配置/：作者教程仓库 ZIP 快照。没有下载庞大的 OAI 子模块或执行配置。
+网页入口/：论文、项目和厂商官方入口快捷方式。
+references.bib：10 条论文/预印本/海报题录，可导入文献工具；P6 作者用 et al. 简写，正式投稿前应从出版方导出完整题录。
+sources.json：来源、DOI、实现层级、全文状态；downloads.json：下载 URL、大小及 SHA-256。
+全文检索/：PDF 提取文本，仅供本地定位；公式、图和双栏顺序可能提取不准，以原 PDF 为准。
+
+九、逐项官方入口
+
+P1｜A Tutorial on SDR-Based Emulation of 5G Non-Terrestrial Networks Using OpenAirInterface
+https://ieeexplore.ieee.org/abstract/document/11698779/
+
+P2｜FlexSAN: A Flexible Regenerative Satellite Access Network Architecture
+https://arxiv.org/abs/2509.07548
+
+P3｜A Scalable Architecture for Future Regenerative Satellite Payloads
+https://publications.polymtl.ca/61051/
+
+P4｜Demonstration of Advanced Regenerative 5G NTN NR Satellite Base Station Prototype
+https://ieeexplore.ieee.org/document/10774047
+
+P5｜A Review of Discussions on Support of Regenerative Payloads in NR NTN
+https://ksp.etri.re.kr/ksp/article/read?id=71418
+
+P6｜OpenAirInterface as a platform for 5G-NTN Research and Experimentation
+https://orbilu.uni.lu/handle/10993/53157
+
+P7｜5G Non-Terrestrial Networks With OpenAirInterface: An Experimental Study Over GEO Satellites
+https://orbilu.uni.lu/handle/10993/62569
+
+P8｜An SDR-Based Test Platform for 5G NTN Prototyping and Validation
+https://arxiv.org/abs/2509.20692
+
+P9｜O-RAN NTN Regenerative Payload Testbed with RIC Monitoring
+https://elib.dlr.de/227683/
+
+P10｜Space-O-RAN: Enabling Intelligent, Open, and Interoperable Non Terrestrial Networks in 6G
+https://arxiv.org/abs/2502.15936
+
+C1｜OAI + Open5GS 可复现实验配置
+https://github.com/dpugliese6/5G_NTN_Tutorial
+
+C2｜Celeste SmartgNB 产品
+https://celestetechnologies.com/products-and-services/
+
+C2a｜Celeste/Qualcomm/Sateliot 2026 互操作测试
+https://celestetechnologies.com/milestones/
+
+C3｜AccelerComm AX-RG
+https://www.accelercomm.com/solutions/accelercomm-ax-rg
+
+C3a｜AccelerComm + Radisys EVK
+https://www.accelercomm.com/solutions/accelercomm-evk
+
+C4｜Capgemini + Keysight 2025 验证
+https://www.keysight.com/se/en/about/newsroom/news-releases/2025/0305-pr25-037-keysight-and-capgemeni-accelerate-validation-of-regenerative-and-transparent-non-terrestrial-network-ran.html
+
+C5｜ESA MIXELS
+https://resilience.esa.int/archives/projects/mixels
+
+C6｜Fraunhofer / ESA 6G LINO
+https://www.iis.fraunhofer.de/en/ff/kom/satkom/6g-lino.html
+
+C7｜Airbus UpNext SpaceRAN
+https://www.airbus.com/en/newsroom/press-releases/2026-01-airbus-launches-demonstrator-to-test-global-5g-connectivity-in
+
+C8｜Antwerp Space + AccelerComm + ESA
+https://www.accelercomm.com/insights/accelercomm-selected-for-esa-funded-contract-advancing-regenerative-5g-satellite-networks
+
+C9｜Starlink Direct to Cell 星上 LTE 基站
+https://new.spacex.com/updates
+
+B1｜Ericsson 标准制定者技术解读
+https://www.ericsson.com/en/blog/2024/10/ntn-payload-architecture
+
+S1｜3GPP TS 38.300 V19.4.0
+https://www.etsi.org/deliver/etsi_ts/138300_138399/138300/19.04.00_60/ts_138300v190400p.pdf
+
+S2｜3GPP TS 23.501 V19.9.0
+https://www.etsi.org/deliver/etsi_ts/123500_123599/123501/19.09.00_60/ts_123501v190900p.pdf
+
+S3｜3GPP TS 38.108 V19.4.0
+https://www.etsi.org/deliver/etsi_ts/138100_138199/138108/19.04.00_60/ts_138108v190400p.pdf

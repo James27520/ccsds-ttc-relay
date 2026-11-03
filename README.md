@@ -1,5 +1,7 @@
 # CCSDS 测控与变频转发实验系统
 
+2026-11-03：[本地源码整理记录](docs/local-source-inventory.md)与[历史源码归档](archive/local_sources/README.md)已补齐。新增多普勒模块见[ADDA遥控链实验](docs/doppler-telecontrol-prototype.md)和[LDSDR双路业务实验](docs/doppler-compensation.md)，均为默认关闭的独立扩展，尚未完成动态射频闭环验收。现有桌面UI及正常启动流程不变。
+
 双电脑联调请先看[操作说明](docs/two-computer-guide.md)：电脑1运行根目录`start_terminal1.bat`，电脑2运行`start_terminal2.bat`，首次在各自电脑运行`setup_station.bat`。两个入口各只打开本地终端窗口，电脑1从窗口内进入测控；原`start_station_v2.bat`改为选择菜单，选择3才打开单电脑三个窗口。
 
 2026-11-01接收性能更新：合并板端轮询，采集与解码通过固定缓冲并行运行，并处理终端2仅启用一个CPU核心的配置。1989.5→2179.5 MHz固定六线台架完成30分钟持续接收，期间60条双向中文消息全部对端实收；两端处理速度约2.500 MSPS，无缓冲满、自然RX重建或采样削顶。短时性能下降改为告警，持续不足采用有界恢复。失败复现、修正与验收界限见[接收性能与恢复记录](docs/validation/20261101_receive_pipeline.md)。原始采样无硬件序号，未证明零丢样；该单频点测试不替代全系统验收。

@@ -1,0 +1,27 @@
+{
+  "source_files": {
+    "D:\\RelayTools\\work\\sband_ui_20261029\\gui_business\\verification.json": "811cfd09c3a2de4224543efadf24a4200d8d6f95bc92e22fab2ec37c97a2f377",
+    "D:\\RelayTools\\work\\sband_ui_20261029\\gui_business\\20261029_192352_receiver_bf1a2dfc\\rx_000010.bin": "da0a560d4081805d143dac81fbccb917b5d7df8cca6e33ba9efa4e54dfb9e948",
+    "D:\\RelayTools\\work\\sband_ui_20261029\\gui_business\\20261029_192352_receiver_bf1a2dfc\\rx_000018.bin": "0d47f354700884df8042a020755f4390f0b853a79eb6fb155b86c7b53b63548c",
+    "C:\\Users\\Lu\\Desktop\\全国大学生嵌入式芯片与系统设计竞赛\\ccsds-ttc-relay\\docs\\validation\\2026-10-29-sband-tc.json": "6fbcffa1440fbd63164f9aa09e52e7501cbbc16ae6b7484e2cb1ca09a01e2a43"
+  },
+  "figures": {
+    "02_高频文本实收与停发对照.png": "3867e20a6df4ac468a485a746a4327be39622781971e2dc20e1bb1e61b794e87",
+    "02_高频文本实收与停发对照.svg": "6285e349d4c7fd3cdc85e87a9f22199bcc186f2fd5fb22d1878f51189a5e130c",
+    "03_高频射频遥控实测结果.png": "6511c8c4923b54ab1906f7bea2195c5510f1dc11edf318239a3455eef60f3ade",
+    "03_高频射频遥控实测结果.svg": "91ae3506c21f4cf3b4927fefb92f934170cd4a36afda655cd5a13badcb5c0d8e",
+    "01_文本回发界面_测试结束后.png": "513ed8f2aa7b667f54fe3cd6c28962033794773beb9006aa0c037e27d7be6b21",
+    "04_遥控改频后_1989.5MHz发送.png": "63298c69df82fc9f9d6721780627b1f99a06893c73b2f9af255783d9fd0b2e5e",
+    "05_文本实收_停发后的接收状态.png": "afe9f4c300a66076c2392473ea2210eee23c99869dfcfc67e1a2d385c16e4729",
+    "06_第二条文本实收_停发后.png": "784395c22347f9aef93694d6d07aea3ff5f833cd658a47d2eb08334f9984f215",
+    "07_遥控改频后的文本实收与停发对照.png": "a97a29cab6022b6aa4997cd9e562276c22b5875be5f1d307be8e216f2989a14c",
+    "07_遥控改频后的文本实收与停发对照.svg": "4769a30c49a43b434f39108dcf42652bad9e86f7918a7ba1af884e59b4a09453"
+  },
+  "screenshot_note": "Original post-test UI screenshot, exported without modifying pixels.",
+  "post_control_sources": {
+    "D:\\RelayTools\\work\\sband_post_tc_20261029\\verification.json": "ad46732fb98f28f5cf8822b63cd0bf8f5378a2f93110e917a3b71495fb0378af",
+    "D:\\RelayTools\\work\\sband_post_tc_20261029\\capture_audit.json": "3329c24e0b6ca8dde4624a5d48d7b056445844a0c3b49f0733528f555112630c",
+    "D:\\RelayTools\\work\\sband_post_tc_20261029\\sessions\\20261029_214114_receiver_4891324f\\rx_000014.bin": "30a2ba4f7f1de71bf60821605e15553757b8c6325c296d697cd8095bfe1903e6",
+    "D:\\RelayTools\\work\\sband_post_tc_20261029\\sessions\\20261029_214114_receiver_4891324f\\rx_000024.bin": "41567f1ab1748cb3d99566f2c200528f8071a751fbefb9a1dbb9151ed631b4e0"
+  }
+}

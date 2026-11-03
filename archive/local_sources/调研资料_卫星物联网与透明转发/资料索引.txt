@@ -1,0 +1,136 @@
+卫星物联网与FPGA透明转发：资料索引
+检索与核对日期：2026-10-18
+范围：6篇论文、1份FPGA技术讲义、1项标准研究报告、7个相关项目。
+已下载：P3、P4、P6三篇公开论文，以及M1技术讲义。
+其余材料保留来源入口；P5全文需授权，本轮仅核实摘要。
+本轮未进行外部开源项目的安装、编译或实机复现。
+
+建议阅读顺序：P1（中文应用背景）→ P3（透明转发与NB-IoT）→ J1（最接近的实验架构）→ M1（FPGA结构）→ P6（端到端实验）。
+
+P1 | 论文 | 2019 | 低轨卫星物联网的发展背景、业务特点和技术挑战
+作者：沈俊、高卫斌、张更新
+原始来源：https://www.telecomsci.com/zh/article/doi/10.11959/j.issn.1000-0801.2019089/
+
+
+
+说明：中文入门；期刊页与摘要已核实
+
+P2 | 论文 | 2019 | Direct-To-Satellite IoT - A Survey of the State of the Art and Future Research Perspectives
+作者：Juan A. Fraire, Sandra Céspedes, Nicola Accettura
+原始来源：https://juanfraire.space/publications/2019-direct-to-satellite-iot-a-survey-of-the-state/
+
+
+
+说明：作者页含HAL公开版本入口；摘要与书目信息已核实
+
+P3 | 论文 | 2020 | Narrowband Internet of Things for Non-terrestrial Networks
+作者：Olof Liberg et al.
+原始来源：https://arxiv.org/abs/2010.04906
+公开PDF：https://arxiv.org/pdf/2010.04906
+本地文件：P3_2020_NB_IoT_NTN_Liberg.pdf
+
+说明：公开作者稿，已查看全文；IEEE Communications Standards Magazine 4(4):49–55
+
+P4 | 论文 | 2021 | NB-IoT Random Access for Non-Terrestrial Networks
+作者：Houcine Chougrani, Steven Kisseleff, Wallace A. Martins, Symeon Chatzinotas
+原始来源：https://arxiv.org/abs/2101.08079
+公开PDF：https://arxiv.org/pdf/2101.08079
+本地文件：P4_2021_NB_IoT_Random_Access.pdf
+
+说明：公开预印本；长时延、多普勒、随机接入
+
+P5 | 论文 | 2023 | Early Power Estimation of FPGA-based Digital Transparent Processors for 5G-satcom
+作者：Graziano Battisti et al.
+原始来源：https://ricerca.univaq.it/handle/11697/222620
+
+
+DOI：10.1109/AERO55745.2023.10115710
+说明：仅核实机构库摘要与书目信息；全文需授权
+
+P6 | 论文 | 2024 | 5G Non-Terrestrial Networks With OpenAirInterface: An Experimental Study Over GEO Satellites
+作者：Florian Völk et al.
+原始来源：https://orbilu.uni.lu/handle/10993/62569
+公开PDF：https://orbilu.uni.lu/bitstream/10993/62569/1/5G_Non-Terrestrial_Networks_With_OpenAirInterface_An_Experimental_Study_Over_GEO_Satellites.pdf
+本地文件：P6_2024_5G_NTN_OAI_GEO_Experiment.pdf
+DOI：10.1109/ACCESS.2024.3483958
+说明：公开全文；真实GEO透明卫星实验
+
+M1 | 技术讲义 | 2017 | Efficient FPGA implementation of a Digital Transparent Satellite Processor
+作者：Giuseppe Marini, Vincenzo Sulli, Fortunato Santucci, Marco Faccio
+原始来源：https://eascitech.eu.org/iwes/2017/presentations.phtml?id=marini1
+公开PDF：https://eascitech.eu.org/iwes/2017/documents/marini1/slides.pdf
+本地文件：M1_2017_FPGA_Digital_Transparent_Processor_Slides.pdf
+
+说明：公开技术报告幻灯片；不是期刊论文
+
+S1 | 标准研究报告 |  | 3GPP TR 36.763: NB-IoT/eMTC support for Non-Terrestrial Networks
+
+原始来源：https://portal.3gpp.org/desktopmodules/Specifications/SpecificationDetails.aspx?specificationId=3747
+
+
+
+说明：Release 17研究报告，非单一可直接执行的完整协议规范
+
+J1 | 科研实验平台 |  | University of Luxembourg 6GSPACE NTN Emulation
+
+原始来源：https://6gspacelab.uni.lu/research-testbeds/ntn-emulation
+
+
+
+说明：FPGA信道模拟、GomSpace透明载荷、OAI/srsRAN/USRP；平台架构非整体开源代码
+
+J2 | 已完成工程项目 |  | ESA 5G-GOA
+
+原始来源：https://resilience.esa.int/archives/projects/5ggoa
+
+
+
+说明：真实GEO卫星双向5G连接；官方页含OAI代码分支
+
+J3 | 开源实验教程 |  | 5G_NTN_Tutorial
+
+原始来源：https://github.com/dpugliese6/5G_NTN_Tutorial
+
+
+
+说明：OAI、SDR和信道模拟器的端到端实验；需要适配硬件与版本，未实机复现
+
+J4 | 开源仿真工具 |  | Libre Space Foundation gr-leo
+
+原始来源：https://gitlab.com/librespacefoundation/gr-leo
+
+
+
+说明：GNU Radio星地信道模拟；多普勒与传播损耗；不是星载转发器
+
+J5 | 开源协议模块 |  | euryspace
+
+原始来源：https://github.com/euryecetelecom/euryspace
+
+
+
+说明：CCSDS RTL；本地交接文档已记录采用并修改；不是完整NTN系统
+
+J6 | 开源软件配合商用终端的教程 |  | srsRAN gNB for 5G NTN
+
+原始来源：https://docs.srsran.com/projects/project/en/latest/tutorials/source/ntn/source/index.html
+
+
+
+说明：该官方教程使用商用Amarisoft UE，不能视为全套免费开源方案
+
+J7 | 在轨工程应用 |  | 天启星座
+
+原始来源：https://www.guodiangaoke.com/constellation
+
+
+
+说明：国内卫星物联网应用案例；不能据此推定内部载荷与本项目透明转发架构相同
+
+
+与本地工程对应的判断：
+1. 本地IoT-NTN-FPGA-Relay的README将其定位为低成本星载载荷验证平台，数据面为数字下变频、隔直、数字上变频与数字增益。
+2. 卫星物联网解决覆盖需求；本项目聚焦该系统中的透明转发载荷，CCSDS遥控遥测属于管理/测控链路。
+3. 端到端无线转发不等于已经完成3GPP NB-IoT或5G NTN标准接入验证。
+4. 后续论证建议覆盖弱信号/误包率、动态多普勒频偏、时延及协议定时、可见窗口和网关覆盖条件。
+5. 已有商业卫星物联网项目能证明需求存在，公开应用介绍不能证明其内部采用与本项目相同的透明载荷架构。

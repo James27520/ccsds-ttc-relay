@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "backend": "native",
+  "rasterEngine": "libreoffice",
+  "source": "saved",
+  "inputPath": "E:\\fpga_sdr_project\\USB失效根因分析与遥控遥测架构调整报告.docx",
+  "sourceSha256": "2b0148b2d05eec00897704ca815f57ea20d6f8140eceb6abbe935aa4e5d22e2c",
+  "dpi": 100,
+  "pageCount": 7,
+  "images": [
+    {
+      "index": 1,
+      "page": 2,
+      "path": "E:\\LDSDR_010\\usb_prev2\\page-0001.png",
+      "width": 827,
+      "height": 1170,
+      "rectangle": {
+        "x": 0,
+        "y": 0,
+        "width": 793.7333333333333,
+        "height": 1122.5333333333333
+      },
+      "byteLength": 105909
+    }
+  ],
+  "missingFonts": [
+    "Courier"
+  ]
+}

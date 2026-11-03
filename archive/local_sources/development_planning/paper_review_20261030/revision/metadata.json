@@ -1,0 +1,19 @@
+{
+  "blocks": 282,
+  "media": [
+    "image1.png",
+    "image5.png",
+    "image8.png",
+    "image9.png",
+    "image11.png",
+    "image12.png",
+    "image13.png",
+    "image14.png",
+    "image15.png",
+    "image16.png"
+  ],
+  "insertions": 0,
+  "deletions": 0,
+  "comments_file": false,
+  "app_properties": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\" xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\"><Template>Normal.dotm</Template><Pages>3</Pages><Words>626</Words><Characters>686</Characters><Lines>37</Lines><Paragraphs>45</Paragraphs><TotalTime>6</TotalTime><ScaleCrop>false</ScaleCrop><LinksUpToDate>false</LinksUpToDate><CharactersWithSpaces>710</CharactersWithSpaces><Application>WPS Office_12.1.0.22529_F1E327BC-269C-435d-A152-05C5408002CA</Application><DocSecurity>0</DocSecurity></Properties>"
+}

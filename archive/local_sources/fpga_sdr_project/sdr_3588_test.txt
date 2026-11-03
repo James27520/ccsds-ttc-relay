@@ -1,0 +1,37 @@
+python3 -u - <<'PY'
+import os
+import sys
+import runpy
+import linecache
+import traceback
+
+path = os.path.expanduser("~/sdr_iq_forward.py")
+sys.argv = [
+    path, "--uri", "usb:1.4.5",
+    "--rx-hz", "900000000", "--tx-hz", "1000000000",
+    "--rate", "2500000", "--bandwidth", "1500000",
+    "--rx-gain", "10", "--tx-gain", "-60",
+    "--seconds", "60", "--transmit"
+]
+
+def trace(frame, event, arg):
+    if frame.f_code.co_filename != path:
+        return None
+    if event == "line":
+        text = linecache.getline(path, frame.f_lineno).strip()
+        if text.startswith("started = time.monotonic()"):
+            sys.settrace(None)
+            return None
+        if text.startswith(("sdr.", "sdr = adi.")):
+            print("[正在执行]", text, flush=True)
+    elif event == "exception" and isinstance(arg[1], OSError):
+        print("[出错位置]", flush=True)
+        traceback.print_exception(*arg, file=sys.stdout)
+    return trace
+
+sys.settrace(trace)
+try:
+    runpy.run_path(path, run_name="__main__")
+finally:
+    sys.settrace(None)
+PY                                                                                                                                     

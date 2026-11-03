@@ -1,0 +1,41 @@
+﻿# ---- Vivado / SDK ----
+*.jou
+*.log
+*.str
+.Xil/
+*.cache/
+*.hw/
+*.sim/
+*.ip_user_files/
+*.runs/
+*.sdk/
+vivado*.backup.*
+webtalk*
+*.dcp
+*.bit
+*.ltx
+*.hdf
+*.xsa
+*.xci
+
+# ---- ModelSim ----
+work/
+transcript
+vsim.wlf
+*.vstf
+modelsim.ini
+*.wlf
+
+# ---- simulation outputs ----
+sim/*.txt
+sim/manifest.json
+
+# ---- Python ----
+__pycache__/
+*.pyc
+
+# ---- OS / editor ----
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

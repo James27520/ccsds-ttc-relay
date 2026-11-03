@@ -1,0 +1,25 @@
+﻿背景音乐与署名
+
+主选 Cipher — Kevin MacLeod
+官方试听与下载：https://incompetech.com/music/royalty-free/index.html?Search=Search&isrc=USUAN1100844
+备选 Dreams Become Real — Kevin MacLeod
+官方试听与下载：https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500027
+选择其中一首，从作者页面下载MP3，再导入剪辑软件。本包未包含音频文件，也未制作按时间锁定的混音。
+
+官方页面所列许可：CC BY 4.0。
+作者说明：https://en.incompetech.com/music/royalty-free/faq.html
+许可：https://creativecommons.org/licenses/by/4.0/
+
+主选署名（片尾和视频发布说明可用）：
+音乐：Cipher — Kevin MacLeod
+来源：https://incompetech.com/music/royalty-free/index.html?Search=Search&isrc=USUAN1100844
+许可：Creative Commons Attribution 4.0（CC BY 4.0）
+https://creativecommons.org/licenses/by/4.0/
+本视频按画面需要对音乐作截取、音量调整及淡入淡出。
+
+若使用备选，将曲名与来源改为备选，不需要署名未使用的曲目。
+若实际未作某项修改，删掉对应描述；若循环，补写“循环”。
+
+混音安排：片头淡入 → 全片同一首低音量铺底 → 口播时压低 → 片尾淡出。
+以音乐比人声低18—24 dB为试混起点，实际以讲话清晰、无削波为准。
+不要现场外放音乐；口播在安静房间按镜号单独录制。

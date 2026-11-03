@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "updated": "2026-10-26",
+  "note": "架构 V2：遥控板=信号发生器，ADDA=遥控板(PS解调)，转发板=中继，接收板=接收",
+  "roles": {
+    "signal_gen": {
+      "board": "7010_AD9363_SDR(旧遥控板)",
+      "iface": "USB + libiio",
+      "role": "模拟基站：发 CCSDS 指令 + 发业务内容（分时）"
+    },
+    "cmd_rx": {
+      "board": "Z7ADDALite(ADDA)",
+      "iface": "ADC 收中频 + 网线控转发板",
+      "role": "遥控板：PS 解调出 rx/tx 频段"
+    },
+    "relay": {
+      "board": "LDSDR 转发板",
+      "iface": "CLI(串口/网口)",
+      "role": "变频中继"
+    },
+    "rx": {
+      "board": "Pluto 同款新板",
+      "iface": "USB RNDIS + iio",
+      "role": "接收端：解出业务内容"
+    }
+  },
+  "freq": {
+    "ccsds_if_hz": 100000000,
+    "payload_if_hz": 100000000,
+    "relay_rx_lo_mhz": 100,
+    "relay_tx_lo_mhz": 2450,
+    "rx_board_lo_mhz": 2450,
+    "signal_center_mhz": 100.5,
+    "adda_alias_mhz": 6.75
+  },
+  "control_frame": {
+    "asm": "1ACFFC1D",
+    "body_bytes": 8,
+    "layout": "ver(1) | rx_lo_mhz(u16 LE) | tx_lo_mhz(u16 LE) | seq(1) | crc16(2)",
+    "coding": "conv 1/2 K=7 (G1=1111001, G2=1011011, inv2), ASM 不编码",
+    "cadu_symbols": 160
+  },
+  "timing": {
+    "sym_rate_sps": 100000,
+    "frame_ms": 1.6,
+    "repeat": 3,
+    "total_ms": 4.8,
+    "adc_fs_hz": 250000000,
+    "fpga_decim": 8,
+    "decimated_fs_hz": 31250000,
+    "if_alias_hz": 6250000,
+    "capture_samples": 65536,
+    "capture_ms": 2.1
+  },
+  "atten": {
+    "ccsds_link_db": 50,
+    "payload_link_db": 40,
+    "relay_out_db": 20,
+    "relay_txatt_db": 25
+  },
+  "acceptance": {
+    "R0": "WNS>=0 WHS>=0 TNS=0；ADC 1:8 反序列化；BRAM 采集可读",
+    "R1": "PS 读出 65536 样点，非全 0/全满",
+    "R2": "FFT 在 6.25 MHz 见明显谱峰",
+    "R3": "ASM 命中，错 <=2 bit",
+    "R4": "解出 rx/tx 两频率，CRC 通过",
+    "R5": "转发板收到 lo 命令并回 OK",
+    "R6": "接收板在 2450 解出业务内容"
+  },
+  "open_questions": [
+    "ADDA 的 PS 有没有 USB host 口？（决定能不能直接控转发板串口）",
+    "ADDA 是否跑 PetaLinux 2018.3？",
+    "转发板是否保留裸机 CLI，还是加 lwIP / 改跑 Linux？"
+  ],
+  "signal_gen": {
+    "board": "7010_AD9363_SDR（旧遥控板）",
+    "tool": "sw/tools/pluto_siggen.py",
+    "tx_lo_mhz": 100.0,
+    "if_offset_mhz": 0.5,
+    "center_mhz": 100.5,
+    "fs_hz": 2500000,
+    "sym_rate_hz": 100000,
+    "sps": 25,
+    "beta": 0.35,
+    "txatt_db": 30,
+    "bw_hz": 500000,
+    "cmd_example": "python pluto_siggen.py --mode cmd --rx 100 --tx 2450 --seconds 20",
+    "payload_example": "python pluto_siggen.py --mode payload --text \"hello world\" --seconds 20"
+  }
+}
