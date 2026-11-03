@@ -4,7 +4,7 @@
 
 [双电脑操作说明](docs/two-computer-guide.md) · [验证记录](docs/validation.md) · [更新日志](CHANGELOG.md) · [文档索引](docs/README.md)
 
-![四板系统总体架构](docs/images/fig1_system_architecture.png)
+![系统总体架构与六路射频连接](docs/images/fig1_system_architecture.png)
 
 ## 系统怎样工作
 
